@@ -1,0 +1,13 @@
+###############################################################
+#
+#   Copyright (c) 2021 MarkLogic Corporation
+#
+###############################################################
+FROM ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-7.3_1.0.0_EA
+
+###############################################################
+# Place-holders for other system configurations
+###############################################################
+RUN sudo yum -y update
+
+RUN sudo yum clean all

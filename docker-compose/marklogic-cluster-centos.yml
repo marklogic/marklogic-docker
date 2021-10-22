@@ -1,0 +1,72 @@
+version: '3.6'
+services:
+    bootstrap:
+      image: store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea
+      container_name: bootstrap
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - /space/MarkLogic1:/var/opt/MarkLogic
+      secrets:
+          - mldb_admin_password
+          - mldb_admin_username
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+    node2:
+      image: store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea
+      container_name: node2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - /space/MarkLogic2:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7200-7210:8000-8010
+        - 7297:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
+    node3:
+      image: store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea
+      container_name: node3
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - /space/MarkLogic3:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7300-7310:8000-8010
+        - 7397:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
+secrets:
+  mldb_admin_password:
+    file: ./mldb_admin_password.txt
+  mldb_admin_username:
+    file: ./mldb_admin_username.txt
+networks:
+  external_net: {}

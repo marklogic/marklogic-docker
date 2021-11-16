@@ -405,6 +405,28 @@ $ docker secret rm <secret-name>
    2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=2&linkCreation=true&fromPageId=220243563)
 
 ## Older Supported Tags
-- ...
+- 9.0-12-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 9.0-12.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 9.0-13-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 9.0-13.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 9.0-13.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-3-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-4-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-4.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-4.4-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-5-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-5.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-5.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-6-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-6.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-6.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-6.4-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-7-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-7.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-7.3-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-1-dev-ubi- MarkLogic Developer docker image, running on Redhat UBI, including all features and is limited to developer use
+- 10.0-2-dev-ubi- MarkLogic Developer docker image, running on Redhat UBI, including all features and is limited to developer use
 - 10.0-3-dev-ubi- MarkLogic Developer docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-7.3-centos-1.0.0-ea - MarkLogic Developer docker image includes all features and is limited to developer use
+- 10.0-7.3-centos-1.0.0-ea - MarkLogic Developer docker image includes all features and is limited to developer use

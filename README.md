@@ -9,6 +9,7 @@ Note: MarkLogic docker images follow a specific tagging format: `<ML release ver
 Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker team: docker@marklogic.com
 
 Supported Docker architectures: x86_64
+
 Base OS: CentOS
 
 Latest supported MarkLogic Server version: 10.0-8.1

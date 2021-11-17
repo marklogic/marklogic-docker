@@ -1,0 +1,1 @@
+container-structure-test test --config ./structure-test.yml --image ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-8.1-centos-1.0.0-ea2

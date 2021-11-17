@@ -394,7 +394,7 @@ $ docker secret rm <secret-name>
 
 ## Known Issues and Limitations
 
-10.0-7.3-centos-1.0.0-ea
+10.0-8.1-centos-1.0.0-ea2
 
 1. Enabling huge pages for clusters containing single-host, multi-container configurations may lead to failure, due to incorrect memory allocation. MarkLogic recommends that you disable huge pages in such architectures.
 2. Database replication will only work for configurations having a single container per host, with matching hostname.

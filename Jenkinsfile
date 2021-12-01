@@ -128,6 +128,7 @@ pipeline{
                         sh """
                           ls -l
                           ls -l test
+                        """
                         //junit testResults: '**/**/container-structure-test.xml'
                         readJSON file: '**/container-structure-test.json', text: ''
                     }

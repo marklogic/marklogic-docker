@@ -97,8 +97,8 @@ pipeline{
                         sh """
                             cd test
                             curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-                            #./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
-                            ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output json | tee container-structure-test.json
+                            ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
+                            #./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output json | tee container-structure-test.json
                         """
                         //junit '**/*.xml'
                     }
@@ -125,12 +125,10 @@ pipeline{
                 }
                 stage("report") {
                     steps{
-                        sh """
-                          ls -l
-                          ls -l test
-                        """
                         //junit testResults: '**/**/container-structure-test.xml'
-                        readJSON file: '**/container-structure-test.json', text: ''
+                        //readJSON file: '**/container-structure-test.json', text: ''
+                        allure results: [[path: 'test']]
+                        emailext body: 'body of the message', subject: 'docker report', to: '${params.passEmail}'
                     }
                 }
             }    

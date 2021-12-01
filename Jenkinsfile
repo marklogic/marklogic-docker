@@ -126,7 +126,7 @@ pipeline{
                 stage("report") {
                     steps{
                         //junit testResults: '**/**/container-structure-test.xml'
-                        readJSON file: '**/**/container-structure-test.json', text: ''
+                        readJSON file: '**/container-structure-test.json', text: ''
                     }
                 }
             }    

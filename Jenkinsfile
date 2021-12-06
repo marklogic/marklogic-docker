@@ -94,7 +94,7 @@ pipeline{
                 sh """
                     cd test
                     #insert current version
-                    sed -i -e 's/VERSION_PLACEHOLDER/10.0-20211201-centos-1.0.0-ea-test/' ./structure-test.yml
+                    sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
                     curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
                     ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
                     #fix junit output

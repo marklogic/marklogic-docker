@@ -13,7 +13,11 @@
 def timeStamp;    
 
 pipeline{
-    agent { label params['agent-name'] } 
+    agent {
+                label{
+                    label 'docker-vitaly';
+                }
+            }
     environment {
         GIT_CREDS = "bitbucket-dhs-operations"
         buildServer = "distro.marklogic.com"
@@ -32,7 +36,6 @@ pipeline{
         string(name: 'REPO_BRANCH', defaultValue: 'feature/CLD-312-structure-tests', description: 'branch for portal repo')
         choice(name: 'ML_SERVER_BRANCH', choices: '10.0\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
-        agentParameter name:'agent-name', defaultValue:'docker-vitaly', description:'Agent name'
     }
     stages{
         stage("prepare") {

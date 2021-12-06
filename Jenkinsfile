@@ -133,13 +133,13 @@ pipeline{
             echo 'This will always run'  
         }  
         success {  
-            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> Build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "SUCCESS CI:  ${env.JOB_NAME}", to: "vkorolev@marklogic.com";
+            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> Build: ${env.BUILD_URL} ${SCRIPT, template="groovy-html.template"}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "SUCCESS CI:  ${env.JOB_NAME} ${env.BUILD_NUMBER}", to: "${params.passEmail}";
         }  
         failure {  
-            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> Build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: ${env.JOB_NAME}", to: "vkorolev@marklogic.com";
+            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> Build: ${env.BUILD_URL} ${SCRIPT, template="groovy-html.template"}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: ${env.JOB_NAME} ${env.BUILD_NUMBER}", to: "${params.failEmail}";
         }  
         unstable {  
-            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> Build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "UNSTABLE CI: ${env.JOB_NAME}", to: "vkorolev@marklogic.com";
+            mail bcc: '', body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> Build: ${env.BUILD_URL} ${SCRIPT, template="groovy-html.template"}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "UNSTABLE CI: ${env.JOB_NAME} ${env.BUILD_NUMBER}", to: "${params.failEmail}";
         }  
         changed {  
             echo 'This will run only if the state of the Pipeline has changed'  

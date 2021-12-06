@@ -15,7 +15,7 @@ def timeStamp;
 pipeline{
     agent {
                 label{
-                    label 'docker-vitaly';
+                    label 'docker-build';
                 }
             }
     environment {

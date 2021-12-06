@@ -3,7 +3,7 @@ schemaVersion: "2.0.0"
 metadataTest:
   env:
     - key: MARKLOGIC_VERSION
-      value: 10.0-8.1-centos-1.0.0-ea2
+      value: VERSION_PLACEHOLDER
     - key: MARKLOGIC_ADMIN_USERNAME_FILE
       value: mldb_admin_user
     - key: MARKLOGIC_ADMIN_PASSWORD_FILE

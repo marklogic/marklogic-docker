@@ -19,7 +19,6 @@ pipeline{
                 }
             }
     environment {
-        GIT_CREDS = "bitbucket-dhs-operations"
         buildServer = "distro.marklogic.com"
         buildServerBasePath = "/space/nightly/builds/"
         buildServerPlatform = "linux64-rh7"
@@ -28,12 +27,12 @@ pipeline{
     }
 
     parameters{
-        string(name: 'failEmail', defaultValue: 'vkorolev@marklogic.com', description: 'Whom should I send the Pass email to?', trim: true)
-        string(name: 'passEmail', defaultValue: 'vkorolev@marklogic.com', description: 'Whom should I send the Failure email to?', trim: true) 
-        string(name: 'REPO_URL', defaultValue: 'https://github.com/vitalykorolev/marklogic-docker.git', description: 'Docker repository URL', trim: true)
+        string(name: 'failEmail', defaultValue: 'sverma@marklogic.com,vkorolev@marklogic.com', description: 'Whom should I send the Pass email to?', trim: true)
+        string(name: 'passEmail', defaultValue: 'sverma@marklogic.com,vkorolev@marklogic.com', description: 'Whom should I send the Failure email to?', trim: true) 
+        string(name: 'REPO_URL', defaultValue: 'https://github.com/marklogic/marklogic-docker.git', description: 'Docker repository URL', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.0.0-ea-test', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
-        string(name: 'REPO_BRANCH', defaultValue: 'feature/CLD-312-structure-tests', description: 'branch for portal repo')
+        string(name: 'REPO_BRANCH', defaultValue: 'develop', description: 'branch for portal repo')
         choice(name: 'ML_SERVER_BRANCH', choices: '10.0\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
     }
@@ -107,9 +106,9 @@ pipeline{
             steps{
                 withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
                     sh """
-                        # docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
-                        # cd src/centos
-                        # make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
+                        docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
+                        cd src/centos
+                        make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
                     """
                 }
             }    

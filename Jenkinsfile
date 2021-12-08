@@ -1,3 +1,5 @@
+// This Jenkinsfile defines internal MarkLogic build pipeline.
+
 @Library('shared-libraries@1.0-declarative') _
     def getServerPath(branchName) {
         if("10.0".equals(branchName)) {
@@ -37,6 +39,7 @@ pipeline{
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
     }
     stages{
+        // check out build scripts and get MarkLogic RPM
         stage("prepare") {
             steps{
                 script {
@@ -77,17 +80,17 @@ pipeline{
                     mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
                 }
             }
-        }    
+        }
+        // build docker image
         stage("build") {
             steps{
                 sh """
                     cd src/centos
-                    # RPM=`file *.rpm | cut -d: -f1`
-                    #mlVersion=`echo \$RPM|  awk -F \"MarkLogic-\" '{print \$2;}' | awk -F \".x86_64.rpm\"  '{print \$1;}'`
                     make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM}
                 """
             }
         }
+        // test docker image and generate junit report
         stage("test") {
             steps{
                 sh """
@@ -99,9 +102,10 @@ pipeline{
                     #fix junit output
                     sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
                 """
-                //junit '**/*.xml'
+                junit testResults: '**/container-structure-test.xml'
             }
         }
+        // publish docker image to internal registry
         stage("publish") {
             steps{
                 withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
@@ -121,16 +125,8 @@ pipeline{
                 """
             }
         }
-        stage("report") {
-            steps{
-                junit testResults: '**/container-structure-test.xml'
-            }
-        }
     }
-    post {  
-        always {  
-            echo 'This will always run'  
-        }  
+    post {
         success {  
             mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
         }  
@@ -139,9 +135,6 @@ pipeline{
         }  
         unstable {  
             mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-        }  
-        changed {  
-            echo 'This will run only if the state of the Pipeline has changed'  
-        }  
+        }   
     }
 }

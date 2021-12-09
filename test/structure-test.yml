@@ -1,0 +1,51 @@
+schemaVersion: "2.0.0"
+ 
+metadataTest:
+  env:
+    - key: MARKLOGIC_VERSION
+      value: VERSION_PLACEHOLDER
+    - key: MARKLOGIC_ADMIN_USERNAME_FILE
+      value: mldb_admin_user
+    - key: MARKLOGIC_ADMIN_PASSWORD_FILE
+      value: mldb_password_user
+    - key: MARKLOGIC_BOOTSTRAP_HOST
+      value: bootstrap
+    - key: MARKLOGIC_DATA_DIR
+      value: /var/opt/MarkLogic
+    - key: MARKLOGIC_PID_FILE
+      value: /var/run/MarkLogic.pid
+    - key: MARKLOGIC_INSTALL_DIR
+      value: /opt/MarkLogic
+    - key: MARKLOGIC_UMASK
+      value: 022
+  labels:
+    - key: "com.marklogic"
+      value: "MarkLogic"
+    - key: "com.marklogic.description"
+      value: "MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, and backup and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster and for doing dynamic content delivery at massive scale. MarkLogic Developer redhat image includes all features but is limited to pre-production applications and use."
+    - key: "com.marklogic.release-type"
+      value: "production"
+    - key: "com.marklogic.license"
+      value: "MarkLogic EULA"
+    - key: "com.marklogic.license.description"
+      value: "By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
+    - key: "com.marklogic.license.url"
+      value: "https://developer.marklogic.com/eula"
+  exposedPorts: ["7997","8001","8002","8003","8004","8005","8006","8007","8009","8010"]
+  volumes: ["/var/opt/MarkLogic"]
+  entrypoint: ["/usr/local/bin/start-marklogic.sh"]
+  workdir: ""
+ 
+fileExistenceTests:
+- name: 'entrypoint'
+  path: '/usr/local/bin/start-marklogic.sh'
+  isExecutableBy: 'any'
+  shouldExist: true
+- name: 'MarkLogic binary'
+  path: '/opt/MarkLogic/bin/MarkLogic'
+  isExecutableBy: 'any'
+  shouldExist: true
+- name: 'joiner script'
+  path: '/usr/local/bin/join-cluster.sh'
+  isExecutableBy: 'any'
+  shouldExist: true

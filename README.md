@@ -12,7 +12,7 @@ Supported Docker architectures: x86_64
 
 Base OS: CentOS
 
-Latest supported MarkLogic Server version: 10.0-8.1
+Latest supported MarkLogic version: 10.0-8.1
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/_/marklogic
 
@@ -24,14 +24,11 @@ MarkLogic documentation is available at [http://docs.marklogic.com](https://docs
 
 ## Using this Image
 
-To create an uninitialized MarkLogic server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
+Optionally we can either create an initialized or an uninitialized MarkLogic. 
 
-```
-$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
-```
+For an initialized MarkLogic, admin credentials are required to be passed while creating the docker container. The docker container will have MarkLogic instaled and initialized. MarkLogic will have databases and app servers created. A security database will be created to store user data,roles and other security information. MarkLogic credentials passed as env params while running a container will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Admin interface on port 8001 and other app servers with respective ports.
 
-To create an initialized MarkLogic server, and pass environment variables, run this command:
+To create an initialized MarkLogic, pass environment variables and replace <insert admin username> and <insert admin password> with actual values for admin credentials, run this command: 
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
@@ -40,8 +37,18 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
 ```
+Wait for about a minute for MarkLogic to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic admin interface using admin credentials provided while running the container. After the initial login, you should see app servers and databases created and admin user in the security database. Optionally you can check logs on admin interface from the logs tab.
 
-Wait for about a minute for MarkLogic to initialize before checking the ports.
+For an Uninitialized MarkLogic, admin credentials or license information is not required while creating the container. The docker conatiner will have MarkLogic installed and ports exposed for appservers as specified in the run command. Users can access Admin interface on port 8001 and manually initialize the MarkLogic, create admin user, databases and install license.
+
+To create an uninitialized MarkLogic with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
+
+```
+$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
+     PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
+```
+
+Wait for about a minute, before going to admin interface on port 8001. If MarkLogic is installed successfully, you should see an initialize button on admin interface to initialize MarkLogic. Once the MarkLogic is initialized, access Manage app server on port 8002 to see all the app servers and databases information. Optionally you can check logs on admin interface from the logs tab.
 
 ### Persistent Data Directory
 
@@ -82,7 +89,7 @@ MarkLogic Docker containers are configured via a set of environment variables.
 
 | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
-| MARKLOGIC_INIT                | true                            | no                                | <br/>     | when set to true, will initialize server           |
+| MARKLOGIC_INIT                | true                            | no                                | <br/>     | when set to true, will initialize MarkLogic           |
 | MARKLOGIC_ADMIN_USERNAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin user                           |
 | MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin password                       |
 | MARKLOGIC_ADMIN_USERNAME_FILE | secret_username                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin username via Docker secrets    |

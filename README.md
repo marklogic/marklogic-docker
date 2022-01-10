@@ -34,13 +34,15 @@ Optionally we can either create an initialized or an uninitialized MarkLogic.
 
 For an initialized MarkLogic, admin credentials are required to be passed while creating the docker container. The docker container will have MarkLogic instaled and initialized. MarkLogic will have databases and app servers created. A security database will be created to store user data,roles and other security information. MarkLogic credentials passed as env params while running a container will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Admin interface on port 8001 and other app servers with respective ports.
 
-To create an initialized MarkLogic, pass environment variables and replace <insert admin username> and <insert admin password> with actual values for admin credentials, run this command: 
+To create an initialized MarkLogic, pass environment variables and replace <insert admin username> and <insert admin password> with actual values for admin credentials, optionally pass license information in <insert license> and, <insert licensee> to apply license and, run this command: 
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
+     -e MARKLOGIC_LICENSE="<insert license>" \
+     -e MARKLOGIC_LICENSEE="<insert licensee>" \
      marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 Wait for about a minute for MarkLogic to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic admin interface using admin credentials provided while running the container. After the initial login, you should see app servers and databases created on the host and admin user in the security database. Optionally you can check logs on admin interface from the logs tab.
@@ -105,6 +107,8 @@ MarkLogic Docker containers are configured via a set of environment variables.
 | MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                | <br/>     | will join cluster via MARKLOGIC_BOOTSTRAP          |
 | MARKLOGIC_BOOTSTRAP           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
+| MARKLOGIC_LICENSE             | license key                     | no                                | n/a       | set MarkLogic license key                          |
+| MARKLOGIC_LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
 
 **IMPORTANT:** The use of Docker secrets is new in the marklogic-server:10.0-8.1-centos-1.0.0-ea2 image and will not work with older versions of the Docker image. The Docker compose examples below use secrets. If you want to use the examples with an older version of the image, you will need to update the examples to use environment variables instead.
 

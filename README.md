@@ -1,9 +1,9 @@
 ## Prerequisites
-- Docker Engine
-    To use dockerd, docker cli, docker APIs
+- [Docker Engine](https://docs.docker.com/engine/)
+    - To use dockerd, docker cli, docker APIs
 - Desktop Browser
-    To access MarkLogic Admin interface and App Servers
-
+    - To access MarkLogic Admin interface and App Servers
+    - See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/)
 ## Supported tags
 
 Note: MarkLogic Server docker images follow a specific tagging format: `<ML release version>-<platform>-<ML Docker release version>-ea`
@@ -32,7 +32,7 @@ MarkLogic documentation is available at [http://docs.marklogic.com](https://docs
 
 Optionally we can either create an initialized or an uninitialized MarkLogic Server. 
 
-For an initialized MarkLogic Server, admin credentials are required to be passed while creating the docker container. The docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data,roles and other security information. MarkLogic Server credentials passed as env params while running a container will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.
+For an initialized MarkLogic Server, admin credentials are required to be passed while creating the docker container. The docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data,roles and other security information. MarkLogic Server credentials, passed as env params while running a container, will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.
 
 To create an initialized MarkLogic Server, pass environment variables and replace <insert admin username> and <insert admin password> with actual values for admin credentials, optionally pass license information in <insert license> and, <insert licensee> to apply license and, run this command: 
 
@@ -43,20 +43,31 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      -e MARKLOGIC_LICENSE="<insert license>" \
      -e MARKLOGIC_LICENSEE="<insert licensee>" \
-     marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
-Wait for about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic Server admin interface using admin credentials provided while running the container. After the initial login, you should see app servers and databases created on the host and admin user in the security database. Optionally you can check logs on admin interface from the logs tab.
+Example run 
+```
+> docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \                                                                                                                                                   ─╯
+     -e MARKLOGIC_INIT=true \
+     -e MARKLOGIC_ADMIN_USERNAME=admin \
+     -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
+     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+8834a1193994cc75405de27d6985eba632ee1e9a1f4519dac6ff833cecb9abb6
+```
+Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic Server admin interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8000. After the initial login, you should see app servers and databases created on the host and admin user in the security database. Optionally you can check logs on admin interface from the logs tab.
 
-For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The docker conatiner will have MarkLogic Server installed and ports exposed for appservers as specified in the run command. Users can access Admin interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
+
+For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access Admin interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
 
 To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
+Example output will just contain a hash of the image ID IE: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
-Wait for about a minute, before going to admin interface on port 8001. If MarkLogic Server is installed successfully, you should see an initialize button on admin interface to initialize MarkLogic Server. Once the MarkLogic Server is initialized, access Manage app server on port 8002 to see all the app servers and databases information. Optionally you can check logs on admin interface from the logs tab.
+Wait for about a minute, before going to admin interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see an initialize button on admin interface to initialize MarkLogic Server. Once the MarkLogic Server is initialized, access Manage app server on  http://localhost:8002 to see all the app servers and databases information. Optionally you can check logs on admin interface from the logs tab.
 
 ### Persistent Data Directory
 
@@ -71,7 +82,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
-Above command will start a docker conatiner running MarkLogic Server.
+Above command will start a docker container running MarkLogic Server.
 
 Verify volume creation with this command:
 
@@ -91,7 +102,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
-Above command will start a docker conatiner running MarkLogic Server and dind the given docker volume to it.
+Above command will start a docker container running MarkLogic Server and dind the given docker volume to it.
 
 ## Configuration
 
@@ -382,6 +393,51 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
 
+## Debugging
+Below is a set of instructions to access a running MarkLogic instance on a docker container and confirm its running correctly. 
+
+1. Access the machine running the docker container, this is typically done through SSH or having physical access to the machine.
+2. Get the container ID of the running MarkLogic container on the machine
+```
+# Where store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 is the image ID this could be different. 
+> docker container ps --filter ancestor=store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 -q
+
+# Example Output
+> f484a784d998  
+
+# If you don't know the image you can search without a filter
+> docker container ps
+
+
+# Example unfiltered output
+CONTAINER ID   IMAGE                                                        COMMAND                  CREATED          STATUS          PORTS                                  NAMES
+f484a784d998   store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002->8000-8002/tcp   vibrant_burnell
+```
+3. Execute a command to access a remote shell onto the container
+
+```
+# f484a784d998 is the container ID from the prior step, the one given to your container will be different
+> docker exec -it f484a784d998 /bin/bash  
+```
+
+4. Verify MarkLogic is running
+```
+> sudo service MarkLogic status
+MarkLogic (pid  34) is running...
+```
+5. To read the logs Navigate to `/var/opt/MarkLogic/Logs` and view them in an reader like `vi`
+```
+# As an example we can view the 8001 error logs, and list the log directory with a single command
+> sudo cd /var/opt/MarkLogic/Logs && ls && vi ./8001_ErrorLog.txt
+```
+
+6. Exit the container, when you've completed debugging, with the exit command
+```
+> exit
+```
+### Accessing a MarkLogic Container while its running
+Below is a set of steps to run in order to access a container while it is running. This is not exclusive to marklogic
+
 ## Clean up
 
 ### Docker secrets removal
@@ -406,10 +462,10 @@ $ docker secret rm <secret-name>
 
 ### Remove volumes
 
-Anonynomus volumes can be removed by adding --rm option while running a container. So when the conatiner is removed this anonymous volume will be removed as well.
+Anonymous volumes can be removed by adding --rm option while running a container. So when the container is removed this anonymous volume will be removed as well.
 
 ```
-$docker run --rm -v /foo -v awesome:/bar cotaainer image
+$docker run --rm -v /foo -v awesome:/bar container image
 ```
 
 To remove all other volumes use below command
@@ -419,16 +475,16 @@ $docker volume prune
 
 ### Stop a container
 
-Use below command to stop a running conainer
+Use below command to stop a running container
 ```
-$docker stop conatiner_name
+$docker stop container_name
 ```
 
 ### Remove a container
 
-Use below command to remove a stopped conainer
+Use below command to remove a stopped container
 ```
-$docker rm conatiner_name
+$docker rm container_name
 ```
 
 ## Known Issues and Limitations

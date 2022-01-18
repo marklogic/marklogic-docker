@@ -47,7 +47,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 ```
 Example run 
 ```
-> docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \                                                                                                                                                   ─╯
+> docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \                                                                                                                                                  
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=admin \
      -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
@@ -80,7 +80,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
-     marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 Above command will start a docker container running MarkLogic Server.
 
@@ -100,7 +100,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
-     marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 Above command will start a docker container running MarkLogic Server and dind the given docker volume to it.
 
@@ -142,7 +142,7 @@ version: '3.6'
 
 services:
     bootstrap:
-      image: marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
       container_name: bootstrap
       dns_search: ""
       environment:
@@ -212,7 +212,7 @@ version: '3.6'
 
 services:
     bootstrap:
-      image: marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
       container_name: bootstrap
       dns_search: ""
       environment:
@@ -231,7 +231,7 @@ services:
       networks:
       - external_net
     node2:
-      image: marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
       container_name: node2
       dns_search: ""
       environment:
@@ -253,7 +253,7 @@ services:
       networks:
       - external_net
     node3:
-      image: marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
       container_name: node3
       dns_search: ""
       environment:
@@ -363,7 +363,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      -v ~/data/MarkLogic:/var/opt/MarkLogic \
      --network ml-cluster-network \
      --dns-search "marklogic.com" \
-     marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 
 #### VM#n
@@ -388,7 +388,7 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      -e MARKLOGIC_JOIN_CLUSTER=true \
      -v ~/data/MarkLogic:/var/opt/MarkLogic \
      --network ml-cluster-network \
-     marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.

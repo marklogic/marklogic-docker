@@ -71,6 +71,8 @@ Wait for about a minute, before going to admin interface on http://localhost:800
 
 ### Persistent Data Directory
 
+> Prior to the following section please note the docker documentation on [persistent data](https://docs.docker.com/get-started/05_persisting_data/) 
+
 A MarkLogic Server Docker container is always instantiated with a volume (`/var/opt/MarkLogic`).
 
 Run the following command to instantiate a container:

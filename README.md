@@ -133,7 +133,7 @@ The credentials for admin user are configured via Docker secrets, and are stored
 
 ### Single node MarkLogic on a single VM
 
-Create marklogic-1n-centos.yaml, mldb_admin_username.txt, and mldb_admin_password.txt files in your home directory where the user has full access to run docker as shown below.
+Create marklogic-1n-centos.yaml, mldb_admin_username.txt, and mldb_admin_password.txt files in your home directory, typically denoted as `~`, where the user has full access to run docker as shown below.
 
 **marklogic-1n-centos.yaml**
 

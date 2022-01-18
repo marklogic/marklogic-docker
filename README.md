@@ -394,49 +394,59 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
 
 ## Debugging
-Below is a set of instructions to access a running MarkLogic instance on a docker container and confirm its running correctly. 
+
+### Accessing a MarkLogic Container while its running
+Below is a set of steps to run in order to access a container while it is running and do some basic debugging once access is obtained
 
 1. Access the machine running the docker container, this is typically done through SSH or having physical access to the machine.
 2. Get the container ID of the running MarkLogic container on the machine
+
+- In the below command store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 is an image ID this could be different on your machine. 
 ```
-# Where store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 is the image ID this could be different. 
-> docker container ps --filter ancestor=store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 -q
+docker container ps --filter ancestor=store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 -q
+```
+- Example Output
+```
+f484a784d998  
+```
+- If you don't know the image you can search without a filter
+```
+docker container ps
+```
 
-# Example Output
-> f484a784d998  
-
-# If you don't know the image you can search without a filter
-> docker container ps
-
-
-# Example unfiltered output
+- Example unfiltered output
+```
 CONTAINER ID   IMAGE                                                        COMMAND                  CREATED          STATUS          PORTS                                  NAMES
 f484a784d998   store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002->8000-8002/tcp   vibrant_burnell
 ```
 3. Execute a command to access a remote shell onto the container
 
+- In the below command f484a784d998 is the container ID from the prior step, the one given to your container will be different. 
 ```
-# f484a784d998 is the container ID from the prior step, the one given to your container will be different
-> docker exec -it f484a784d998 /bin/bash  
+docker exec -it f484a784d998 /bin/bash  
 ```
 
 4. Verify MarkLogic is running
 ```
-> sudo service MarkLogic status
+sudo service MarkLogic status
+```
+Example Output:  
+
+```
 MarkLogic (pid  34) is running...
-```
+```  
+
 5. To read the logs Navigate to `/var/opt/MarkLogic/Logs` and view them in an reader like `vi`
+- As an example we can view the 8001 error logs, and list the log directory with a single command
 ```
-# As an example we can view the 8001 error logs, and list the log directory with a single command
-> sudo cd /var/opt/MarkLogic/Logs && ls && vi ./8001_ErrorLog.txt
+sudo cd /var/opt/MarkLogic/Logs && ls && vi ./8001_ErrorLog.txt
 ```
 
 6. Exit the container, when you've completed debugging, with the exit command
 ```
-> exit
+exit
 ```
-### Accessing a MarkLogic Container while its running
-Below is a set of steps to run in order to access a container while it is running. This is not exclusive to marklogic
+
 
 ## Clean up
 

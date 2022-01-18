@@ -328,6 +328,8 @@ In the examples above, Docker secrets files were used to specify admin credentia
 
 This setup will create and initialize MarkLogic Server on 3 different VMs/hosts, and connect them with each other using [Docker Swarm](https://docs.docker.com/engine/swarm/).
 
+> Additionally please note the docker documentation on [overlay networks](https://docs.docker.com/network/overlay/)
+
 #### VM#1
 
 Follow the steps below to setup the first node (bootstrap) on VM1.

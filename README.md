@@ -114,10 +114,10 @@ MarkLogic Server Docker containers are configured via a set of environment varia
 | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
 | MARKLOGIC_INIT                | true                            | no                                | <br/>     | when set to true, will initialize MarkLogic           |
-| MARKLOGIC_ADMIN_USERNAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin user                           |
-| MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin password                       |
-| MARKLOGIC_ADMIN_USERNAME_FILE | secret_username                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin username via Docker secrets    |
-| MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin password via Docker secrets    |
+| MARKLOGIC_ADMIN_USERNAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                       |
+| MARKLOGIC_ADMIN_USERNAME_FILE | secret_username                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin username via Docker secrets    |
+| MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                | <br/>     | will join cluster via MARKLOGIC_BOOTSTRAP          |
 | MARKLOGIC_BOOTSTRAP           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
 | MARKLOGIC_LICENSE             | license key                     | no                                | n/a       | set MarkLogic license key                          |
@@ -131,14 +131,14 @@ MarkLogic Server Docker containers ship with a small set of scripts, making it e
 
 The credentials for admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files. Make sure the yaml files for Docker compose have the desired image label and volume path (~/data/MarkLogic). All of these scripts were tested with version 20.10 of Docker.
 
-### Single node MarkLogic on a single VM
+### Single node MarkLogic Server on a single VM
 
 Create marklogic-1n-centos.yaml, mldb_admin_username.txt, and mldb_admin_password.txt files in your home directory, typically denoted as `~`, where the user has full access to run docker as shown below.
 
 **marklogic-1n-centos.yaml**
 
 ```
-#Docker compose file sample to setup single node MarkLogic cluster
+#Docker compose file sample to setup single node cluster
 
 version: '3.6'
 
@@ -201,14 +201,14 @@ Above command lists all the docker containers running on the host.
 
 After the container is initialized, you can access QConsole on http://localhost:8000 and the Admin UI on http://localhost:8001. The ports can also be accessed externally via your hostname or IP.
 
-### Three node MarkLogic cluster on a single VM
+### Three node cluster on a single VM
 
 Here is an example of the marklogic-3n-centos.yaml, mldb_admin_username.txt, and mldb_admin_password.txt files that need to be created in your host machine before running the Docker compose command.
 
 **marklogic-3n-centos.yaml**
 
 ```
-#Docker compose file sample to setup a three node MarkLogic Server cluster
+#Docker compose file sample to setup a three node cluster
 
 version: '3.6'
 
@@ -324,7 +324,7 @@ The node2, node3 use MARKLOGIC_JOIN_CLUSTER to join the cluster once they are ru
 
 In the examples above, Docker secrets files were used to specify admin credentials for MarkLogic Server. An alternative approach would be to use MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD environmental variables. This approach is less secure because credentials remain in the environment at runtime. In order to use these variables in the Docker compose files, remove the secrets section at the end of the Docker compose yaml file, and remove the secrets section in each node. Finally, replace MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
 
-### Three node MarkLogic cluster setup on multiple VM
+### Three node cluster setup on multiple VM
 
 This setup will create and initialize MarkLogic Server on 3 different VMs/hosts, and connect them with each other using [Docker Swarm](https://docs.docker.com/engine/swarm/).
 
@@ -342,7 +342,7 @@ $ docker swarm init
 
 Write down the output from this step. It will be needed for the other VMs to connect to them to the swarm. The output will be "docker swarm join --token random-string-of-characters-generated-by-docker-swarm-command <VM1_IP>:2377"
 
-Create an overlay network. All of the nodes inside the MarkLogic cluster must be part of this network in order to communicate with each other.
+Create an overlay network. All of the nodes inside the cluster must be part of this network in order to communicate with each other.
 For more information on overlay network, please refer https://docs.docker.com/network/overlay/
 
 ```
@@ -456,7 +456,7 @@ exit
 
 ### Docker secrets removal
 
-Using Docker secrets, username and password information is secured when transmitting the sensitive data from Docker host to Docker containers. The information is not available as an environment variable, to prevent any attacks. Still these values are stored in a text file and persisted in an in-memory file system. MarkLogic recommends that you delete the Docker secrets information once the cluster is up and running. In order to remove the secrets file, follow these steps:
+Using Docker secrets, username and password information is secured when transmitting the sensitive data from Docker host to Docker containers. The information is not available as an environment variable, to prevent any attacks. Still these values are stored in a text file and persisted in an in-memory file system. It is recommended to delete the Docker secrets information once the cluster is up and running. In order to remove the secrets file, follow these steps:
 
 First, stop the container, because secrets cannot be removed from running containers.
 

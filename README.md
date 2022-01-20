@@ -41,7 +41,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
 ```
 
-Wait for about a minute for MarkLogic Server to initialize before checking the ports.
+Wait for about a minute for MarkLogic to initialize before checking the ports.
 
 ### Persistent Data Directory
 
@@ -83,10 +83,10 @@ MarkLogic Docker containers are configured via a set of environment variables.
 | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
 | MARKLOGIC_INIT                | true                            | no                                | <br/>     | when set to true, will initialize server           |
-| MARKLOGIC_ADMIN_USERNAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                       |
-| MARKLOGIC_ADMIN_USERNAME_FILE | secret_username                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin username via Docker secrets    |
-| MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password via Docker secrets    |
+| MARKLOGIC_ADMIN_USERNAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin user                           |
+| MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin password                       |
+| MARKLOGIC_ADMIN_USERNAME_FILE | secret_username                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin username via Docker secrets    |
+| MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic admin password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                | <br/>     | will join cluster via MARKLOGIC_BOOTSTRAP          |
 | MARKLOGIC_BOOTSTRAP           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
 
@@ -98,7 +98,7 @@ MarkLogic Docker containers ship with a small set of scripts, making it easy to 
 
 The credentials for admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files. Make sure the yaml files for Docker compose have the desired image label and volume path (~/data/MarkLogic). All of these scripts were tested with version 20.10 of Docker.
 
-### Single node MarkLogic Server on a single VM
+### Single node MarkLogic on a single VM
 
 Create marklogic-1n-centos.yaml, mldb_admin_username.txt, and mldb_admin_password.txt files as shown below.
 
@@ -374,7 +374,7 @@ When you complete these steps, you will have three containers; one on each VM an
 
 ## Docker secrets removal
 
-Using Docker secrets, username and password information is secured when transmitting the sensitive data from Docker host to Docker containers. The information is not available as an environment variable, to prevent any attacks. Still these values are stored in a text file and persisted in an in-memory file system. It is recommended to delete the Docker secrets information once the cluster is up and running. In order to remove the secrets file, follow these steps:
+Using Docker secrets, username and password information is secured when transmitting the sensitive data from Docker host to Docker containers. The information is not available as an environment variable, to prevent any attacks. Still these values are stored in a text file and persisted in an in-memory file system. MarkLogic recommends that you delete the Docker secrets information once the cluster is up and running. In order to remove the secrets file, follow these steps:
 
 First, stop the container, because secrets cannot be removed from running containers.
 
@@ -386,7 +386,7 @@ $ docker service update --secret-rm <secret-name>
 
 Restart the Docker container.
 
-MarkLogic Server recommends that you remove Docker secrets from the Docker host as well.
+MarkLogic recommends that you remove Docker secrets from the Docker host as well.
 
 ```
 $ docker secret rm <secret-name>
@@ -396,12 +396,12 @@ $ docker secret rm <secret-name>
 
 10.0-7.3-centos-1.0.0-ea
 
-1. Enabling huge pages for clusters containing single-host, multi-container configurations may lead to failure, due to incorrect memory allocation. MarkLogic Server recommends that you disable huge pages in such architectures.
+1. Enabling huge pages for clusters containing single-host, multi-container configurations may lead to failure, due to incorrect memory allocation. MarkLogic recommends that you disable huge pages in such architectures.
 2. Database replication will only work for configurations having a single container per host, with matching hostname.
 3. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 4. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
-5. MarkLogic Server will default to the UTC timezone.
-6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
+5. MarkLogic will default to the UTC timezone.
+6. By default, MarkLogic runs as the root user. To run MarkLogic as a non-root user, see the following references:
    1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=1&linkCreation=true&fromPageId=220243563)
    2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=2&linkCreation=true&fromPageId=220243563)
 

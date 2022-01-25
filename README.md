@@ -56,8 +56,7 @@ Example run
      store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 8834a1193994cc75405de27d6985eba632ee1e9a1f4519dac6ff833cecb9abb6
 ```
-Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic Server admin interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8000. After the initial login, you should see app servers and databases created on the host and admin user in the security database. Optionally you can check logs on admin interface from the logs tab.
-
+Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic Server admin interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8000. Additionally you can verify configuration through following the procedures outlined in [MarkLogic Server supporting documentation](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
 For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access Admin interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
 

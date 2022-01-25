@@ -1,6 +1,6 @@
 ## Prerequisites
 - [Docker Engine](https://docs.docker.com/engine/)
-    - To use dockerd, docker cli, docker APIs
+    - To use dockerd, Docker cli, Docker APIs
 - [Docker Hub Registration](https://hub.docker.com/signup)
   - In order to pull down the MarkLogic image from Dockerhub you need a Dockerhub account
 - Desktop Browser
@@ -8,9 +8,9 @@
     - See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/)
 ## Supported tags
 
-Note: MarkLogic Server docker images follow a specific tagging format: `<ML release version>-<platform>-<ML Docker release version>-ea`
+Note: MarkLogic Server Docker images follow a specific tagging format: `<ML release version>-<platform>-<ML Docker release version>-ea`
 
-- 10.0-8.1-centos-1.0.0-ea2 - MarkLogic Server Developer docker image includes all features and is limited to developer use
+- 10.0-8.1-centos-1.0.0-ea2 - MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
 
 ## Quick reference
@@ -34,7 +34,7 @@ MarkLogic documentation is available at [http://docs.marklogic.com](https://docs
 
 Optionally we can either create an initialized or an uninitialized MarkLogic Server. 
 
-For an initialized MarkLogic Server, admin credentials are required to be passed while creating the docker container. The docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data, roles and other security information. MarkLogic Server credentials, passed as env params while running a container, will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.
+For an initialized MarkLogic Server, admin credentials are required to be passed while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data, roles and other security information. MarkLogic Server credentials, passed as env params while running a container, will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.
 
 To create an initialized MarkLogic Server, pass environment variables and replace \<admin password> with actual values for admin credentials, optionally pass license information in \<insert license> and, \<insert licensee> to apply license and, run this command: 
 
@@ -59,7 +59,7 @@ Example run
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic Server admin interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8000. After the initial login, you should see app servers and databases created on the host and admin user in the security database. Optionally you can check logs on admin interface from the logs tab.
 
 
-For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access Admin interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
+For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access Admin interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
 
 To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
 
@@ -73,7 +73,7 @@ Wait for about a minute, before going to admin interface on http://localhost:800
 
 ### Persistent Data Directory
 
-> Prior to the following section please note the docker documentation on [persistent data](https://docs.docker.com/get-started/05_persisting_data/) 
+> Prior to the following section please note the Docker documentation on [persistent data](https://docs.docker.com/get-started/05_persisting_data/) 
 
 A MarkLogic Server Docker container is always instantiated with a volume (`/var/opt/MarkLogic`).
 
@@ -86,14 +86,14 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
-Above command will start a docker container running MarkLogic Server.
+Above command will start a Docker container running MarkLogic Server.
 
 Verify volume creation with this command:
 
 ```
 $ docker volume ls
 ```
-Above command will list all docker volumes on the host
+Above command will list all Docker volumes on the host
 
 Alternately, you can bind a volume at runtime using the `-v` option:
 
@@ -106,7 +106,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
-Above command will start a docker container running MarkLogic Server and dind the given docker volume to it.
+Above command will start a Docker container running MarkLogic Server and dind the given Docker volume to it.
 
 ## Configuration
 
@@ -135,7 +135,7 @@ The credentials for admin user are configured via Docker secrets, and are stored
 
 ### Single node MarkLogic Server on a single VM
 
-Create marklogic-1n-centos.yaml, mldb_admin_username.txt, and mldb_admin_password.txt files in your home directory, typically denoted as `~`, where the user has full access to run docker as shown below.
+Create marklogic-1n-centos.yaml, mldb_admin_username.txt, and mldb_admin_password.txt files in your home directory, typically denoted as `~`, where the user has full access to run Docker as shown below.
 
 **marklogic-1n-centos.yaml**
 
@@ -195,11 +195,11 @@ Once the files are ready, run the following command to start the MarkLogic Serve
 ```
 $ docker-compose -f marklogic-1n-centos.yaml up -d
 ```
-Above command will start a docker container running MarkLogic Server named bootstrap. Run below command to verify if the container is running,
+Above command will start a Docker container running MarkLogic Server named bootstrap. Run below command to verify if the container is running,
 ```
 $ docker ps
 ```
-Above command lists all the docker containers running on the host.
+Above command lists all the Docker containers running on the host.
 
 After the container is initialized, you can access QConsole on http://localhost:8000 and the Admin UI on http://localhost:8001. The ports can also be accessed externally via your hostname or IP.
 
@@ -310,11 +310,11 @@ Once the files are ready, run the following command to start the MarkLogic Serve
 $ docker-compose -f marklogic-3n-centos.yaml up -d
 ```
 
-Above command will start three docker containers running MarkLogic Server named bootstrap, node2 and, node3. Run below command to verify if the conatiners are running,
+Above command will start three Docker containers running MarkLogic Server named bootstrap, node2 and, node3. Run below command to verify if the conatiners are running,
 ```
 $ docker ps
 ```
-Above command lists all the docker containers running on the host.
+Above command lists all the Docker containers running on the host.
 
 After the container is initialized, you can access the QConsole on http://localhost:8000 and the Admin UI on http://localhost:8001. The ports can also be accessed externally via your hostname or IP.
 
@@ -330,7 +330,7 @@ In the examples above, Docker secrets files were used to specify admin credentia
 
 This setup will create and initialize MarkLogic Server on 3 different VMs/hosts, and connect them with each other using [Docker Swarm](https://docs.docker.com/engine/swarm/).
 
-> Additionally please note the docker documentation on [overlay networks](https://docs.docker.com/network/overlay/)
+> Additionally please note the Docker documentation on [overlay networks](https://docs.docker.com/network/overlay/)
 
 #### VM#1
 
@@ -404,7 +404,7 @@ When you complete these steps, you will have multiple containers; one on each VM
 ### Accessing a MarkLogic Container while its running
 Below is a set of steps to run in order to access a container while it is running and do some basic debugging once access is obtained
 
-1. Access the machine running the docker container, this is typically done through SSH or having physical access to the machine.
+1. Access the machine running the Docker container, this is typically done through SSH or having physical access to the machine.
 2. Get the container ID of the running MarkLogic container on the machine
 
 - In the below command store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 is an image ID this could be different on your machine. 
@@ -517,28 +517,28 @@ $docker rm container_name
    2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=2&linkCreation=true&fromPageId=220243563)
 
 ## Older Supported Tags
-- 9.0-12-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 9.0-12.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 9.0-13-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 9.0-13.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 9.0-13.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-3-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-4-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-4.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-4.4-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-5-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-5.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-5.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-6-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-6.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-6.2-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-6.4-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-7-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-7.1-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-7.3-dev-centos- MarkLogic Developer docker image includes all features and is limited to developer use
-- 10.0-1-dev-ubi- MarkLogic Developer docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-2-dev-ubi- MarkLogic Developer docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-3-dev-ubi- MarkLogic Developer docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-7.3-centos-1.0.0-ea - MarkLogic Developer docker image includes all features and is limited to developer use
+- 9.0-12-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 9.0-12.2-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 9.0-13-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 9.0-13.1-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 9.0-13.2-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-1-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-2-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-3-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-4-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-4.2-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-4.4-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-5-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-5.1-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-5.2-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-6-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-6.1-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-6.2-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-6.4-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-7-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-7.1-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-7.3-dev-centos- MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-1-dev-ubi- MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
+- 10.0-2-dev-ubi- MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
+- 10.0-3-dev-ubi- MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
+- 10.0-7.3-centos-1.0.0-ea - MarkLogic Developer Docker image includes all features and is limited to developer use

@@ -32,9 +32,9 @@ MarkLogic documentation is available at [http://docs.marklogic.com](https://docs
 
 Optionally we can either create an initialized or an uninitialized MarkLogic Server. 
 
-For an initialized MarkLogic Server, admin credentials are required to be passed while creating the docker container. The docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data,roles and other security information. MarkLogic Server credentials, passed as env params while running a container, will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.
+For an initialized MarkLogic Server, admin credentials are required to be passed while creating the docker container. The docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data, roles and other security information. MarkLogic Server credentials, passed as env params while running a container, will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.
 
-To create an initialized MarkLogic Server, pass environment variables and replace <insert admin username> and <insert admin password> with actual values for admin credentials, optionally pass license information in <insert license> and, <insert licensee> to apply license and, run this command: 
+To create an initialized MarkLogic Server, pass environment variables and replace \<admin password> with actual values for admin credentials, optionally pass license information in \<insert license> and, \<insert licensee> to apply license and, run this command: 
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \

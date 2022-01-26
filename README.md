@@ -1,3 +1,6 @@
+<!-- Space: ENGINEERING -->
+<!-- Parent: MarkLogic Docker Documentation for DockerHub and GitHub -->
+<!-- Title: EA3 Review -->
 ## Prerequisites
 - [Docker Engine](https://docs.docker.com/engine/)
     - To use dockerd, Docker cli, Docker APIs
@@ -8,7 +11,7 @@
     - See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/)
 ## Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `<ML release version>-<platform>-<ML Docker release version>-ea`
+Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
 
 - 10.0-8.1-centos-1.0.0-ea2 - MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
@@ -36,20 +39,20 @@ Optionally we can either create an initialized or an uninitialized MarkLogic Ser
 
 For an initialized MarkLogic Server, admin credentials are required to be passed while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data, roles and other security information. MarkLogic Server credentials, passed as env params while running a container, will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.
 
-To create an initialized MarkLogic Server, pass environment variables and replace \<admin password> with actual values for admin credentials, optionally pass license information in \<insert license> and, \<insert licensee> to apply license and, run this command: 
+To create an initialized MarkLogic Server, pass environment variables and replace {admin password} with actual values for admin credentials, optionally pass license information in {insert license} and, {insert licensee} to apply license and, run this command: 
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
-     -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
-     -e MARKLOGIC_LICENSE="<insert license>" \
-     -e MARKLOGIC_LICENSEE="<insert licensee>" \
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
+     -e MARKLOGIC_LICENSE="{insert license}" \
+     -e MARKLOGIC_LICENSEE="{insert licensee}" \
      store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 Example run 
 ```
-> docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \                                                                                                                                                  
+ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \        
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=admin \
      -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
@@ -97,8 +100,8 @@ $ mkdir ~/data
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      --mount src=MarkLogic,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
-     -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 The output should now contain a named volume:
@@ -117,12 +120,12 @@ MarkLogic Server Docker containers are configured via a set of environment varia
 
 | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
-| MARKLOGIC_INIT                | true                            | no                                | <br/>     | when set to true, will initialize MarkLogic           |
+| MARKLOGIC_INIT                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
 | MARKLOGIC_ADMIN_USERNAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
 | MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                       |
 | MARKLOGIC_ADMIN_USERNAME_FILE | secret_username                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin username via Docker secrets    |
 | MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password via Docker secrets    |
-| MARKLOGIC_JOIN_CLUSTER        | true                            | no                                | <br/>     | will join cluster via MARKLOGIC_BOOTSTRAP          |
+| MARKLOGIC_JOIN_CLUSTER        | true                            | no                                |           | will join cluster via MARKLOGIC_BOOTSTRAP          |
 | MARKLOGIC_BOOTSTRAP           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
 | MARKLOGIC_LICENSE             | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | MARKLOGIC_LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
@@ -182,7 +185,7 @@ volumes:
 ```
 #This file will contain the MARKLOGIC_ADMIN_USERNAME value
 
-<insert admin username>
+{insert admin username}
 ```
 
 **mldb_admin_password.txt**
@@ -190,7 +193,7 @@ volumes:
 ```
 #This file will contain the MARKLOGIC_ADMIN_PASSWORD value
 
-<insert admin password>
+{insert admin password}
 ```
 
 Once the files are ready, run the following command to start the MarkLogic Server container.
@@ -299,7 +302,7 @@ volumes:
 ```
 #This file will contain the MARKLOGIC_ADMIN_USERNAME value
 
-<insert admin username>
+{insert admin username}
 ```
 
 **mldb_admin_password.txt**
@@ -307,7 +310,7 @@ volumes:
 ```
 #This file will contain the MARKLOGIC_ADMIN_PASSWORD value
 
-<insert admin password>
+{insert admin password}
 ```
 
 Once the files are ready, run the following command to start the MarkLogic Server container.
@@ -336,7 +339,7 @@ In the examples above, Docker secrets files were used to specify admin credentia
 
 This setup will create and initialize MarkLogic Server on 3 different VMs/hosts, and connect them with each other using [Docker Swarm](https://docs.docker.com/engine/swarm/).
 
-> Additionally please note the Docker documentation on [overlay networks](https://docs.docker.com/network/overlay/)
+- Additionally please note the Docker documentation on [overlay networks](https://docs.docker.com/network/overlay/)
 
 #### VM#1
 
@@ -348,7 +351,7 @@ Initialize the Docker Swarm with this command:
 $ docker swarm init
 ```
 
-Write down the output from this step. It will be needed for the other VMs to connect to them to the swarm. The output will be "docker swarm join --token random-string-of-characters-generated-by-docker-swarm-command <VM1_IP>:2377"
+Write down the output from this step. It will be needed for the other VMs to connect to them to the swarm. The output will be "docker swarm join --token random-string-of-characters-generated-by-docker-swarm-command {VM1_IP}:2377"
 
 Create an overlay network. All of the nodes inside the cluster must be part of this network in order to communicate with each other.
 For more information on overlay network, please refer https://docs.docker.com/network/overlay/
@@ -369,8 +372,8 @@ Start the Docker container (bootstrap) with MarkLogic Server initialized. Give t
 ```
 $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      --name bootstrap -h bootstrap.marklogic.com \
-     -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
-     -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      -e MARKLOGIC_INIT=true \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
@@ -385,7 +388,7 @@ Follow the next steps to set up additonal node (for example ml2) on VM#n.
 Run the Docker swarm join command that you got as output when you set up VM#1.
 
 ```
-$ docker swarm join --token random-string-of-characters-generated-by-docker-swarm-command <VM#1_IP>:2377
+$ docker swarm join --token random-string-of-characters-generated-by-docker-swarm-command {VM#1_IP}:2377
 ```
 Above command will add the current node to the swarm intialized above. 
 
@@ -394,8 +397,8 @@ Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized
 ```
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      --name ml2 -h ml2.marklogic.com \
-     -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
-     -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_JOIN_CLUSTER=true \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
@@ -471,7 +474,7 @@ First, stop the container, because secrets cannot be removed from running contai
 Then update the Docker service to remove secrets.
 
 ```
-$ docker service update --secret-rm <secret-name>
+$ docker service update --secret-rm {secret-name}
 ```
 
 Restart the Docker container.
@@ -479,7 +482,7 @@ Restart the Docker container.
 MarkLogic recommends that you remove Docker secrets from the Docker host as well.
 
 ```
-$ docker secret rm <secret-name>
+$ docker secret rm {secret-name}
 ```
 
 ### Remove volumes

@@ -43,32 +43,24 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 
 Wait for about a minute for MarkLogic to initialize before checking the ports.
 
-### Persistent Data Directory
+### Persistent Data Volume
 
-A MarkLogic Docker container is always instantiated with a volume (`/var/opt/MarkLogic`).
+A MarkLogic Docker container stores data in `/var/opt/MarkLogic` which should be persistent in Docker managed volume. It is reommended to use named volumes instead of bind mounts as per [Docker documentation](https://docs.docker.com/storage/volumes/).
 
-Run the following command to instantiate a container:
-
-```
-$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
-     -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
-     PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
-```
-
-Verify volume creation with this command:
+The following command will list previously created volumes:
 
 ```
 $ docker volume ls
 ```
 
-Alternately, you can bind a volume at runtime using the `-v` option:
+The command should output at least two randomly generated volume identifiers from the previous commands.
+
+The following command uses named volume in order to make it easier to manage:
 
 ```
 $ mkdir ~/data
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     -v ~/data/MarkLogic:/var/opt/MarkLogic \
+     --mount src=MarkLogic,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
@@ -96,7 +88,7 @@ MarkLogic Docker containers are configured via a set of environment variables.
 
 MarkLogic Docker containers ship with a small set of scripts, making it easy to create clusters. Below are three examples for creating MarkLogic clusters with Docker containers. The first two use [Docker compose](https://docs.docker.com/compose/) scripts to create one-node and three-node clusters. The third example demonstrates a container setup on separate VMs.
 
-The credentials for admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files. Make sure the yaml files for Docker compose have the desired image label and volume path (~/data/MarkLogic). All of these scripts were tested with version 20.10 of Docker.
+The credentials for admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files.
 
 ### Single node MarkLogic on a single VM
 
@@ -120,7 +112,7 @@ services:
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - TZ=Europe/Prague
       volumes:
-        - ~/data/MarkLogic:/var/opt/MarkLogic
+        - MarkLogic:/var/opt/MarkLogic
       secrets:
           - mldb_admin_password
           - mldb_admin_username
@@ -129,7 +121,6 @@ services:
         - 7997:7997
       networks:
       - external_net
-  
 secrets:
   mldb_admin_password:
     file: ./mldb_admin_password.txt
@@ -137,6 +128,8 @@ secrets:
     file: ./mldb_admin_username.txt
 networks:
   external_net: {}
+volumes:
+  MarkLogic-1:
 ```
 
 **mldb_admin_username.txt**
@@ -185,7 +178,7 @@ services:
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - TZ=Europe/Prague
       volumes:
-        - ~/data/MarkLogic1:/var/opt/MarkLogic
+        - MarkLogicVol1:/var/opt/MarkLogic
       secrets:
           - mldb_admin_password
           - mldb_admin_username
@@ -205,7 +198,7 @@ services:
         - MARKLOGIC_JOIN_CLUSTER=true
         - TZ=Europe/Prague
       volumes:
-        - ~/data/MarkLogic2:/var/opt/MarkLogic
+        - MarkLogicVol2:/var/opt/MarkLogic
       secrets:
         - mldb_admin_password
         - mldb_admin_username
@@ -227,7 +220,7 @@ services:
         - MARKLOGIC_JOIN_CLUSTER=true
         - TZ=Europe/Prague
       volumes:
-        - ~/data/MarkLogic3:/var/opt/MarkLogic
+        - MarkLogicVol3:/var/opt/MarkLogic
       secrets:
         - mldb_admin_password
         - mldb_admin_username
@@ -238,7 +231,6 @@ services:
       - bootstrap
       networks:
       - external_net
-
 secrets:
   mldb_admin_password:
     file: ./mldb_admin_password.txt
@@ -246,6 +238,10 @@ secrets:
     file: ./mldb_admin_username.txt
 networks:
   external_net: {}
+volumes:
+  MarkLogicVol1:
+  MarkLogicVol2:
+  MarkLogicVol3:
 ```
 
 **mldb_admin_username.txt**
@@ -316,7 +312,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      -e MARKLOGIC_INIT=true \
-     -v ~/data/MarkLogic:/var/opt/MarkLogic \
+     --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      --dns-search "marklogic.com" \
      PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
@@ -341,7 +337,7 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_JOIN_CLUSTER=true \
-     -v ~/data/MarkLogic:/var/opt/MarkLogic \
+     --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
 ```
@@ -365,7 +361,7 @@ $ docker run -d -it -p 7300:8000 -p 7301:8001 -p 7302:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_JOIN_CLUSTER=true \
-     -v ~/data/MarkLogic:/var/opt/MarkLogic \
+     --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
 ```

@@ -54,8 +54,14 @@ $ docker volume ls
 ```
 
 The command should output at least two randomly generated volume identifiers from the previous commands.
+Example output:
+```
+DRIVER    VOLUME NAME
+local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019
+local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
+```
 
-The following command uses named volume in order to make it easier to manage:
+The following command uses a named volume in order to make management easier:
 
 ```
 $ mkdir ~/data
@@ -65,6 +71,13 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_USERNAME=<insert admin username> \
      -e MARKLOGIC_ADMIN_PASSWORD=<insert admin password> \
      PLACEHOLDER-FOR-DOCKER-IMAGE:DOCKER-TAG
+```
+The output should now contained a named volume:
+```
+DRIVER    VOLUME NAME
+local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019
+local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
+local     MarkLogic
 ```
 
 ## Configuration
@@ -88,7 +101,7 @@ MarkLogic Docker containers are configured via a set of environment variables.
 
 MarkLogic Docker containers ship with a small set of scripts, making it easy to create clusters. Below are three examples for creating MarkLogic clusters with Docker containers. The first two use [Docker compose](https://docs.docker.com/compose/) scripts to create one-node and three-node clusters. The third example demonstrates a container setup on separate VMs.
 
-The credentials for admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files.
+The credentials for the admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files.
 
 ### Single node MarkLogic on a single VM
 

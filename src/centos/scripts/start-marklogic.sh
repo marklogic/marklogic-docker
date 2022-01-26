@@ -64,7 +64,7 @@ then
 echo "MARKLOGIC_INIT is not defined, no bootstrap"
 else
 echo "MARKLOGIC_INIT is defined, bootstrapping"
-#curl -X POST -d "" http://$HOSTNAME:8001/admin/v1/init
+
 curl --anyauth -i -X POST \
    -H "Content-type:application/x-www-form-urlencoded" \
    --data-urlencode $MARKLOGIC_LICENSE \

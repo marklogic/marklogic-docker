@@ -3,6 +3,7 @@
 <!-- Title: EA3 Review -->
 
 ## Prerequisites
+
 - [Docker Engine](https://docs.docker.com/engine/)
     - To use dockerd, Docker cli, Docker APIs
 - [Docker Hub Registration](https://hub.docker.com/signup)
@@ -10,6 +11,7 @@
 - Desktop Browser
     - To access MarkLogic Admin interface and App Servers
     - See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/)
+
 ## Supported tags
 
 Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
@@ -18,6 +20,7 @@ Note: MarkLogic Server Docker images follow a specific tagging format: `{ML rele
 - [Older Supported Tags](#older-supported-tags)
 
 ## Quick reference
+
 Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker team: docker@marklogic.com
 
 Supported Docker architectures: x86_64
@@ -94,12 +97,13 @@ local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
 ```
 Above command will list all Docker volumes on the host
 
-The following command uses a named volume in order to make management easier:
+The following command uses a named volume and named container in order to make management easier:
 
 ```
 $ mkdir ~/data
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     --mount src=MarkLogic,dst=/var/opt/MarkLogic \
+     --name MarkLogic_cont_1
+     --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -110,9 +114,9 @@ The output should now contain a named volume:
 DRIVER    VOLUME NAME
 local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019
 local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
-local     MarkLogic
+local     MarkLogic_vol_1
 ```
-Above command will start a Docker container running MarkLogic Server and dind the given Docker volume to it.
+Above command will start a Docker container `MarkLogic_cont_1` running MarkLogic Server and associate the named Docker volume `MarkLogic_vol_1` with it.
 
 ## Configuration
 
@@ -153,7 +157,7 @@ version: '3.6'
 services:
     bootstrap:
       image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
-      container_name: bootstrap
+      container_name: bootstrap_1n
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -161,7 +165,7 @@ services:
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - TZ=Europe/Prague
       volumes:
-        - MarkLogic:/var/opt/MarkLogic
+        - MarkLogic_1n_vol1:/var/opt/MarkLogic
       secrets:
           - mldb_admin_password
           - mldb_admin_username
@@ -178,7 +182,7 @@ secrets:
 networks:
   external_net: {}
 volumes:
-  MarkLogic:
+  MarkLogic_1n_vol1:
 ```
 
 **mldb_admin_username.txt**
@@ -224,7 +228,7 @@ version: '3.6'
 services:
     bootstrap:
       image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
-      container_name: bootstrap
+      container_name: bootstrap_3n
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -232,7 +236,7 @@ services:
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - TZ=Europe/Prague
       volumes:
-        - MarkLogicVol1:/var/opt/MarkLogic
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
       secrets:
           - mldb_admin_password
           - mldb_admin_username
@@ -252,7 +256,7 @@ services:
         - MARKLOGIC_JOIN_CLUSTER=true
         - TZ=Europe/Prague
       volumes:
-        - MarkLogicVol2:/var/opt/MarkLogic
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
       secrets:
         - mldb_admin_password
         - mldb_admin_username
@@ -274,7 +278,7 @@ services:
         - MARKLOGIC_JOIN_CLUSTER=true
         - TZ=Europe/Prague
       volumes:
-        - MarkLogicVol3:/var/opt/MarkLogic
+        - MarkLogic_3n_vol3:/var/opt/MarkLogic
       secrets:
         - mldb_admin_password
         - mldb_admin_username
@@ -293,13 +297,12 @@ secrets:
 networks:
   external_net: {}
 volumes:
-  MarkLogicVol1:
-  MarkLogicVol2:
-  MarkLogicVol3:
+  MarkLogic_3n_vol1:
+  MarkLogic_3n_vol2:
+  MarkLogic_3n_vol3:
 ```
 
 **mldb_admin_username.txt**
-
 ```
 #This file will contain the MARKLOGIC_ADMIN_USERNAME value
 
@@ -307,7 +310,6 @@ volumes:
 ```
 
 **mldb_admin_password.txt**
-
 ```
 #This file will contain the MARKLOGIC_ADMIN_PASSWORD value
 
@@ -558,4 +560,4 @@ $docker rm container_name
 - 10.0-1-dev-ubi- MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
 - 10.0-2-dev-ubi- MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
 - 10.0-3-dev-ubi- MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-7.3-centos-1.0.0-ea - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-7.3-centos-1.0.0-ea- MarkLogic Developer Docker image includes all features and is limited to developer use

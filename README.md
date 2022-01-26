@@ -1,6 +1,7 @@
 <!-- Space: ENGINEERING -->
 <!-- Parent: MarkLogic Docker Documentation for DockerHub and GitHub -->
 <!-- Title: EA3 Review -->
+
 ## Prerequisites
 - [Docker Engine](https://docs.docker.com/engine/)
     - To use dockerd, Docker cli, Docker APIs
@@ -50,7 +51,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_LICENSEE="{insert licensee}" \
      store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
-Example run 
+Example run:
 ```
  docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \        
      -e MARKLOGIC_INIT=true \
@@ -177,7 +178,7 @@ secrets:
 networks:
   external_net: {}
 volumes:
-  MarkLogic-1:
+  MarkLogic:
 ```
 
 **mldb_admin_username.txt**
@@ -485,6 +486,13 @@ MarkLogic recommends that you remove Docker secrets from the Docker host as well
 $ docker secret rm {secret-name}
 ```
 
+### Remove compose resources
+
+Resources that were created with compose command can be removed with the following command:
+```
+compose -f marklogic-1n-centos.yaml down
+```
+
 ### Remove volumes
 
 Anonymous volumes can be removed by adding --rm option while running a container. So when the container is removed this anonymous volume will be removed as well.
@@ -493,7 +501,7 @@ Anonymous volumes can be removed by adding --rm option while running a container
 $docker run --rm -v /foo -v awesome:/bar container image
 ```
 
-To remove all other volumes use below command
+To remove all other unused volumes use below command
 ```
 $docker volume prune
 ```

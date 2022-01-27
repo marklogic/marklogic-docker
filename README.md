@@ -50,8 +50,8 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-     -e MARKLOGIC_LICENSE="{insert license}" \
-     -e MARKLOGIC_LICENSEE="{insert licensee}" \
+     -e LICENSE_KEY="{insert license}" \
+     -e LICENSEE="{insert licensee}" \
      store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
 ```
 Example run:
@@ -132,8 +132,8 @@ MarkLogic Server Docker containers are configured via a set of environment varia
 | MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                |           | will join cluster via MARKLOGIC_BOOTSTRAP          |
 | MARKLOGIC_BOOTSTRAP           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
-| MARKLOGIC_LICENSE             | license key                     | no                                | n/a       | set MarkLogic license key                          |
-| MARKLOGIC_LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
+| LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
+| LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
 
 **IMPORTANT:** The use of Docker secrets is new in the marklogic-server:10.0-8.1-centos-1.0.0-ea2 image and will not work with older versions of the Docker image. The Docker compose examples below use secrets. If you want to use the examples with an older version of the image, you will need to update the examples to use environment variables instead.
 

@@ -67,8 +67,8 @@ echo "MARKLOGIC_INIT is defined, bootstrapping"
 
 curl --anyauth -i -X POST \
    -H "Content-type:application/x-www-form-urlencoded" \
-   --data-urlencode $MARKLOGIC_LICENSE \
-   --data-urlencode $MARKLOGIC_LICENSEE \
+   --data-urlencode $license-key=$LICENSE_KEY \
+   --data-urlencode $licensee=$LICENSEE \
    http://$HOSTNAME:8001/admin/v1/init
 sleep 5s
 curl -X POST -H "Content-type: application/x-www-form-urlencoded" \

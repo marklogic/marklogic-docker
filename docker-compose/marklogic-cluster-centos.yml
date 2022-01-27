@@ -1,7 +1,7 @@
 version: '3.6'
 services:
     bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: bootstrap
       dns_search: ""
       environment:
@@ -20,7 +20,7 @@ services:
       networks:
       - external_net
     node2:
-      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: node2
       dns_search: ""
       environment:
@@ -42,7 +42,7 @@ services:
       networks:
       - external_net
     node3:
-      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: node3
       dns_search: ""
       environment:

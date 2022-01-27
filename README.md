@@ -52,7 +52,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      -e LICENSE_KEY="{insert license}" \
      -e LICENSEE="{insert licensee}" \
-     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
 Example run:
 ```
@@ -60,7 +60,7 @@ Example run:
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=admin \
      -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
-     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 8834a1193994cc75405de27d6985eba632ee1e9a1f4519dac6ff833cecb9abb6
 ```
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic Server admin interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8000. Additionally you can verify configuration through following the procedures outlined in [MarkLogic Server supporting documentation](https://docs.marklogic.com/guide/installation/procedures#id_84772).
@@ -71,7 +71,7 @@ To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docke
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
 Example output will just contain a hash of the image ID IE: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
@@ -107,7 +107,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
 The output should now contain a named volume:
 ```
@@ -135,7 +135,7 @@ MarkLogic Server Docker containers are configured via a set of environment varia
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
 
-**IMPORTANT:** The use of Docker secrets is new in the marklogic-server:10.0-8.1-centos-1.0.0-ea2 image and will not work with older versions of the Docker image. The Docker compose examples below use secrets. If you want to use the examples with an older version of the image, you will need to update the examples to use environment variables instead.
+**IMPORTANT:** The use of Docker secrets is new in the marklogic-server:10.0-8.3-centos-1.0.0-ea3 image and will not work with older versions of the Docker image. The Docker compose examples below use secrets. If you want to use the examples with an older version of the image, you will need to update the examples to use environment variables instead.
 
 ## Clustering
 
@@ -156,7 +156,7 @@ version: '3.6'
 
 services:
     bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: bootstrap_1n
       dns_search: ""
       environment:
@@ -227,7 +227,7 @@ version: '3.6'
 
 services:
     bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: bootstrap_3n
       dns_search: ""
       environment:
@@ -246,7 +246,7 @@ services:
       networks:
       - external_net
     node2:
-      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: node2
       dns_search: ""
       environment:
@@ -268,7 +268,7 @@ services:
       networks:
       - external_net
     node3:
-      image: store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: node3
       dns_search: ""
       environment:
@@ -381,7 +381,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      --dns-search "marklogic.com" \
-     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
 
 #### VM#n
@@ -406,7 +406,7 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      -e MARKLOGIC_JOIN_CLUSTER=true \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
-     store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2
+     store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
@@ -419,9 +419,9 @@ Below is a set of steps to run in order to access a container while it is runnin
 1. Access the machine running the Docker container, this is typically done through SSH or having physical access to the machine.
 2. Get the container ID of the running MarkLogic container on the machine
 
-- In the below command store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 is an image ID this could be different on your machine. 
+- In the below command store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3 is an image ID this could be different on your machine. 
 ```
-docker container ps --filter ancestor=store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2 -q
+docker container ps --filter ancestor=store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3 -q
 ```
 - Example Output
 ```
@@ -435,7 +435,7 @@ docker container ps
 - Example unfiltered output
 ```
 CONTAINER ID   IMAGE                                                        COMMAND                  CREATED          STATUS          PORTS                                  NAMES
-f484a784d998   store/marklogicdb/marklogic-server:10.0-8.1-centos-1.0.0-ea2   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002->8000-8002/tcp   vibrant_burnell
+f484a784d998   store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002->8000-8002/tcp   vibrant_burnell
 ```
 3. Execute a command to access a remote shell onto the container
 

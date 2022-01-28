@@ -2,6 +2,10 @@
 <!-- Parent: MarkLogic Docker Documentation for DockerHub and GitHub -->
 <!-- Title: EA3 Review -->
 
+<!-- Include: wiki-disclaimer.md -->
+<!-- Include: ac:toc -->
+<!-- Include: dockerhub-tos.md -->
+
 ## Prerequisites
 
 - [Docker Engine](https://docs.docker.com/engine/)
@@ -16,7 +20,7 @@
 
 Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
 
-- 10.0-8.1-centos-1.0.0-ea2 - MarkLogic Server Developer Docker image includes all features and is limited to developer use
+- 10.0-8.3-centos-1.0.0-ea3 - MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
 
 ## Quick reference
@@ -27,7 +31,7 @@ Supported Docker architectures: x86_64
 
 Base OS: CentOS
 
-Latest supported MarkLogic Server version: 10.0-8.1
+Latest supported MarkLogic Server version: 10.0-8.3
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/_/marklogic
 
@@ -77,6 +81,8 @@ Example output will just contain a hash of the image ID IE: `f484a784d99838a918e
 
 Wait for about a minute, before going to admin interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see an initialize button on admin interface to initialize MarkLogic Server. Once the MarkLogic Server is initialized, access Manage app server on  http://localhost:8002 to see all the app servers and databases information. Optionally you can check logs on admin interface from the logs tab.
 
+Note that examples in this document can interfere with each other and it is recommended to stop all the containers before running the examples. See [Clean up](#clean-up) section below for more details.
+
 ### Persistent Data Volume
 
 A MarkLogic Docker container stores data in `/var/opt/MarkLogic` which should be persistent in Docker managed volume. It is reommended to use named volumes instead of bind mounts as per [Docker documentation](https://docs.docker.com/storage/volumes/).
@@ -86,21 +92,16 @@ The following command will list previously created volumes:
 ```
 $ docker volume ls
 ```
-Above command will start a Docker container running MarkLogic Server.
-
-The command should output at least two randomly generated volume identifiers from the previous commands.
-Example output:
+The command should output at least two volume identifiers from the previous commands:
 ```
 DRIVER    VOLUME NAME
 local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019
 local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
 ```
-Above command will list all Docker volumes on the host
 
 The following command uses a named volume and named container in order to make management easier:
 
 ```
-$ mkdir ~/data
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      --name MarkLogic_cont_1
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \

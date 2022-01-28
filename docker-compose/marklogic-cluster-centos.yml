@@ -1,8 +1,9 @@
+#Docker compose file sample to setup a three node cluster
 version: '3.6'
 services:
     bootstrap:
       image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
-      container_name: bootstrap
+      container_name: bootstrap_3n
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -10,7 +11,7 @@ services:
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - TZ=Europe/Prague
       volumes:
-        - MarkLogic1:/var/opt/MarkLogic
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
       secrets:
           - mldb_admin_password
           - mldb_admin_username
@@ -30,7 +31,7 @@ services:
         - MARKLOGIC_JOIN_CLUSTER=true
         - TZ=Europe/Prague
       volumes:
-        - MarkLogic2:/var/opt/MarkLogic
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
       secrets:
         - mldb_admin_password
         - mldb_admin_username
@@ -52,7 +53,7 @@ services:
         - MARKLOGIC_JOIN_CLUSTER=true
         - TZ=Europe/Prague
       volumes:
-        - MarkLogic3:/var/opt/MarkLogic
+        - MarkLogic_3n_vol3:/var/opt/MarkLogic
       secrets:
         - mldb_admin_password
         - mldb_admin_username
@@ -71,6 +72,6 @@ secrets:
 networks:
   external_net: {}
 volumes:
-  MarkLogic1:
-  MarkLogic2:
-  MarkLogic3:
+  MarkLogic_3n_vol1:
+  MarkLogic_3n_vol2:
+  MarkLogic_3n_vol3:

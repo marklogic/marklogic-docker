@@ -65,11 +65,24 @@ echo "MARKLOGIC_INIT is not defined, no bootstrap"
 else
 echo "MARKLOGIC_INIT is defined, bootstrapping"
 
+################################################################
+# generate JSON payload conditionally with license details.
+################################################################
+if [[ -z $LICENSE_KEY ]] || [[ -z $LICENSEE ]]
+then
+LICENSE_PAYLOAD="{}"
+else
+echo "LICENSE_KEY and LICENSEE are defined, generating license payload"
+LICENSE_PAYLOAD="{\"license-key\" : \"$LICENSE_KEY\",\"licensee\" : \"$LICENSEE\"}"
+fi
+
+################################################################
+# run init requests via curl.
+################################################################
 curl --anyauth -i -X POST \
-   -H "Content-type:application/x-www-form-urlencoded" \
-   --data-urlencode "license-key=$LICENSE_KEY" \
-   --data-urlencode "licensee=$LICENSEE" \
-   http://$HOSTNAME:8001/admin/v1/init
+    -H "Content-type:application/json" \
+    -d "$LICENSE_PAYLOAD" \
+    http://$HOSTNAME:8001/admin/v1/init
 sleep 5s
 curl -X POST -H "Content-type: application/x-www-form-urlencoded" \
      --data "admin-username=$ML_ADMIN_USERNAME" --data "admin-password=$ML_ADMIN_PASSWORD" \

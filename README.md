@@ -75,7 +75,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 ```
 Example output will just contain a hash of the image ID IE: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
-Wait for about a minute, before going to admin interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see an initialize button on admin interface to initialize MarkLogic Server. Once the MarkLogic Server is initialized, access Manage app server on  http://localhost:8002 to see all the app servers and databases information. Optionally you can check logs on admin interface from the logs tab.
+Wait for about a minute, before going to admin interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see configuration screen allowing you to initialize the server as per https://docs.marklogic.com/guide/installation/procedures#id_60220.  
 
 ### Persistent Data Volume
 

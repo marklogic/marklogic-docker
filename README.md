@@ -79,7 +79,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 ```
 Example output will just contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
-Wait for about a minute, before going to admin interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see configuration screen allowing you to initialize the server as per https://docs.marklogic.com/guide/installation/procedures#id_60220.  
+Wait for about a minute, before going to the Admin Interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see configuration screen allowing you to initialize the server as per https://docs.marklogic.com/guide/installation/procedures#id_60220.  
 
 
 Note that examples in this document can interfere with each other and it is recommended to stop all the containers before running the examples. See [Clean up](#clean-up) section below for more details.

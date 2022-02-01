@@ -117,7 +117,7 @@ Run
 $ docker volume ls
 ```
 
-The output from should now contain a named volume:
+The output from should now contain a named volume `MarkLogic_vol_1`:
 ```
 DRIVER    VOLUME NAME
 local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019

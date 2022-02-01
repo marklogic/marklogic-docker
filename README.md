@@ -218,7 +218,7 @@ Run below command to verify if the container is running:
 ```
 $ docker ps
 ```
-Above command lists all the Docker containers running on the host.
+If the containers are running correctly, the above command lists all the Docker containers running on the host.
 
 After the container is initialized, you can access QConsole on http://localhost:8000 and the Admin UI on http://localhost:8001. The ports can also be accessed externally via your hostname or IP.
 

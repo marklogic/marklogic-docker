@@ -147,7 +147,7 @@ MarkLogic Server Docker containers are configured via a set of environment varia
 
 ## Clustering
 
-MarkLogic Server Docker containers ship with a small set of scripts, making it easy to create clusters. Below are three examples for creating MarkLogic Server clusters with Docker containers. The first two use [Docker compose](https://docs.docker.com/compose/) scripts to create one-node and three-node clusters. The third example demonstrates a container setup on separate VMs.
+MarkLogic Server Docker containers ship with a small set of scripts, making it easy to [create clusters](https://docs.marklogic.com/guide/concepts/clustering). Below are three examples for creating MarkLogic Server clusters with Docker containers. The first two use [Docker compose](https://docs.docker.com/compose/) scripts to create one-node and three-node clusters. The third example demonstrates a container setup on separate VMs.
 
 The credentials for the admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files.
 

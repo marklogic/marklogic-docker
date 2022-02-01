@@ -67,9 +67,9 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 8834a1193994cc75405de27d6985eba632ee1e9a1f4519dac6ff833cecb9abb6
 ```
-Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to MarkLogic Server admin interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8000. Additionally you can verify configuration through following the procedures outlined in [MarkLogic Server supporting documentation](https://docs.marklogic.com/guide/installation/procedures#id_84772).
+Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to the MarkLogic Server Admin Interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8001. Additionally you can verify configuration through following the procedures outlined in [MarkLogic Server supporting documentation](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
-For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access Admin interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
+For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access the Admin Interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
 
 To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
 
@@ -79,13 +79,13 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 ```
 Example output will just contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
-Wait for about a minute, before going to admin interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see an initialize button on admin interface to initialize MarkLogic Server. Once the MarkLogic Server is initialized, access Manage app server on  http://localhost:8002 to see all the app servers and databases information. Optionally you can check logs on admin interface from the logs tab.
+Wait for about a minute, before going to the Admin Interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see an initialize button on admin interface to initialize MarkLogic Server. Once the MarkLogic Server is initialized, access Manage app server on  http://localhost:8002 to see all the app servers and databases information. Optionally you can check logs on admin interface from the logs tab.
 
 Note that examples in this document can interfere with each other and it is recommended to stop all the containers before running the examples. See [Clean up](#clean-up) section below for more details.
 
 ### Persistent Data Volume
 
-A MarkLogic Docker container stores data in `/var/opt/MarkLogic` which should be persistent in Docker managed volume. It is reommended to use named volumes instead of bind mounts as per [Docker documentation](https://docs.docker.com/storage/volumes/).
+A MarkLogic Docker container stores data in `/var/opt/MarkLogic` which should be persistent in a Docker managed volume. It is reommended to use named volumes instead of bind mounts as per [Docker documentation](https://docs.docker.com/storage/volumes/).
 
 The following command will list previously created volumes:
 
@@ -136,7 +136,7 @@ MarkLogic Server Docker containers are configured via a set of environment varia
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
 
-**IMPORTANT:** The use of Docker secrets is new in the store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker image. The Docker compose examples below use secrets. If you want to use the examples with an older version of the image, you will need to update the examples to use environment variables instead.
+**IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is new in the store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker image. The Docker compose examples below use secrets. If you want to use the examples with an older version of the image, you will need to update the examples to use environment variables instead.
 
 ## Clustering
 
@@ -326,9 +326,9 @@ $ docker ps
 ```
 Above command lists all the Docker containers running on the host.
 
-After the container is initialized, you can access the QConsole on http://localhost:8000 and the Admin UI on http://localhost:8001. The ports can also be accessed externally via your hostname or IP.
+After the container is initialized, you can access the Query Console on http://localhost:8000 and the Admin Interface on http://localhost:8001. The ports can also be accessed externally via your hostname or IP.
 
-As with the single node example, each node of the cluster can be accessed with localhost or host machine IP. QConsole and Admin UI ports for each container are different, as defined in the Docker compose file: http://localhost:7101, http://localhost:7201, http://localhost:7301, etc.
+As with the single node example, each node of the cluster can be accessed with localhost or host machine IP. Query Console and Admin Interface ports for each container are different, as defined in the Docker compose file: http://localhost:7101, http://localhost:7201, http://localhost:7301, etc.
 
 The node2, node3 use MARKLOGIC_JOIN_CLUSTER to join the cluster once they are running.
 
@@ -336,7 +336,7 @@ The node2, node3 use MARKLOGIC_JOIN_CLUSTER to join the cluster once they are ru
 
 In the examples above, Docker secrets files were used to specify admin credentials for MarkLogic Server. An alternative approach would be to use MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD environmental variables. This approach is less secure because credentials remain in the environment at runtime. In order to use these variables in the Docker compose files, remove the secrets section at the end of the Docker compose yml file, and remove the secrets section in each node. Finally, replace MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
 
-### Three node cluster setup on multiple VM
+### Three node cluster setup on multiple VMs
 
 This setup will create and initialize MarkLogic Server on 3 different VMs/hosts, and connect them with each other using [Docker Swarm](https://docs.docker.com/engine/swarm/).
 

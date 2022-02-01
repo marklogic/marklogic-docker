@@ -375,7 +375,7 @@ Verify that the ml-cluster-network has been created.
 ```
 $ docker network ls
 ```
-Above command will list all the networks on host.
+Above command will list all the networks on the host.
 
 Start the Docker container (bootstrap) with MarkLogic Server initialized. Give the container a couple of minutes to get initialized.
 

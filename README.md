@@ -336,7 +336,7 @@ Above command lists all the Docker containers running on the host.
 
 After the container is initialized, you can access the Query Console on http://localhost:8000 and the Admin Interface on http://localhost:8001. The ports can also be accessed externally via your hostname or IP.
 
-As with the single node example, each node of the cluster can be accessed with localhost or host machine IP. Query Console and Admin Interface ports for each container are different, as defined in the Docker compose file: http://localhost:7101, http://localhost:7201, http://localhost:7301, etc.
+As with the single node example, each node of the cluster can be accessed with localhost or host machine IP. Query Console and Admin Interface ports for each container are different, as defined in the [Docker compose file](docker-compose/marklogic-cluster-centos.yml): http://localhost:7101, http://localhost:7201, http://localhost:7301, etc.
 
 The node2, node3 use MARKLOGIC_JOIN_CLUSTER to join the cluster once they are running.
 

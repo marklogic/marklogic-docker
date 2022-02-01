@@ -93,7 +93,7 @@ The following command will list previously created volumes:
 ```
 $ docker volume ls
 ```
-The command should output at least two volume identifiers from the [previous commands](#using-this-image):
+The command should output at least two volume identifiers from the previous commands:
 ```
 DRIVER    VOLUME NAME
 local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019

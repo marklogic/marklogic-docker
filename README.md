@@ -111,7 +111,13 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
-The output should now contain a named volume:
+
+Run 
+```
+$ docker volume ls
+```
+
+The output from should now contain a named volume:
 ```
 DRIVER    VOLUME NAME
 local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019

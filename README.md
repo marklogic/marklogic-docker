@@ -152,6 +152,7 @@ MarkLogic Server Docker containers ship with a small set of scripts, making it e
 The credentials for the admin user are configured via Docker secrets, and are stored in mldb_admin_username.txt and mldb_admin_password.txt files.
 
 ### Single node MarkLogic Server on a single VM
+Single node configurations are usually used on a development machine with a single user.
 
 Create marklogic-centos.yml, mldb_admin_username.txt, and mldb_admin_password.txt files in your home directory, typically denoted as `~`, where the user has full access to run Docker as shown below.
 

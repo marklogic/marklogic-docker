@@ -43,7 +43,10 @@ MarkLogic documentation is available at [http://docs.marklogic.com](https://docs
 
 ## Using this Image
 
-Optionally we can either create an initialized or an uninitialized MarkLogic Server. 
+Optionally we can either create an initialized or an uninitialized MarkLogic Server. The difference between initialized and uninitialized pertains to when the username and password for the admin are setup. 
+
+- Initialized: when admin credentials are setup at runtime prior to MarkLogic starting 
+- Unintialized: when admin credentials are created by the user after MarkLogic has started, by navigating to localhost:8000 and using the GUI 
 
 ### Initialized MarkLogic Server
 For an initialized MarkLogic Server, admin credentials are required to be passed while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized. MarkLogic Server will have databases and app servers created. A security database will be created to store user data, roles and other security information. MarkLogic Server credentials, passed as env params while running a container, will be stored as admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with respective ports.

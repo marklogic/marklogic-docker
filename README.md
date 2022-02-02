@@ -11,7 +11,7 @@
 - [Docker Engine](https://docs.docker.com/engine/)
     - To use dockerd, Docker cli, Docker APIs
 - [Docker Hub Registration](https://hub.docker.com/signup)
-  - In order to pull down the MarkLogic image from Dockerhub you need a Dockerhub account
+  - In order to get the MarkLogic image from Dockerhub you need a Dockerhub account
 - Desktop Browser
     - To access MarkLogic Admin interface and App Servers
     - See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/)
@@ -20,7 +20,7 @@
 
 Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
 
-- 10.0-8.3-centos-1.0.0-ea3 - MarkLogic Server Developer Docker image includes all features and is limited to developer use
+- 10.0-8.3-centos-1.0.0-ea3 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
 
 ## Quick reference
@@ -67,9 +67,9 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 8834a1193994cc75405de27d6985eba632ee1e9a1f4519dac6ff833cecb9abb6
 ```
-Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to the MarkLogic Server Admin Interface using admin credentials provided while running the container, this is achieved by navigating to http://localhost:8001. Additionally you can verify configuration through following the procedures outlined in [MarkLogic Server supporting documentation](https://docs.marklogic.com/guide/installation/procedures#id_84772).
+Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, login to the MarkLogic Server Admin Interface using admin credentials provided while running the container. This is done by navigating to http://localhost:8001. Additionally, you can verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
-For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access the Admin Interface on port 8001 and manually initialize the MarkLogic Server, create admin user, databases and install license.
+For an Uninitialized MarkLogic Server, admin credentials or license information is not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access the Admin Interface via http://localhost:8001 and manually initialize the MarkLogic Server, create admin user, databases and install license. See the Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
 To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
 
@@ -77,7 +77,7 @@ To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docke
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
-Example output will just contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
+The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
 Wait for about a minute, before going to the Admin Interface on http://localhost:8001. If MarkLogic Server is installed successfully, you should see configuration screen allowing you to initialize the server as per https://docs.marklogic.com/guide/installation/procedures#id_60220.  
 

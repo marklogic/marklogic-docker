@@ -509,7 +509,22 @@ MarkLogic recommends that you remove Docker secrets from the Docker host as well
 $ docker secret rm {secret-name}
 ```
 
-### Remove compose resources
+#### Basic Example Removal
+Below are the steps needed to remove the containers setup in the "Using this Image" section of the text. Removal of resources is important after development is complete in order to keep ports free, and resources free when they are not in use. 
+
+Below replace `container_name` with the name of the container(s) found in `docker container ps`
+```
+$ docker stop container_name
+```
+
+Use below command to remove a stopped container
+
+```
+$ docker rm container_name
+```
+#### Multi and Single Node, Single VM cleanup
+The below section describes the teardown process of clusters setup on a single VM using docker compose, as noted in the examples above. 
+#### Remove compose resources
 
 Resources that were created with compose command can be removed with the following command:
 
@@ -517,10 +532,9 @@ Resources that were created with compose command can be removed with the followi
 $ compose -f marklogic-centos.yml down
 ```
 
-### Remove volumes
+#### Remove volumes
 
-Anonymous volumes can be removed by adding --rm option while running a container. So when the container is removed this anonymous volume will be removed as well.
-
+ Volumes can be removed in a few ways by adding --rm option while running a container, this will remove the volume when the container dies and by using `prune`. See the below examples for further information. 
 ```
 $ docker run --rm -v /foo -v awesome:/bar container image
 ```
@@ -531,22 +545,8 @@ To remove all other unused volumes use below command
 $ docker volume prune
 ```
 
-### Stop a container
 
-Use below command to stop a running container
-
-```
-$ docker stop container_name
-```
-
-### Remove a container
-
-Use below command to remove a stopped container
-
-```
-$ docker rm container_name
-```
-### remove swarms
+### Multi-VM Cleanup
 TODO:
 
 ## Known Issues and Limitations

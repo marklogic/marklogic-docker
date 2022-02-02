@@ -352,17 +352,16 @@ This setup will create and initialize MarkLogic Server on 3 different VMs/hosts,
 
 #### VM#1
 
-Follow the steps below to setup the first node (bootstrap) on VM1.
+Follow the steps below to set up the first node (bootstrap) on VM1.
 
 Initialize the Docker Swarm with this command:
 
 ```
 $ docker swarm init
 ```
-The output will be similar to `docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377`.Copy the output from this step as it will be needed for the other VMs to connect to them to the swarm. 
+The output will be similar to `docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377`. Copy the output from this step as it will be needed for the other VMs to connect to them to the swarm. 
 
-All of the nodes inside the cluster must be part of the same network in order to communicate with each other.
-For more information on overlay network, please refer https://docs.docker.com/network/overlay/
+All of the nodes inside the cluster must be part of the same network in order to communicate with each other. In this example, we use the overlay network which allows for container communication on separate hosts. For more information on overlay networks, please refer https://docs.docker.com/network/overlay/
 
 Create an overlay network with this command:
 
@@ -390,6 +389,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      --dns-search "marklogic.com" \
      store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
+As with the single node example at the top of this document, the command will output the container ID. 
 
 #### VM#n
 

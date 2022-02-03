@@ -8,13 +8,9 @@
 
 ## Prerequisites
 
-- [Docker Engine](https://docs.docker.com/engine/)
-    - To use dockerd, Docker cli, Docker APIs
-- [Docker Hub Registration](https://hub.docker.com/signup)
-  - In order to get the MarkLogic image from Dockerhub you need a Dockerhub account
-- Desktop Browser
-    - To access MarkLogic Admin interface and App Servers
-    - See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/)
+- Examples in this document use Docker Engine and Docker CLI to create and manage containers. Please follow Docker documentation for instructions on how to install Docker: [Docker Engine](https://docs.docker.com/engine/)
+- In order to get the MarkLogic image from Dockerhub you need a Dockerhub account. Follow the instruction on [Docker Hub](https://hub.docker.com/signup) to create a Dockerhub account.
+- To access MarkLogic Admin interface and App Servers in our examples, you will need a desktop browser. See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/) for a list of supported browsers.
 
 ## Supported tags
 

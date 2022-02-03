@@ -540,7 +540,7 @@ $ docker volume prune
 ```
 If successful, the output will list all removed volumes.
 
-### Multi-VM Cleanup
+#### Multi-VM Cleanup
 For multi-VM setup, first stop and remove all the containers on all the VMs with commands described in the "Basic Example Removal" section.
 Then remove all the volumes with the command described in the "Remove volumes" section.
 Finally, disconnect each VM from the swarm with the following command:

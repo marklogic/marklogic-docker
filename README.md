@@ -229,7 +229,7 @@ After the container is initialized, you can access QConsole on http://localhost:
 
 ### Three node cluster on a single VM
 
-TODO:V what are we doing... Here is an example of the marklogic-cluster-centos.yml, mldb_admin_username.txt, and mldb_admin_password.txt files that need to be created in your host machine before running the Docker compose command.
+Here is an example of a three node MarkLogic server cluster using Docker compose. Create marklogic-cluster-centos.yml, mldb_admin_username.txt, and mldb_admin_password.txt files on your host machine as shown below.
 
 **marklogic-cluster-centos.yml**
 
@@ -348,8 +348,7 @@ As with the single node example, each node of the cluster can be accessed with l
 In the examples above, Docker secrets files were used to specify admin credentials for the MarkLogic Server. A less managed approach would be to use environmental variables. If your environment prevents the use of Docker secrets, use environmental variables. This approach is less secure because credentials remain in the environment at runtime. In order to use these variables in the Docker compose files, remove the secrets section at the end of the Docker compose yml file, and remove the secrets section in each node. Finally, replace MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
 
 ### Three node cluster setup on multiple VMs
-TODO: expain why..
-This setup will create and initialize MarkLogic Server on 3 different VMs/hosts, and connect them with each other using [Docker Swarm](https://docs.docker.com/engine/swarm/).
+In this example, containers will be created on separate VMs and connected them with each other using Docker Swarm. For more details on Docker Swarm see https://docs.docker.com/engine/swarm/. All of the nodes inside the cluster must be part of the same network in order to communicate with each other. We will use the overlay network which allows for container communication on separate hosts. For more information on overlay networks, please refer https://docs.docker.com/network/overlay/.
 
 #### VM#1
 
@@ -362,9 +361,7 @@ $ docker swarm init
 ```
 Copy the output from this step as it will be needed for the other VMs to connect to them to the swarm. The output will be similar to `docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377`. 
 
-All of the nodes inside the cluster must be part of the same network in order to communicate with each other. In this example, we use the overlay network which allows for container communication on separate hosts. For more information on overlay networks, please refer https://docs.docker.com/network/overlay/
-
-Create an overlay network with this command:
+Create a new network with this command:
 
 ```
 $ docker network create --driver=overlay --attachable ml-cluster-network
@@ -523,10 +520,11 @@ Use below command to remove a stopped container
 $ docker rm container_name
 ```
 #### Multi and Single Node, Single VM cleanup
-The below section describes the teardown process of clusters setup on a single VM using docker compose, as noted in the examples above. 
+The below section describes the teardown process of clusters setup on a single VM using docker compose, as noted in the examples above.
+
 #### Remove compose resources
 
-Resources that were created with compose command can be removed with the following command:
+Resources such as containers, volumes and networks that were created with compose command can be removed with the following command:
 
 ```
 $ compose -f marklogic-centos.yml down
@@ -544,10 +542,17 @@ To remove all other unused volumes use below command
 ```
 $ docker volume prune
 ```
-
+If successful, the output will list all removed volumes.
 
 ### Multi-VM Cleanup
-TODO:
+For multi-VM setup, first stop and remove all the containers on all the VMs with commands described in the "Basic Example Removal" section.
+Then remove all the volumes with the command described in the "Remove volumes" section.
+Finally, disconnect each VM from the swarm with the following command:
+
+```
+docker swarm leave --force
+```
+If successful, the command will output a message that the node has left the swarm.
 
 ## Known Issues and Limitations
 

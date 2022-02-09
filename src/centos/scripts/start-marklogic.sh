@@ -12,6 +12,21 @@
 ###############################################################
 
 cd ~
+
+
+################################################################
+# Install Converters if required
+################################################################
+if [[ -z $INSTALL_CONVERTERS ]]
+then
+echo "Not Installing Converters"
+else
+echo "Installing Converters"
+CONVERTERS_PATH=$(ls -d $PWD/* | grep MarkLogicConverters) 
+rpm -i $CONVERTERS_PATH
+fi
+
+
 ################################################################
 # Setup timezone
 ################################################################
@@ -19,6 +34,7 @@ if [ ! -z $TZ ]; then
     sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime 
     echo $TZ | sudo tee /etc/timezone
 fi
+
 
 ################################################################
 # start MarkLogic service

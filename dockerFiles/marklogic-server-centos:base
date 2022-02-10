@@ -15,40 +15,7 @@ MAINTAINER docker@marklogic.com
 ARG ML_RPM=marklogic.rpm
 ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
-
-###############################################################
-# define docker labels
-###############################################################
-
-LABEL "Maintainer"="docker@marklogic.com"
-LABEL "Name"="MarkLogic Server ${ML_VERSION}"
-LABEL "Version"="1.0.0"
-LABEL "com.marklogic"="MarkLogic"
-LABEL "com.marklogic.release-type"="production"
-LABEL "com.marklogic.release-version"="${ML_VERSION}"
-LABEL "com.marklogic.license"="MarkLogic EULA"
-LABEL "com.marklogic.license.description"="By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
-LABEL "com.marklogic.license.url"="https://developer.marklogic.com/eula"
-LABEL "com.marklogic.version"="${ML_VERSION}"
-LABEL "com.marklogic.description"="MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, and backup and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster and for doing dynamic content delivery at massive scale. MarkLogic Developer redhat image includes all features but is limited to pre-production applications and use."
-LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> -v ~/data:/var/opt/MarkLogic marklogicdb/marklogic-server-centos:${ML_VERSION}"
-
-###############################################################
-# set env vars
-###############################################################
-
-ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
-    MARKLOGIC_DATA_DIR=/var/opt/MarkLogic \
-    MARKLOGIC_USER=${ML_USER} \
-    MARKLOGIC_PID_FILE=/var/run/MarkLogic.pid  \
-    MARKLOGIC_UMASK=022 \
-    LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH:/opt/MarkLogic/lib \
-    MARKLOGIC_VERSION="${ML_VERSION}" \
-    MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
-    MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
-    MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user
-
-###############################################################
+####################################################
 # inject init, start and clustering scripts
 ###############################################################
 
@@ -69,6 +36,51 @@ RUN yum localinstall -y /tmp/marklogic-server.rpm \
 ###############################################################
 
 RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+
+
+###############################################################
+# second stage for flattening layers
+###############################################################
+FROM ${BASE_IMAGE}
+
+
+###############################################################
+# define docker labels
+###############################################################
+
+LABEL "Maintainer"="docker@marklogic.com"
+LABEL "Name"="MarkLogic Server ${ML_VERSION}"
+LABEL "Version"="1.0.0"
+LABEL "com.marklogic"="MarkLogic"
+LABEL "com.marklogic.release-type"="production"
+LABEL "com.marklogic.release-version"="${ML_VERSION}"
+LABEL "com.marklogic.license"="MarkLogic EULA"
+LABEL "com.marklogic.license.description"="By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
+LABEL "com.marklogic.license.url"="https://developer.marklogic.com/eula"
+LABEL "com.marklogic.version"="${ML_VERSION}"
+LABEL "com.marklogic.description"="MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, and backup and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster and for doing dynamic content delivery at massive scale. MarkLogic Developer redhat image includes all features but is limited to pre-production applications and use."
+LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> -v ~/data:/var/opt/MarkLogic marklogicdb/marklogic-server-centos:${ML_VERSION}"
+
+
+
+###############################################################
+# set env vars
+###############################################################
+
+ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
+    MARKLOGIC_DATA_DIR=/var/opt/MarkLogic \
+    MARKLOGIC_USER=${ML_USER} \
+    MARKLOGIC_PID_FILE=/var/run/MarkLogic.pid  \
+    MARKLOGIC_UMASK=022 \
+    LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH:/opt/MarkLogic/lib \
+    MARKLOGIC_VERSION="${ML_VERSION}" \
+    MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
+    MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
+    MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user
+    
+
+COPY --from=builder / /
 
 ###############################################################
 # expose MarkLogic server ports
@@ -91,7 +103,5 @@ VOLUME /var/opt/MarkLogic
 ###############################################################
 # set entrypoint
 ###############################################################
-FROM ${BASE_IMAGE}
-COPY --from=builder / /
 ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
 CMD ["/bin/bash"]

@@ -5,7 +5,7 @@
 ###############################################################
 
 ARG BASE_IMAGE=marklogic-centos/marklogic-deps-centos:10-internal
-FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE} as builder
 MAINTAINER docker@marklogic.com
 
 ###############################################################
@@ -58,7 +58,6 @@ ADD scripts/join-cluster.sh /usr/local/bin/join-cluster.sh
 ###############################################################
 # install MarkLogic server and sudo
 ###############################################################
-
 ADD ${ML_RPM} /tmp/marklogic-server.rpm
 RUN yum localinstall -y /tmp/marklogic-server.rpm \
     && rm /tmp/marklogic-server.rpm \
@@ -92,6 +91,7 @@ VOLUME /var/opt/MarkLogic
 ###############################################################
 # set entrypoint
 ###############################################################
-
+FROM ${BASE_IMAGE}
+COPY --from=builder / /
 ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
 CMD ["/bin/bash"]

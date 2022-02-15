@@ -39,10 +39,10 @@ MarkLogic documentation is available at [http://docs.marklogic.com](https://docs
 
 # Using this Image
 
-With this image, you have the option to eithern create an initialized or an uninitialized MarkLogic Server. The initialized MarkLogic Server is more secure and requires that you set up a username and password for the administrator. The uninitialized MarkLogic Server does not require these credentials for set up.
+With this image, you have the option to either create an initialized or an uninitialized MarkLogic Server.
 
-- Initialized: when admin credentials are setup at runtime prior to MarkLogic starting 
-- Unintialized: when admin credentials are created by the user after MarkLogic has started, by navigating to localhost:8000 and using the GUI 
+- Initialized: admin credentials are set up as part of container startup process.
+- Unintialized: admin credentials are created by the user after MarkLogic has started. You can use the GUI (See the MarkLogic Installation documentation: https://docs.marklogic.com/guide/installation/procedures#id_84772) or you can use APIs (See the scripting documentation: https://docs.marklogic.com/10.0/guide/admin-api/cluster).
 
 ## Initialized MarkLogic Server
 For an initialized MarkLogic Server, admin credentials are required to be passed in while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized,and databases and app servers created. A security database will be created to store user data, roles, and other security information. MarkLogic Server credentials, passed in as environment variable parameters while running a container, will be stored as part of the admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with their respective ports.
@@ -333,7 +333,7 @@ $ docker-compose -f marklogic-cluster-centos.yml up -d
 
 This command will start three Docker containers running MarkLogic Server, named bootstrap_3n, node2 and, node3.
 
-Run below command to verify if the conatiners are running:
+Run below command to verify if the containers are running:
 ```
 $ docker ps
 ```
@@ -345,7 +345,7 @@ As in the single-node example previously, each node of the cluster can be access
 
 ### Using ENV for admin credentials in Docker compose
 
-In the prvious examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. A less managed and less secure approach would be to use environmental variables for these credentials. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure because the credentials remain in the environment at runtime. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
+In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. A less managed and less secure approach would be to use environmental variables for these credentials. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure because the credentials remain in the environment at runtime. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
 
 ## Three node cluster setup on multiple VMs
 This next example shows how to create containers on separate VMs and connect them with each other using Docker Swarm. For more details on Docker Swarm, see https://docs.docker.com/engine/swarm/. All of the nodes inside the cluster must be part of the same network in order to communicate with each other. We use the overlay network that allows for container communication on separate hosts. For more information on overlay networks, please refer https://docs.docker.com/network/overlay/.
@@ -387,7 +387,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      --dns-search "marklogic.com" \
      store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
 ```
-If successful, the command will output the ID for the new container. Give the container a couple of minutes to get initialized. Continue with the next section to create additonal nodes for the cluster.
+If successful, the command will output the ID for the new container. Give the container a couple of minutes to get initialized. Continue with the next section to create additional nodes for the cluster.
 
 ### VM#n
 
@@ -398,7 +398,7 @@ Run the Docker `swarm join` command that you got as output when you set up VM#1 
 ```
 $ docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377
 ```
-This command adds the current node to the swarm intialized earlier. 
+This command adds the current node to the swarm initialized earlier. 
 
 Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your username and password to the command. 
 

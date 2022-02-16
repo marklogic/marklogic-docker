@@ -1,6 +1,6 @@
 ## Terms of Service {DockerHub Only}
 
-By subscribing to this product, you agree to the terms and conditions outlined in the MarkLogic's End User License Agreement (EULA) here: https://developer.marklogic.com/eula.
+By subscribing to this product, you agree to the terms and conditions outlined in the MarkLogic End User License Agreement (EULA) here: https://developer.marklogic.com/eula.
 
 The {9.0.10-dev-ubi} and {10.0.1-dev-ubi} and {10.0.2-dev-ubi} images are built using the RedHat Universal Base Image, which is subject to this EULA: https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf.
 

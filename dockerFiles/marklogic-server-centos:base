@@ -19,13 +19,13 @@ ARG ML_VERSION=10-internal
 # inject init, start and clustering scripts
 ###############################################################
 
-ADD scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
-ADD scripts/join-cluster.sh /usr/local/bin/join-cluster.sh
+COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
+COPY scripts/join-cluster.sh /usr/local/bin/join-cluster.sh
 
 ###############################################################
 # install MarkLogic server and sudo
 ###############################################################
-ADD ${ML_RPM} /tmp/marklogic-server.rpm
+COPY ${ML_RPM} /tmp/marklogic-server.rpm
 RUN yum localinstall -y /tmp/marklogic-server.rpm \
     && rm /tmp/marklogic-server.rpm \
     && yum -y install sudo \
@@ -104,4 +104,3 @@ VOLUME /var/opt/MarkLogic
 # set entrypoint
 ###############################################################
 ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
-CMD ["/bin/bash"]

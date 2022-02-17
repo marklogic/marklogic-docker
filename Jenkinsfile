@@ -2,7 +2,7 @@
 
 @Library('shared-libraries@1.0-declarative') _
     def getServerPath(branchName) {
-        if("10.0".equals(branchName)) {
+        if("10.1".equals(branchName)) {
             return "rh7v-10-tst-bld-1.eng.marklogic.com/b10_0";
         } else if ("11.0".equals(branchName)) {
             return "rh7v-i64-11-build/HEAD";

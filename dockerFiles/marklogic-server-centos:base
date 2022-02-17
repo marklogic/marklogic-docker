@@ -5,7 +5,7 @@
 ###############################################################
 
 ARG BASE_IMAGE=marklogic-centos/marklogic-deps-centos:10-internal
-FROM ${BASE_IMAGE}
+FROM ${BASE_IMAGE} as builder
 MAINTAINER docker@marklogic.com
 
 ###############################################################
@@ -15,6 +15,35 @@ MAINTAINER docker@marklogic.com
 ARG ML_RPM=marklogic.rpm
 ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
+####################################################
+# inject init, start and clustering scripts
+###############################################################
+
+COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
+COPY scripts/join-cluster.sh /usr/local/bin/join-cluster.sh
+
+###############################################################
+# install MarkLogic server and sudo
+###############################################################
+COPY ${ML_RPM} /tmp/marklogic-server.rpm
+RUN yum localinstall -y /tmp/marklogic-server.rpm \
+    && rm /tmp/marklogic-server.rpm \
+    && yum -y install sudo \
+    && yum -y clean all
+
+###############################################################
+# create system user
+###############################################################
+
+RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+
+
+###############################################################
+# second stage for flattening layers
+###############################################################
+FROM ${BASE_IMAGE}
+
 
 ###############################################################
 # define docker labels
@@ -33,6 +62,8 @@ LABEL "com.marklogic.version"="${ML_VERSION}"
 LABEL "com.marklogic.description"="MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, and backup and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster and for doing dynamic content delivery at massive scale. MarkLogic Developer redhat image includes all features but is limited to pre-production applications and use."
 LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> -v ~/data:/var/opt/MarkLogic marklogicdb/marklogic-server-centos:${ML_VERSION}"
 
+
+
 ###############################################################
 # set env vars
 ###############################################################
@@ -47,29 +78,9 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
     MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user
+    
 
-###############################################################
-# inject init, start and clustering scripts
-###############################################################
-
-ADD scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
-ADD scripts/join-cluster.sh /usr/local/bin/join-cluster.sh
-
-###############################################################
-# install MarkLogic server and sudo
-###############################################################
-
-ADD ${ML_RPM} /tmp/marklogic-server.rpm
-RUN yum localinstall -y /tmp/marklogic-server.rpm \
-    && rm /tmp/marklogic-server.rpm \
-    && yum -y install sudo \
-    && yum -y clean all
-
-###############################################################
-# create system user
-###############################################################
-
-RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+COPY --from=builder / /
 
 ###############################################################
 # expose MarkLogic server ports
@@ -92,6 +103,4 @@ VOLUME /var/opt/MarkLogic
 ###############################################################
 # set entrypoint
 ###############################################################
-
 ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
-CMD ["/bin/bash"]

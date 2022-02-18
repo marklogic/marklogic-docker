@@ -2,8 +2,8 @@
 
 @Library('shared-libraries@1.0-declarative') _
     def getServerPath(branchName) {
-        if("10.0".equals(branchName)) {
-            return "rh7v-10-tst-bld-1.eng.marklogic.com/b10_0";
+        if("10.1".equals(branchName)) {
+            return "rh7v-10-tst-bld-1.eng.marklogic.com/b10_1";
         } else if ("11.0".equals(branchName)) {
             return "rh7v-i64-11-build/HEAD";
         } else if ("9.0".equals(branchName)) {
@@ -35,7 +35,7 @@ pipeline{
         string(name: 'dockerVersion', defaultValue: '1.0.0-ea2', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
         string(name: 'REPO_BRANCH', defaultValue: 'develop', description: 'branch for portal repo')
-        choice(name: 'ML_SERVER_BRANCH', choices: '10.0\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
+        choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
     }
     stages{

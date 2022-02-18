@@ -1,0 +1,32 @@
+#Docker compose file sample to setup single node cluster
+version: '3.6'
+services:
+    bootstrap:
+      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
+      container_name: bootstrap
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_1n_vol1:/var/opt/MarkLogic
+      secrets:
+          - mldb_admin_password
+          - mldb_admin_username
+      ports:
+        - 8000-8010:8000-8010
+        - 7997:7997
+      networks:
+      - external_net
+secrets:
+  mldb_admin_password:
+    file: ./mldb_admin_password.txt
+  mldb_admin_username:
+    file: ./mldb_admin_username.txt
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_1n_vol1:
+  

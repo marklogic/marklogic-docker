@@ -567,8 +567,8 @@ $ docker secret rm {secret-name}
 4. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 5. MarkLogic Server will default to the UTC timezone.
 6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
-   1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=1&linkCreation=true&fromPageId=220243563)
-   2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=2&linkCreation=true&fromPageId=220243563)
+   1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
+   2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
 
 # Older Supported Tags
 - 9.0-12-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use

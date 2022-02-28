@@ -44,6 +44,7 @@ RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPA
 ###############################################################
 FROM ${BASE_IMAGE}
 
+COPY --from=builder / /
 
 ###############################################################
 # define docker labels
@@ -63,7 +64,6 @@ LABEL "com.marklogic.description"="MarkLogic is the only Enterprise NoSQL databa
 LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> -v ~/data:/var/opt/MarkLogic marklogicdb/marklogic-server-centos:${ML_VERSION}"
 
 
-
 ###############################################################
 # set env vars
 ###############################################################
@@ -78,9 +78,6 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
     MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user
-    
-
-COPY --from=builder / /
 
 ###############################################################
 # expose MarkLogic server ports

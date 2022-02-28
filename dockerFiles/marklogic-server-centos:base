@@ -46,6 +46,8 @@ FROM ${BASE_IMAGE}
 
 COPY --from=builder / /
 
+ARG ML_USER="marklogic_user"
+ARG ML_VERSION=10-internal
 ###############################################################
 # define docker labels
 ###############################################################
@@ -101,3 +103,4 @@ VOLUME /var/opt/MarkLogic
 # set entrypoint
 ###############################################################
 ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
+

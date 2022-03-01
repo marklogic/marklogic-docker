@@ -5,6 +5,22 @@
 <!-- Include: wiki-disclaimer.md -->
 <!-- Include: ac:toc -->
 <!-- Include: dockerhub-tos.md -->
+# Table of contents
+ * [Introduction](#Introduction)
+ * [Prerequisites](#Prerequisites)
+ * [Supported tags](#Supported-tags)
+ * [Quick reference](#Quick-reference)
+ * [MarkLogic](#MarkLogic)
+ * [Using this Image](#Using-this-Image)
+ * [Configuration](#Configuration)
+ * [Clustering](#Clustering)
+ * [Debugging](#Debugging)
+ * [Clean up](#Clean-up)
+ * [Known Issues and Limitations](#Known-Issues-and-Limitations)
+ * [Older Supported Tags](#Older-Supported-Tags)
+
+# Introduction
+This readme serves as a technical guide about MarkLogic Docker, MarkLogic docker images, how to use images to setup initialized/uninitialized MarkLogic server, how to use docker compose and docker swarm to setup single/multi node MarkLogic cluster, how to enable security using docker secrets, how to mount volumes for docker containers and clean up steps for MarkLogic docker containers and resources.
 
 # Prerequisites
 
@@ -567,8 +583,8 @@ $ docker secret rm {secret-name}
 4. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 5. MarkLogic Server will default to the UTC timezone.
 6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
-   1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=1&linkCreation=true&fromPageId=220243563)
-   2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://wiki.marklogic.com/pages/createpage.action?spaceKey=PM&title=2&linkCreation=true&fromPageId=220243563)
+   1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
+   2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
 
 # Older Supported Tags
 - 9.0-12-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use

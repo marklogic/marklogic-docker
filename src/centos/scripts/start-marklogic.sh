@@ -17,13 +17,16 @@ cd ~
 ################################################################
 # Install Converters if required
 ################################################################
-if [[ -z $INSTALL_CONVERTERS ]]
-then
-echo "Not Installing Converters"
+if [[ -z $INSTALL_CONVERTERS ]] ; then
+    echo "Not Installing Converters"
 else
-echo "Installing Converters"
-CONVERTERS_PATH=$(ls -d $PWD/* | grep MarkLogicConverters) 
-rpm -i $CONVERTERS_PATH
+    if [[ ! -d "/opt/MarkLogic/Converters" ]]; then
+        echo "Installing Converters"
+        CONVERTERS_PATH="/opt/converters.rpm"
+        sudo yum localinstall -y $CONVERTERS_PATH
+    else
+        echo "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation"
+    fi
 fi
 
 

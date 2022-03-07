@@ -1,6 +1,6 @@
 <!-- Space: ENGINEERING -->
 <!-- Parent: MarkLogic Docker Documentation for DockerHub and GitHub -->
-<!-- Title: EA3 Review -->
+<!-- Title: EA4 Review -->
 
 <!-- Include: wiki-disclaimer.md -->
 <!-- Include: ac:toc -->
@@ -20,7 +20,12 @@
  * [Older Supported Tags](#Older-Supported-Tags)
 
 # Introduction
-This readme serves as a technical guide about MarkLogic Docker, MarkLogic docker images, how to use images to setup initialized/uninitialized MarkLogic server, how to use docker compose and docker swarm to setup single/multi node MarkLogic cluster, how to enable security using docker secrets, how to mount volumes for docker containers and clean up steps for MarkLogic docker containers and resources.
+This readme serves as a technical guide for using MarkLogic Docker and MarkLogic Docker images. These tasks arevcovered in this readme:
+- How to use images to setup initialized/uninitialized MarkLogic servers
+- How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
+- How to enable security using Docker secrets
+- How to mount volumes for Docker containers 
+- How to clean up MarkLogic Docker containers and resources
 
 # Prerequisites
 
@@ -35,7 +40,7 @@ Note: MarkLogic Server Docker images follow a specific tagging format: `{ML rele
 - 10.0-8.3-centos-1.0.0-ea3 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
 
-# Quick reference
+# Architecture reference
 
 Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker team: docker@marklogic.com
 

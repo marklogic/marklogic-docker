@@ -75,7 +75,7 @@ pipeline{
                     else
                         cp $ML_RPM .
                     fi
-                if [-z ${env.ML_CONVERTERS}]; then
+                if [ -z ${env.ML_CONVERTERS}]; then
                         unset RETCODE
                         scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
                         if [ ! -z \$RETCODE ]; then

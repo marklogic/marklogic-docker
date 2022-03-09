@@ -77,14 +77,14 @@ pipeline{
                     fi
                 if [ -z ${env.ML_CONVERTERS}]; then
                         unset RETCODE
-                        scp ${env.buildServer}:${env.buildServerBasePath}converter/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                        scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
                         if [ ! -z \$RETCODE ]; then
                             count_iter=75
                             while [ \$count_iter -gt 0 ] ; do
                                 unset RETCODE
                                 echo "WARN : unable to copy package!! retrying after 5 mins"
                                 sleep 300
-                                scp ${env.buildServer}:${env.buildServerBasePath}converter/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                                scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
                                 if [ -z \$RETCODE ] ; then
                                     echo "INFO" "Successfully copied package"
                                     break

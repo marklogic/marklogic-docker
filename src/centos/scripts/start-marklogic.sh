@@ -17,9 +17,8 @@ cd ~
 ################################################################
 # Install Converters if required
 ################################################################
-if [[ -z $INSTALL_CONVERTERS ]] || [[ $INSTALL_CONVERTERS="false" ]] ; then
+if [[ -z $INSTALL_CONVERTERS ]] || [[ "$INSTALL_CONVERTERS" = "false" ]] ; then
     echo "Not Installing Converters"
-fi
 else
     if [[ ! -d "/opt/MarkLogic/Converters" ]]; then
         echo "Installing Converters"

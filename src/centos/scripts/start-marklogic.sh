@@ -20,12 +20,12 @@ cd ~
 if [[ -z $INSTALL_CONVERTERS ]] || [[ "$INSTALL_CONVERTERS" = "false" ]] ; then
     echo "Not Installing Converters"
 else
-    if [[ ! -d "/opt/MarkLogic/Converters" ]]; then
-        echo "Installing Converters"
-        CONVERTERS_PATH="/opt/converters.rpm"
-        sudo yum localinstall -y $CONVERTERS_PATH
-    else
+    if [[ -d "/opt/MarkLogic/Converters" ]]; then
         echo "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation"
+    else
+        echo "Installing Converters"
+        CONVERTERS_PATH="/converters.rpm"
+        sudo yum localinstall -y $CONVERTERS_PATH
     fi
 fi
 

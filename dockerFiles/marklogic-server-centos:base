@@ -37,7 +37,7 @@ RUN yum localinstall -y /tmp/marklogic-server.rpm \
 ###############################################################
 # Copy converters package 
 ###############################################################
-COPY ${ML_CONVERTERS} /opt/converters.rpm
+COPY ${ML_CONVERTERS} ./converters.rpm
 ###############################################################
 # create system user
 ###############################################################

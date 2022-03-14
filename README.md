@@ -20,7 +20,7 @@
  * [Older Supported Tags](#Older-Supported-Tags)
 
 # Introduction
-This readme serves as a technical guide for using MarkLogic Docker and MarkLogic Docker images. These tasks are covered in this readme:
+This README serves as a technical guide for using MarkLogic Docker and MarkLogic Docker images. These tasks are covered in this README:
 - How to use images to setup initialized/uninitialized MarkLogic servers
 - How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
 - How to enable security using Docker secrets
@@ -369,6 +369,8 @@ As in the previous single-node example, each node of the cluster can be accessed
 
 In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure, but it is commonly used in development environments. This is not recommended for production environments. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
 
+Using Docker secrets, username and password information are secured when transmitting the sensitive data from Docker host to Docker containers. To prevent any attacks, the login information is not available as an environment variable. However, these values are stored in a text file and persisted in an in-memory file system inside the container. We recommend that you delete the Docker secrets information once the cluster is up and running.
+
 ## Three node cluster setup on multiple VMs
 This next example shows how to create containers on separate VMs and connect them with each other using Docker Swarm. For more details on Docker Swarm, see https://docs.docker.com/engine/swarm/. All of the nodes inside the cluster must be part of the same network in order to communicate with each other. We use the overlay network that allows for container communication on separate hosts. For more information on overlay networks, please refer https://docs.docker.com/network/overlay/.
 
@@ -556,28 +558,6 @@ Finally, disconnect VMs from the swarm running the following command on each VM:
 docker swarm leave --force
 ```
 If the process is successful, a message saying the node has left the swarm will be displayed.
-
-## Docker secrets removal
-
-Using Docker secrets, username and password information is secured when transmitting the sensitive data from Docker host to Docker containers. The information is not available as an environment variable, to prevent any attacks. Still these values are stored in a text file and persisted in an in-memory file system. It is recommended that you delete the Docker secrets information once the cluster is up and running.
-
-To remove the secrets file, follow these steps:
-
-First, stop the container. Secrets cannot be removed from running containers.
-
-Next, update the Docker service to remove secrets using this command:
-
-```
-$ docker service update --secret-rm {secret-name}
-```
-
-Now, restart the Docker container.
-
-MarkLogic recommends that you remove Docker secrets from the Docker host as well, using this command:
-
-```
-$ docker secret rm {secret-name}
-```
 
 # Known Issues and Limitations
 

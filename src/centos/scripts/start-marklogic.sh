@@ -12,6 +12,24 @@
 ###############################################################
 
 cd ~
+
+
+################################################################
+# Install Converters if required
+################################################################
+if [[ -z $INSTALL_CONVERTERS ]] || [[ "$INSTALL_CONVERTERS" = "false" ]] ; then
+    echo "Not Installing Converters"
+else
+    if [[ -d "/opt/MarkLogic/Converters" ]]; then
+        echo "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation"
+    else
+        echo "Installing Converters"
+        CONVERTERS_PATH="/converters.rpm"
+        sudo yum localinstall -y $CONVERTERS_PATH
+    fi
+fi
+
+
 ################################################################
 # Setup timezone
 ################################################################
@@ -19,6 +37,7 @@ if [ ! -z $TZ ]; then
     sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime 
     echo $TZ | sudo tee /etc/timezone
 fi
+
 
 ################################################################
 # start MarkLogic service

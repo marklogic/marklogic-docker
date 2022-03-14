@@ -15,6 +15,7 @@ MAINTAINER docker@marklogic.com
 ARG ML_RPM=marklogic.rpm
 ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
+ARG ML_CONVERTERS=marklogic.converters
 ####################################################
 # inject init, start and clustering scripts
 ###############################################################
@@ -31,6 +32,12 @@ RUN yum localinstall -y /tmp/marklogic-server.rpm \
     && yum -y install sudo \
     && yum -y clean all
 
+
+
+###############################################################
+# Copy converters package 
+###############################################################
+COPY ${ML_CONVERTERS} ./converters.rpm
 ###############################################################
 # create system user
 ###############################################################

@@ -423,7 +423,7 @@ $ docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377
 ```
 This command adds the current node to the swarm initialized earlier. 
 
-Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the below command.
+Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows.
 
 ```
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \

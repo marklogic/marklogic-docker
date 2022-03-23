@@ -81,12 +81,11 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 ```
 Example run:
 ```
-$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \        
+$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \ 
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=admin \
      -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
      store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
-8834a1193994cc75405de27d6985eba632ee1e9a1f4519dac6ff833cecb9abb6
 ```
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
@@ -126,7 +125,7 @@ The following command uses a named volume and named container in order to make m
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     --name MarkLogic_cont_1
+     --name MarkLogic_cont_1 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
@@ -424,7 +423,7 @@ $ docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377
 ```
 This command adds the current node to the swarm initialized earlier. 
 
-Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your username and password to the command. 
+Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows.
 
 ```
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
@@ -531,7 +530,7 @@ This section describes the teardown process for clusters set up on a single VM u
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
 ```
-$ compose -f marklogic-centos.yml down
+$ docker-compose -f marklogic-centos.yml down
 ```
 
 ### Remove volumes

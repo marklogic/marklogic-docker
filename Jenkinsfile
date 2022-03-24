@@ -32,11 +32,12 @@ pipeline{
         string(name: 'failEmail', defaultValue: 'sverma@marklogic.com,vkorolev@marklogic.com', description: 'Whom should I send the Pass email to?', trim: true)
         string(name: 'passEmail', defaultValue: 'sverma@marklogic.com,vkorolev@marklogic.com', description: 'Whom should I send the Failure email to?', trim: true) 
         string(name: 'REPO_URL', defaultValue: 'https://github.com/marklogic/marklogic-docker.git', description: 'Docker repository URL', trim: true)
-        string(name: 'dockerVersion', defaultValue: '1.0.0-ea2', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '1.0.0-ea3', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
         string(name: 'REPO_BRANCH', defaultValue: 'develop', description: 'branch for portal repo')
         choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
+        string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
     }
     stages{
         // check out build scripts and get MarkLogic RPM
@@ -74,9 +75,36 @@ pipeline{
                     else
                         cp $ML_RPM .
                     fi
+                if [ -z ${env.ML_CONVERTERS}]; then
+                        unset RETCODE
+                        scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                        if [ ! -z \$RETCODE ]; then
+                            count_iter=75
+                            while [ \$count_iter -gt 0 ] ; do
+                                unset RETCODE
+                                echo "WARN : unable to copy package!! retrying after 5 mins"
+                                sleep 300
+                                scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                                if [ -z \$RETCODE ] ; then
+                                    echo "INFO" "Successfully copied package"
+                                    break
+                                fi
+                                let count_iter--
+                            done
+                            if [ ! -z \$RETCODE ] ; then
+                                echo "ERROR : unable to copy package"
+                                false
+                            else    
+                                echo "INFO" "Successfully copied package"
+                            fi
+                        fi
+                    else
+                        cp $ML_CONVERTERS .
+                    fi
                 """
                 script { 
-                    RPM = sh(returnStdout: true, script: "cd src/centos;file *.rpm | cut -d: -f1").trim()
+                    RPM = sh(returnStdout: true, script: "cd src/centos;file MarkLogic-*.rpm | cut -d: -f1").trim()
+                    CONVERTERS = sh(returnStdout: true, script: "cd src/centos;file MarkLogicConverters-*.rpm | cut -d: -f1").trim()
                     mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
                 }
             }
@@ -86,7 +114,7 @@ pipeline{
             steps{
                 sh """
                     cd src/centos
-                    make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM}
+                    make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}
                 """
             }
         }

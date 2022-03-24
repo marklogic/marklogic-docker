@@ -48,7 +48,7 @@ Supported Docker architectures: x86_64
 
 Base OS: CentOS
 
-Latest supported MarkLogic Server version: 10.0-8.3
+Latest supported MarkLogic Server version: 10.0-9
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/_/marklogic
 

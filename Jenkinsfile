@@ -1,6 +1,6 @@
 // This Jenkinsfile defines internal MarkLogic build pipeline.
 
-@Library('shared-libraries@1.0-declarative') _
+@Library('shared-libraries') _
     def getServerPath(branchName) {
         if("10.1".equals(branchName)) {
             return "rh7v-10-tst-bld-1.eng.marklogic.com/b10_1";

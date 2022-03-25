@@ -134,17 +134,17 @@ pipeline{
             }
         }
         // publish docker image to internal registry
-        stage("publish") {
-            steps{
-                withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
-                    sh """
-                        docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
-                        cd src/centos
-                        make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
-                    """
-                }
-            }    
-        }
+        // stage("publish") {
+        //     steps{
+        //         withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+        //             sh """
+        //                 docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
+        //                 cd src/centos
+        //                 make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
+        //             """
+        //         }
+        //     }    
+        // }
         stage("clean") {
             steps{
                 sh """

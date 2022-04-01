@@ -73,7 +73,6 @@ void copyRPMs() {
 	script {
 		def timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
 	}
-	gitCheckout ".","${params.REPO_URL}","${params.REPO_BRANCH}", '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 	sh """
 		cd src/centos
 		if [ -z ${env.ML_RPM} ]; then 
@@ -169,7 +168,14 @@ pipeline{
 		}
 		// check out build scripts and get MarkLogic RPM
 		stage("Copy-RPMs") {
-			steps{ copyRPMs() }
+			steps{ 
+				gitCheckout ".","${params.REPO_URL}","${params.REPO_BRANCH}", '550650ab-ee92-4d31-a3f4-91a11d5388a3'
+				copyRPMs()
+				echo $RPM
+				echo $CONVERTERS
+				echo $mlVersion
+				sh 'ls'
+				}
 		}
 		// build docker image
 		// stage("build") {

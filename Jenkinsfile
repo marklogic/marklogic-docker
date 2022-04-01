@@ -132,6 +132,7 @@ void copyRPMs() {
 		RPM = sh(returnStdout: true, script: "cd src/centos;file MarkLogic-*.rpm | cut -d: -f1").trim()
 		CONVERTERS = sh(returnStdout: true, script: "cd src/centos;file MarkLogicConverters-*.rpm | cut -d: -f1").trim()
 		mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
+		def mlVersion = sh(returnStdout: true, script: "echo ${RPM}" ).trim()
 	}
 }
 
@@ -172,8 +173,10 @@ pipeline{
 			steps{ 
 				gitCheckout ".","${params.REPO_URL}","${params.REPO_BRANCH}", '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 				//copyRPMs()
+				echo mlVersion
+				copyRPM type,mlVersion
 				echo params.REPO_BRANCH
-				sh 'echo ${RPM}'
+				sh 'echo RPM is ${RPM}'
 				sh 'ls'
 				}
 		}

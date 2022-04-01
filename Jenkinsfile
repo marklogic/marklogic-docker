@@ -154,7 +154,7 @@ pipeline{
 	parameters{
 		string(name: 'failEmail', defaultValue: 'vkorolev@marklogic.com', description: 'Whom should I send the Pass email to?', trim: true)
 		string(name: 'passEmail', defaultValue: 'vkorolev@marklogic.com', description: 'Whom should I send the Failure email to?', trim: true) 
-		string(name: 'REPO_URL', defaultValue: 'https://github.com/marklogic/marklogic-docker.git', description: 'Docker repository URL', trim: true)
+		string(name: 'REPO_URL', defaultValue: 'https://github.com/vitalykorolev/marklogic-docker.git', description: 'Docker repository URL', trim: true)
 		string(name: 'dockerVersion', defaultValue: '1.0.0-ea3', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
 		string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
 		string(name: 'REPO_BRANCH', defaultValue: 'develop', description: 'branch for portal repo')
@@ -164,20 +164,25 @@ pipeline{
 	}
 	stages{
 		stage('Pre-Build-Check'){
-		steps{ //PreBuildCheck()
+			echo REPO_URL
+			echo REPO_BRANCH
+			echo BRANCH_NAME
+			println(BRANCH_NAME)
+		steps{ PreBuildCheck()
 		echo 'hello' }
 		post{failure{postStage('Stage Failed')}}
 		}
 		// check out build scripts and get MarkLogic RPM
 		stage("Copy-RPMs") {
-			steps{ 
+			steps{
+
 				gitCheckout ".","${params.REPO_URL}","${params.REPO_BRANCH}", '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 				//copyRPMs()
-				echo mlVersion
-				copyRPM type,mlVersion
-				echo params.REPO_BRANCH
-				sh 'echo RPM is ${RPM}'
-				sh 'ls'
+				// echo mlVersion
+				// copyRPM type,mlVersion
+				// echo params.REPO_BRANCH
+				// sh 'echo RPM is ${RPM}'
+				// sh 'ls'
 				}
 		}
 		// build docker image

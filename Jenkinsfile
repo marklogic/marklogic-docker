@@ -164,12 +164,14 @@ pipeline{
 	}
 	stages{
 		stage('Pre-Build-Check'){
+		steps{ 
 			echo REPO_URL
 			echo REPO_BRANCH
 			echo BRANCH_NAME
 			println(BRANCH_NAME)
-		steps{ PreBuildCheck()
-		echo 'hello' }
+			PreBuildCheck()
+			echo 'hello' 
+			}
 		post{failure{postStage('Stage Failed')}}
 		}
 		// check out build scripts and get MarkLogic RPM

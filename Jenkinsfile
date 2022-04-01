@@ -172,9 +172,8 @@ pipeline{
 			steps{ 
 				gitCheckout ".","${params.REPO_URL}","${params.REPO_BRANCH}", '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 				//copyRPMs()
-				echo RPM
-				echo CONVERTERS
-				echo mlVersion
+				echo params.REPO_BRANCH
+				sh 'echo ${RPM}'
 				sh 'ls'
 				}
 		}

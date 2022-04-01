@@ -5,7 +5,7 @@
 import groovy.json.JsonSlurperClassic
 
 // Define local variables
-githubAPIUrl="https://api.github.com/repos/marklogic/marklogic-ddocker"
+githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
 
 // Define local funtions
 void PreBuildCheck() {
@@ -14,7 +14,7 @@ void PreBuildCheck() {
 
 	if(PRDraftCheck()){ sh 'exit 1' }
 
-	if((!env.CHANGE_TITLE.startsWith("CLD-")) && (!env.CHANGE_TITLE.startsWith("DEVO-"))){ sh 'exit 1' }
+	if((!env.CHANGE_TITLE.startsWith("CLD-"))){ sh 'exit 1' }
 
 	if(getReviewState().equalsIgnoreCase("CHANGES_REQUESTED")){
 		 println(reviewState)
@@ -135,6 +135,7 @@ void copyRPMs() {
 		mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
 	}
 }
+
 // Define Jenkins build pipeline
 pipeline{
 	agent {

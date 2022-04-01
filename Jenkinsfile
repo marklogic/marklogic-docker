@@ -163,14 +163,14 @@ pipeline{
 	}
 	stages{
 		stage('Pre-Build-Check'){
-		steps{ PreBuildCheck() }
+		//steps{ PreBuildCheck() }
 		post{failure{postStage('Stage Failed')}}
 		}
 		// check out build scripts and get MarkLogic RPM
 		stage("Copy-RPMs") {
 			steps{ 
 				gitCheckout ".","${params.REPO_URL}","${params.REPO_BRANCH}", '550650ab-ee92-4d31-a3f4-91a11d5388a3'
-				copyRPMs()
+				//copyRPMs()
 				echo $RPM
 				echo $CONVERTERS
 				echo $mlVersion

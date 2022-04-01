@@ -163,7 +163,8 @@ pipeline{
 	}
 	stages{
 		stage('Pre-Build-Check'){
-		//steps{ PreBuildCheck() }
+		steps{ //PreBuildCheck()
+		echo hello }
 		post{failure{postStage('Stage Failed')}}
 		}
 		// check out build scripts and get MarkLogic RPM

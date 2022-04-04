@@ -6,6 +6,7 @@ import groovy.json.JsonSlurperClassic
 
 // Define local variables
 githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
+def test = 'hello world'
 
 // Define local funtions
 void PreBuildCheck() {
@@ -166,16 +167,27 @@ pipeline{
 		stage('Pre-Build-Check'){
 		steps{
 			script {
-				if(params.BRANCH_NAME == ""){
-					echo "HERE >"
-					BRANCH_NAME = params.BRANCH_NAME
-					echo params.BRANCH_NAME
-					echo "Branch name is now "
-					echo BRANCH_NAME
-				}
+				echo "THIS IS A TEST"
+				echo 'VARS'
+				echo githubAPIUrl
+				echo test
+				echo failEmail
+				echo ML_RPM
+				echo 'ENV'
+				echo env.githubAPIUrl
+				echo env.test
+				echo env.failEmail
+				echo env.ML_RPM
+				// if(params.BRANCH_NAME == ""){
+				// 	echo "HERE >"
+				// 	BRANCH_NAME = params.BRANCH_NAME
+				// 	echo params.BRANCH_NAME
+				// 	echo "Branch name is now "
+				// 	echo BRANCH_NAME
+				// }
 			}
 			echo REPO_URL
-			PreBuildCheck()
+			//PreBuildCheck()
 			echo 'hello' 
 			}
 		post{failure{postStage('Stage Failed')}}

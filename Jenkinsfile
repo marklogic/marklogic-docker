@@ -159,13 +159,14 @@ def RunStructureTests() {
 }
 
 def PublishToInternalRegestry() {
-	withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
-		            sh """
-		                docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
-		                cd src/centos
-		                make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
-		            """
-	}
+	echo "Pretending to publish to internal registry"
+	// withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+	// 	            sh """
+	// 	                docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
+	// 	                cd src/centos
+	// 	                make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
+	// 	            """
+	// }
 }
 
 // Define Jenkins build pipeline
@@ -225,30 +226,31 @@ pipeline{
 		}
 
 		stage("Publish-Image") {
-		    steps{
-		        PublishToInternalRegistry()
-		        } 
+			when{
+					expression{ return params.PUBLISH_IMAGE }
+			}
+			steps{
+					PublishToInternalRegistry()
+			} 
 		}
 
-		stage("Cleanup") {
-			steps{
+	}
+
+	post {
+		always {
 				sh """
 					cd src/centos
 					rm -rf *.rpm
 				"""
-			}
 		}
+		success {  
+			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
+		}  
+		failure {  
+			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD ERROR: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+		}  
+		unstable {  
+			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+		}   
 	}
-
-	// post {
-	// 	success {  
-	// 		mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
-	// 	}  
-	// 	failure {  
-	// 		mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD ERROR: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-	// 	}  
-	// 	unstable {  
-	// 		mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-	// 	}   
-	// }
 }

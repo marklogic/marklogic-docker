@@ -5,27 +5,22 @@
 import groovy.json.JsonSlurperClassic
 
 // Define local variables
-githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
+//githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
+gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 
 // Define local funtions
 void PreBuildCheck() {
-script {
-				echo "HERE >"
-				echo BRANCH_NAME
-				echo params.REPO_BRANCH
-				if(params.REPO_BRANCH != ""){
-					BRANCH_NAME = params.REPO_BRANCH
-					echo "Branch name is now "
-					echo BRANCH_NAME
-				}
-				if(BRANCH_NAME == ''){
-					echo "Branch name is empty!"
-					sh 'exit 1'
-				}
-				echo "Branch name: " + BRANCH_NAME
-				echo BRANCH_NAME
-			}
-			echo REPO_URL
+	if(params.BRANCH_OVERRIDE != ""){
+		BRANCH_NAME = params.BRANCH_OVERRIDE
+		echo "Branch name is now "
+		echo BRANCH_NAME
+	}
+	if(BRANCH_NAME == ''){
+		echo "Branch name is empty!"
+		sh 'exit 1'
+	}
+	echo "Branch name: " + BRANCH_NAME
+	githubAPIUrl = REPO_URL.replace("github.com","api.github.com/repos").replace(".git","")
  if(env.CHANGE_ID){
 
 	if(PRDraftCheck()){ sh 'exit 1' }
@@ -39,14 +34,14 @@ script {
 
 	// if(!isChangeInUI() && isPRUITest()){env.NO_UI_TESTS=true}
 
- }
- def obj=new abortPrevBuilds();
- obj.abortPrevBuilds();
-
+	}
+	def obj=new abortPrevBuilds();
+ 	obj.abortPrevBuilds();
+	gitCheckout ".", REPO_URL, BRANCH_NAME, gitCredID
 }
 
 def PRDraftCheck(){
-	withCredentials([usernameColonPassword(credentialsId: '550650ab-ee92-4d31-a3f4-91a11d5388a3', variable: 'Credentials')]) {
+	withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
 		PrObj= sh (returnStdout: true, script:'''
 					 curl -u $Credentials  -X GET  '''+githubAPIUrl+'''/pulls/$CHANGE_ID
 					 ''')
@@ -58,7 +53,7 @@ def PRDraftCheck(){
 def getReviewState(){
 	def  reviewResponse;
 	def commitHash;
-	withCredentials([usernameColonPassword(credentialsId: '550650ab-ee92-4d31-a3f4-91a11d5388a3', variable: 'Credentials')]) {
+	withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
 		reviewResponse = sh (returnStdout: true, script:'''
 							curl -u $Credentials  -X GET  '''+githubAPIUrl+'''/pulls/$CHANGE_ID/reviews
 							 ''')
@@ -173,7 +168,7 @@ pipeline{
 		string(name: 'REPO_URL', defaultValue: 'https://github.com/vitalykorolev/marklogic-docker-fork.git', description: 'Docker repository URL', trim: true)
 		string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
 		string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
-		string(name: 'REPO_BRANCH', defaultValue: '', description: 'branch for docker repo')
+		string(name: 'BRANCH_OVERRIDE', defaultValue: '', description: 'define branch for docker repo')
 		choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
 		string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
 		string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
@@ -189,7 +184,7 @@ pipeline{
 		stage("Copy-RPMs") {
 			steps{
 
-				gitCheckout ".","${params.REPO_URL}","${BRANCH_NAME}", '550650ab-ee92-4d31-a3f4-91a11d5388a3'
+				
 				//copyRPMs()
 				// echo mlVersion
 				// copyRPM type,mlVersion
@@ -239,6 +234,8 @@ pipeline{
 
 		stage("clean") {
 			steps{
+				echo "TEST: " + githubAPIUrl
+				sh 'echo test ${env.githubAPIUrl}'
 				sh """
 					cd src/centos
 					rm -rf *.rpm

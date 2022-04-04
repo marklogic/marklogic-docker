@@ -81,9 +81,7 @@ def getServerPath(branchName) {
 }
 
 void copyRPMs() {
-	script {
-		def timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
-	}
+	timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
 	sh """
 		cd src/centos
 		if [ -z ${env.ML_RPM} ]; then 

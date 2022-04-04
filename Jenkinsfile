@@ -19,9 +19,10 @@ script {
 					echo BRANCH_NAME
 				}
 				if(BRANCH_NAME == ''){
-					BRANCH_NAME = "develop"
+					echo "Branch name is empty!"
+					sh 'exit 1'
 				}
-				echo "Branch name is now "
+				echo "Branch name: " + BRANCH_NAME
 				echo BRANCH_NAME
 			}
 			echo REPO_URL

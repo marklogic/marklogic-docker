@@ -141,7 +141,7 @@ void copyRPMs() {
 		RPM = sh(returnStdout: true, script: "cd src/centos;file MarkLogic-*.rpm | cut -d: -f1").trim()
 		CONVERTERS = sh(returnStdout: true, script: "cd src/centos;file MarkLogicConverters-*.rpm | cut -d: -f1").trim()
 		mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
-		def mlVersion = sh(returnStdout: true, script: "echo ${RPM}" ).trim()
+		//def mlVersion = sh(returnStdout: true, script: "echo ${RPM}" ).trim()
 	}
 }
 
@@ -181,14 +181,11 @@ pipeline{
 		// check out build scripts and get MarkLogic RPM
 		stage("Copy-RPMs") {
 			steps{
-
-				
 				copyRPMs()
 				echo mlVersion
-				// copyRPM type,mlVersion
-
+				echo RPM
 				sh 'echo RPM is ${RPM}'
-				sh 'ls'
+				sh 'ls src/centos'
 			}
 		}
 		// build docker image

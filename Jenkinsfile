@@ -167,11 +167,11 @@ pipeline{
 		stage('Pre-Build-Check'){
 		steps{
 			script {
+				echo "HERE >"
+				echo BRANCH_NAME
+				echo params.BRANCH_NAME
 				if(params.BRANCH_NAME != ""){
-					echo "HERE >"
-					echo BRANCH_NAME
 					BRANCH_NAME = params.BRANCH_NAME
-					echo params.BRANCH_NAME
 					echo "Branch name is now "
 					echo BRANCH_NAME
 				}

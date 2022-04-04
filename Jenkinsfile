@@ -158,7 +158,7 @@ pipeline{
 		string(name: 'REPO_URL', defaultValue: 'https://github.com/vitalykorolev/marklogic-docker-fork.git', description: 'Docker repository URL', trim: true)
 		string(name: 'dockerVersion', defaultValue: '1.0.0-ea3', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
 		string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
-		string(name: 'BRANCH_NAME', defaultValue: '', description: 'branch for portal repo')
+		string(name: 'REPO_BRANCH', defaultValue: '', description: 'branch for docker repo')
 		choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
 		string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
 		string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
@@ -169,9 +169,9 @@ pipeline{
 			script {
 				echo "HERE >"
 				echo BRANCH_NAME
-				echo params.BRANCH_NAME
+				echo params.REPO_BRANCH
 				if(params.BRANCH_NAME != ""){
-					BRANCH_NAME = params.BRANCH_NAME
+					BRANCH_NAME = params.REPO_BRANCH
 					echo "Branch name is now "
 					echo BRANCH_NAME
 				}

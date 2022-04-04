@@ -169,7 +169,9 @@ pipeline{
 				if(params.BRANCH_NAME == ""){
 					echo "HERE >"
 					BRANCH_NAME = params.BRANCH_NAME
-					echo "Branch name is now "BRANCH_NAME
+					echo params.BRANCH_NAME
+					echo "Branch name is now "
+					echo BRANCH_NAME
 				}
 			}
 			echo REPO_URL

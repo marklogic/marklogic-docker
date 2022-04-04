@@ -227,8 +227,7 @@ pipeline{
 		stage("Publish-Image") {
 		    steps{
 		        PublishToInternalRegistry()
-		        }
-		    }    
+		        } 
 		}
 
 		stage("Cleanup") {
@@ -240,7 +239,7 @@ pipeline{
 			}
 		}
 	}
-	
+
 	// post {
 	// 	success {  
 	// 		mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";

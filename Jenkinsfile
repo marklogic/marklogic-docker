@@ -149,7 +149,7 @@ def RunStructureTests() {
 	sh """
 					cd test
 					#insert current version
-					sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
+					#####debug######sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
 					curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
 					./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
 					#fix junit output
@@ -175,7 +175,11 @@ pipeline{
 				label{
 					label 'docker-vitaly';
 				}
-			}
+	}
+	options {
+		checkoutToSubdirectory '.'
+		buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
+	}
 	environment {
 		buildServer = "distro.marklogic.com"
 		buildServerBasePath = "/space/nightly/builds/"
@@ -194,6 +198,7 @@ pipeline{
 		choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
 		string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
 		string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
+		booleanParam(name: 'PUBLISH_IMAGE', defaultValue: true, description: 'Publish image to internal registry')
 	}
 
 	stages{

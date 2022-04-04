@@ -80,7 +80,7 @@ def getServerPath(branchName) {
 	}
 }
 
-void copyRPMs() {
+def CopyRPMs() {
 	timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
 	sh """
 		cd src/centos
@@ -145,6 +145,19 @@ void copyRPMs() {
 	}
 }
 
+def RunStructureTests() {
+	sh """
+					cd test
+					#insert current version
+					sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
+					curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+					./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
+					#fix junit output
+					sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
+				"""
+				junit testResults: '**/container-structure-test.xml'
+}
+
 // Define Jenkins build pipeline
 pipeline{
 	agent {
@@ -173,46 +186,32 @@ pipeline{
 	}
 	stages{
 		stage('Pre-Build-Check'){
-		steps{
-			PreBuildCheck()
+			steps{
+				PreBuildCheck()
 			}
-		post{failure{postStage('Stage Failed')}}
+			post{failure{postStage('Stage Failed')}}
 		}
-		// check out build scripts and get MarkLogic RPM
 		stage("Copy-RPMs") {
 			steps{
-				copyRPMs()
-				echo mlVersion
-				echo RPM
-				sh 'echo RPM is ${RPM}'
-				sh 'ls src/centos'
+				CopyRPMs()
 			}
+			post{failure{postStage('Stage Failed')}}
 		}
-		// build docker image
-		// stage("build") {
-		// 	steps{
-		// 		sh """
-		// 			cd src/centos
-		// 			make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}
-		// 		"""
-		// 	}
-		// }
+
+		stage("Build-Image") {
+			steps{
+				sh "cd src/centos; make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
+			}
+			post{failure{postStage('Stage Failed')}}
+		}
 
 		// test docker image and generate junit report
-		// stage("test") {
-		// 	steps{
-		// 		sh """
-		// 			cd test
-		// 			#insert current version
-		// 			sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
-		// 			curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-		// 			./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
-		// 			#fix junit output
-		// 			sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
-		// 		"""
-		// 		junit testResults: '**/container-structure-test.xml'
-		// 	}
-		// }
+		stage("Image-Test") {
+			steps{
+				RunStructureTests()
+			}
+			post{failure{postStage('Stage Failed')}}
+		}
 
 		// publish docker image to internal registry
 		// stage("publish") {
@@ -227,10 +226,8 @@ pipeline{
 		//     }    
 		// }
 
-		stage("clean") {
+		stage("Cleanup") {
 			steps{
-				echo "TEST: " + githubAPIUrl
-				sh 'echo test ${githubAPIUrl}'
 				sh """
 					cd src/centos
 					rm -rf *.rpm

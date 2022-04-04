@@ -167,7 +167,7 @@ pipeline{
 		steps{
 			script {
 				if(params.BRANCH_NAME == ""){
-					ech "HERE >"
+					echo "HERE >"
 					BRANCH_NAME = params.BRANCH_NAME
 					echo "Branch name is now $BRANCH_NAME"
 				}

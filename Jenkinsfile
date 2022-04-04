@@ -186,12 +186,12 @@ pipeline{
 
 				
 				//copyRPMs()
-				// echo mlVersion
+				echo mlVersion
 				// copyRPM type,mlVersion
-				// echo params.BRANCH_NAME
-				// sh 'echo RPM is ${RPM}'
-				// sh 'ls'
-				}
+
+				sh 'echo RPM is ${RPM}'
+				sh 'ls'
+			}
 		}
 		// build docker image
 		// stage("build") {

@@ -158,6 +158,16 @@ def RunStructureTests() {
 				junit testResults: '**/container-structure-test.xml'
 }
 
+def PublishToInternalRegestry() {
+	withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+		            sh """
+		                docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
+		                cd src/centos
+		                make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
+		            """
+	}
+}
+
 // Define Jenkins build pipeline
 pipeline{
 	agent {
@@ -184,6 +194,7 @@ pipeline{
 		string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
 		string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
 	}
+
 	stages{
 		stage('Pre-Build-Check'){
 			steps{
@@ -191,6 +202,7 @@ pipeline{
 			}
 			post{failure{postStage('Stage Failed')}}
 		}
+
 		stage("Copy-RPMs") {
 			steps{
 				CopyRPMs()
@@ -205,7 +217,6 @@ pipeline{
 			post{failure{postStage('Stage Failed')}}
 		}
 
-		// test docker image and generate junit report
 		stage("Image-Test") {
 			steps{
 				RunStructureTests()
@@ -213,18 +224,12 @@ pipeline{
 			post{failure{postStage('Stage Failed')}}
 		}
 
-		// publish docker image to internal registry
-		// stage("publish") {
-		//     steps{
-		//         withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
-		//             sh """
-		//                 docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
-		//                 cd src/centos
-		//                 make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
-		//             """
-		//         }
-		//     }    
-		// }
+		stage("Publish-Image") {
+		    steps{
+		        PublishToInternalRegistry()
+		        }
+		    }    
+		}
 
 		stage("Cleanup") {
 			steps{
@@ -235,6 +240,7 @@ pipeline{
 			}
 		}
 	}
+	
 	// post {
 	// 	success {  
 	// 		mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";

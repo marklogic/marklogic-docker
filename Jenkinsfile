@@ -186,7 +186,7 @@ pipeline{
 
 				
 				//copyRPMs()
-				echo mlVersion
+				//echo mlVersion
 				// copyRPM type,mlVersion
 
 				sh 'echo RPM is ${RPM}'

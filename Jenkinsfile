@@ -20,7 +20,7 @@ void PreBuildCheck() {
 		sh 'exit 1'
 	}
 	echo "Branch name: " + BRANCH_NAME
-	githubAPIUrl = REPO_URL.replace("github.com","api.github.com/repos").replace(".git","")
+	githubAPIUrl = REPO_URL.replace("github.com","api.github.com/repos").replace("\.git","")
  if(env.CHANGE_ID){
 
 	if(PRDraftCheck()){ sh 'exit 1' }
@@ -235,7 +235,7 @@ pipeline{
 		stage("clean") {
 			steps{
 				echo "TEST: " + githubAPIUrl
-				sh 'echo test ${env.githubAPIUrl}'
+				sh 'echo test ${githubAPIUrl}'
 				sh """
 					cd src/centos
 					rm -rf *.rpm

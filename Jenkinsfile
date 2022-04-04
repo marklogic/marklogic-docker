@@ -166,7 +166,7 @@ pipeline{
 		stage('Pre-Build-Check'){
 		steps{
 			script {
-				if(!params.BRANCH_NAME.isEmpty){
+				if(params.BRANCH_NAME == ""){
 					BRANCH_NAME = params.BRANCH_NAME
 					echo BRANCH_NAME
 				}

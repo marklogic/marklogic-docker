@@ -12,21 +12,20 @@ gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 void PreBuildCheck() {
 	if(params.BRANCH_OVERRIDE != ""){
 		BRANCH_NAME = params.BRANCH_OVERRIDE
-		echo "Branch name is now "
-		echo BRANCH_NAME
 	}
 	if(BRANCH_NAME == ''){
 		echo "Branch name is empty!"
 		sh 'exit 1'
 	}
 	echo "Branch name: " + BRANCH_NAME
-	githubAPIUrl = REPO_URL.replace("github.com","api.github.com/repos")
+	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl
  if(env.CHANGE_ID){
 
 	if(PRDraftCheck()){ sh 'exit 1' }
 
 	if((!env.CHANGE_TITLE.startsWith("CLD-"))){ sh 'exit 1' }
+	echo env.CHANGE_TITLE
 
 	if(getReviewState().equalsIgnoreCase("CHANGES_REQUESTED")){
 		 println(reviewState)
@@ -52,7 +51,7 @@ def PRDraftCheck(){
 }
 
 def getReviewState(){
-	def  reviewResponse;
+	def reviewResponse;
 	def commitHash;
 	withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
 		reviewResponse = sh (returnStdout: true, script:'''
@@ -186,8 +185,8 @@ pipeline{
 			steps{
 
 				
-				//copyRPMs()
-				//echo mlVersion
+				copyRPMs()
+				echo mlVersion
 				// copyRPM type,mlVersion
 
 				sh 'echo RPM is ${RPM}'

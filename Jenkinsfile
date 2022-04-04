@@ -169,7 +169,7 @@ pipeline{
 				echo "HERE >"
 				echo BRANCH_NAME
 				echo params.REPO_BRANCH
-				if(params.BRANCH_NAME != ""){
+				if(params.REPO_BRANCH != ""){
 					BRANCH_NAME = params.REPO_BRANCH
 					echo "Branch name is now "
 					echo BRANCH_NAME
@@ -179,11 +179,9 @@ pipeline{
 				}
 				echo "Branch name is now "
 				echo BRANCH_NAME
-				echo 'Testing 'BRANCH_NAME
 			}
 			echo REPO_URL
 			//PreBuildCheck()
-			echo 'hello' 
 			}
 		post{failure{postStage('Stage Failed')}}
 		}

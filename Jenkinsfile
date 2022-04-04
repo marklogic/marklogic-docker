@@ -9,7 +9,22 @@ githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
 
 // Define local funtions
 void PreBuildCheck() {
-
+script {
+				echo "HERE >"
+				echo BRANCH_NAME
+				echo params.REPO_BRANCH
+				if(params.REPO_BRANCH != ""){
+					BRANCH_NAME = params.REPO_BRANCH
+					echo "Branch name is now "
+					echo BRANCH_NAME
+				}
+				if(BRANCH_NAME == ''){
+					BRANCH_NAME = "develop"
+				}
+				echo "Branch name is now "
+				echo BRANCH_NAME
+			}
+			echo REPO_URL
  if(env.CHANGE_ID){
 
 	if(PRDraftCheck()){ sh 'exit 1' }
@@ -165,23 +180,7 @@ pipeline{
 	stages{
 		stage('Pre-Build-Check'){
 		steps{
-			script {
-				echo "HERE >"
-				echo BRANCH_NAME
-				echo params.REPO_BRANCH
-				if(params.REPO_BRANCH != ""){
-					BRANCH_NAME = params.REPO_BRANCH
-					echo "Branch name is now "
-					echo BRANCH_NAME
-				}
-				if(BRANCH_NAME == ''){
-					BRANCH_NAME = "develop"
-				}
-				echo "Branch name is now "
-				echo BRANCH_NAME
-			}
-			echo REPO_URL
-			//PreBuildCheck()
+			PreBuildCheck()
 			}
 		post{failure{postStage('Stage Failed')}}
 		}

@@ -6,7 +6,6 @@ import groovy.json.JsonSlurperClassic
 
 // Define local variables
 githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
-def test = 'hello world'
 
 // Define local funtions
 void PreBuildCheck() {
@@ -156,7 +155,7 @@ pipeline{
 		string(name: 'failEmail', defaultValue: 'vkorolev@marklogic.com', description: 'Whom should I send the Pass email to?', trim: true)
 		string(name: 'passEmail', defaultValue: 'vkorolev@marklogic.com', description: 'Whom should I send the Failure email to?', trim: true) 
 		string(name: 'REPO_URL', defaultValue: 'https://github.com/vitalykorolev/marklogic-docker-fork.git', description: 'Docker repository URL', trim: true)
-		string(name: 'dockerVersion', defaultValue: '1.0.0-ea3', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+		string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
 		string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
 		string(name: 'REPO_BRANCH', defaultValue: '', description: 'branch for docker repo')
 		choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
@@ -175,6 +174,12 @@ pipeline{
 					echo "Branch name is now "
 					echo BRANCH_NAME
 				}
+				if(BRANCH_NAME == ''){
+					BRANCH_NAME = "develop"
+				}
+				echo "Branch name is now "
+				echo BRANCH_NAME
+				echo 'Testing 'BRANCH_NAME
 			}
 			echo REPO_URL
 			//PreBuildCheck()

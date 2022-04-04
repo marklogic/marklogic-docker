@@ -20,7 +20,8 @@ void PreBuildCheck() {
 		sh 'exit 1'
 	}
 	echo "Branch name: " + BRANCH_NAME
-	githubAPIUrl = REPO_URL.replace("github.com","api.github.com/repos").replace("\.git","")
+	githubAPIUrl = REPO_URL.replace("github.com","api.github.com/repos")
+	echo "githubAPIUrl: " + githubAPIUrl
  if(env.CHANGE_ID){
 
 	if(PRDraftCheck()){ sh 'exit 1' }

@@ -14,6 +14,7 @@
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)
  * [Clustering](#Clustering)
+ * [Backing Up and Restoring a Database](#Backing-Up-and-Restoring-a-Database)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
@@ -25,6 +26,7 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 - How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
 - How to enable security using Docker secrets
 - How to mount volumes for Docker containers 
+- How to back up and restore a database
 - How to clean up MarkLogic Docker containers and resources
 
 # Prerequisites
@@ -444,16 +446,17 @@ l-cluster-network' network. All the containers will be part of same cluster.
 
 When creating a backup for a database on a MarkLogic Docker container, verify that the directory used for the backup is mounted to a directory on the Docker host machine or Docker volume. This is so that the database backup persists even after the container is stopped.
 
-This command is an example of mounting the directory /space used for backup on the Docker host file system, while running the MarkLogic Docker container.
-
+This command is an example of mounting the directory /space used for backup on a Docker volume, while running the MarkLogic Docker container.
+```
 $ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
-     -v /data/MarkLogic:/var/opt/MarkLogic \
-     -v /space:/space \
+     --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
+     --mount src=MarkLogic_vol_1,dst=/space \
      -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME=admin \
-     -e MARKLOGIC_ADMIN_PASSWORD=admin \
-     ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-8.3-centos-1.0.0-ea3
-The /space directory can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0
+```
+The /space mounted on the Docker volume can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
 
 # Debugging
 

@@ -96,6 +96,14 @@ def getServerPath(branchName) {
 	}
 }
 
+def ResultNotification(message) {
+	mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+	if(JIRA_ID){
+		def comment = [ body: "Jenkins pipeline build result: ${message}" ]
+		jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
+	}
+}
+
 def CopyRPMs() {
 	timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
 	sh """
@@ -191,14 +199,6 @@ def PublishToInternalRegestry() {
 	}
 }
 
-def ResultNotification(message) {
-	mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-	if(JIRA_ID){
-		def comment = [ body: "Jenkins pipeline build result: ${message}" ]
-		jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
-	}
-}
-
 pipeline{
 	agent {
 				label{
@@ -235,38 +235,30 @@ pipeline{
 			steps{
 				PreBuildCheck()
 			}
-			//post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Copy-RPMs") {
 			steps{
-				//CopyRPMs()
-				echo 'Copying RPMs'
+				CopyRPMs()
 			}
-			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Build-Image") {
 			steps{
-				echo 'Building Image'
-				//sh "cd src/centos; make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
+				sh "cd src/centos; make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
 			}
-			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Image-Test") {
 			steps{
-				echo 'Running Image Tests'
-				// RunStructureTests()
+				RunStructureTests()
 			}
-			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Run-Server-Regression-Tests") {
 			steps{
 				RunServerRegressionTests()
 			}
-			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Publish-Image") {
@@ -274,8 +266,7 @@ pipeline{
 					expression{ return params.PUBLISH_IMAGE }
 			}
 			steps{
-				echo 'Publishing Image'
-				//PublishToInternalRegistry()
+				PublishToInternalRegistry()
 			} 
 		}
 

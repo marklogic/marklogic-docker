@@ -23,6 +23,8 @@ void PreBuildCheck() {
 		sh 'exit 1'
 	}
 	echo "Branch name: " + BRANCH_NAME
+	echo "CHANGE_ID: " + env.CHANGE_ID
+	echo "CHANGE_TITLE: " + env.CHANGE_TITLE
 
 	JIRA_ID = ExtractJiraID(BRANCH_NAME)
 	echo "Jira ticket number: " + JIRA_ID
@@ -50,6 +52,7 @@ void PreBuildCheck() {
 def ExtractJiraID(branchName) {
 	def jiraId
 	def match = (branchName =~ /CLD-\d{3,4}/)
+	echo "DEBUG: about to check match"
 	if(match != null){
 		jiraId = match[0]
 	}

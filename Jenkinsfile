@@ -29,8 +29,8 @@ void PreBuildCheck() {
 	// 	JIRA_ID=env.CHANGE_TITLE.split(':')[0]
 	// }
 	// echo "JIRA_ID: " + JIRA_ID
-	// echo "CHANGE_ID: " + CHANGE_ID
-	// echo "CHANGE_TITLE: " + CHANGE_TITLE
+	echo "CHANGE_ID: " + CHANGE_ID
+	echo "CHANGE_TITLE: " + CHANGE_TITLE
 
  if(env.CHANGE_ID){
 

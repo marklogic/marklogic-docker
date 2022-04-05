@@ -189,7 +189,7 @@ def RunServerRegressionTests() {
 	//input "Server regression tests need to be executed manually. "
 }
 
-def PublishToInternalRegestry() {
+def PublishToInternalRegistry() {
 	withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
 		            sh """
 		                docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 

@@ -20,17 +20,19 @@ void PreBuildCheck() {
 	echo "Branch name: " + BRANCH_NAME
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl
- if(env.CHANGE_ID){
 
-	if(PRDraftCheck()){ sh 'exit 1' }
-
-	if((!env.CHANGE_TITLE.startsWith("CLD-"))){
+		if((!env.CHANGE_TITLE.startsWith("CLD-"))){
 		sh 'exit 1' 
 	}
 	else {
 		JIRA_ID=env.CHANGE_TITLE.split(':')[0]
 	}
 	echo "JIRA_ID: " + JIRA_ID
+	echo "CHANGE_ID: " + CHANGE_ID
+	
+ if(env.CHANGE_ID){
+
+	if(PRDraftCheck()){ sh 'exit 1' }
 
 	if(getReviewState().equalsIgnoreCase("CHANGES_REQUESTED")){
 		 println(reviewState)

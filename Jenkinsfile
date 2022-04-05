@@ -27,7 +27,6 @@ void PreBuildCheck() {
 	// Extract Jira ticket number from branch name
 	def match = (BRANCH_NAME =~ /CLD-\d{3,4}/)
 	JIRA_ID = match[0]
-	echo "Jira ticket number: " + JIRA_ID
 
 	if(JIRA_ID == ''){
 		echo "Jira ticket number is empty!"
@@ -36,11 +35,6 @@ void PreBuildCheck() {
 	else {
 		echo "Jira ticket number: " + JIRA_ID
 	}
-	// echo "Jira ticket number: " + JIRA_ID
-	// def issue = jiraGetIssue failOnError: false, idOrKey: 'CLD-404', site: 'JIRA'
-	// echo issue.data.toString()
-	// def comment = [ body: 'pipeline test comment' ]
-	// jiraAddComment site: 'JIRA', idOrKey: 'CLD-404', input: comment
 
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl
@@ -198,9 +192,10 @@ def PublishToInternalRegestry() {
 
 def ResultNotification(message) {
 	mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-	// if(JIRA_ID){
-	// 	jiraAddComment comment: "Jenkins ${message}: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
-	// }
+	if(JIRA_ID){
+		def comment = [ body: "Jenkins pipeline build result: ${message}" ]
+		jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
+	}
 }
 
 pipeline{

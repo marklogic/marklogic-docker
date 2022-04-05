@@ -438,6 +438,22 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 ```
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
+l-cluster-network' network. All the containers will be part of same cluster.
+
+# Backing Up and Restoring a Database
+
+When creating a backup for a database on a MarkLogic Docker container, verify that the directory used for the backup is mounted to a directory on the Docker host machine or Docker volume. This is so that the database backup persists even after the container is stopped.
+
+This command is an example of mounting the directory /space used for backup on the Docker host file system, while running the MarkLogic Docker container.
+
+$ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
+     -v /data/MarkLogic:/var/opt/MarkLogic \
+     -v /space:/space \
+     -e MARKLOGIC_INIT=true \
+     -e MARKLOGIC_ADMIN_USERNAME=admin \
+     -e MARKLOGIC_ADMIN_PASSWORD=admin \
+     ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-8.3-centos-1.0.0-ea3
+The /space directory can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
 
 # Debugging
 

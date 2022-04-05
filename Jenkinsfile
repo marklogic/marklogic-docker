@@ -283,13 +283,13 @@ pipeline {
                 '''
         }
         success {
-            ResultNotification('BUILD SUCCESS')
+            ResultNotification('BUILD SUCCESS ✅')
         }
         failure {
-            ResultNotification('BUILD ERROR')
+            ResultNotification('BUILD ERROR ❌')
         }
         unstable {
-            ResultNotification('BUILD UNSTABLE')
+            ResultNotification('BUILD UNSTABLE ❌')
         }
     }
 }

@@ -58,7 +58,7 @@ def ExtractJiraID() {
 		match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
 	}
 
-	try(match){
+	try{
 		jiraId = match[0]
 	} catch(Exception e){
 		jiraId = ''

@@ -30,7 +30,8 @@ void PreBuildCheck() {
 	// }
 	// echo "JIRA_ID: " + JIRA_ID
 	//echo "CHANGE_ID: " + CHANGE_ID
-	echo "CHANGE_TITLE: " + env.CHANGE_TITLE
+	//echo "CHANGE_TITLE: " + env.CHANGE_TITLE
+	sh 'env'
 
  if(env.CHANGE_ID){
 

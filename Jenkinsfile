@@ -11,6 +11,9 @@ gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 
 // Define local funtions
 void PreBuildCheck() {
+	echo 'Initialize parameters as environment variables due to https://issues.jenkins-ci.org/browse/JENKINS-41929'
+	evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
+
 	if(params.BRANCH_OVERRIDE != ""){
 		BRANCH_NAME = params.BRANCH_OVERRIDE
 	}
@@ -19,6 +22,8 @@ void PreBuildCheck() {
 		sh 'exit 1'
 	}
 	echo "Branch name: " + BRANCH_NAME
+
+	//REPO_URL = params.REPO_URL
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl
 

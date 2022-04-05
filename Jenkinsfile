@@ -31,6 +31,7 @@ void PreBuildCheck() {
 		JIRA_ID = false
 	}
 	echo "Jira ticket number: " + JIRA_ID
+	jiraGetIssue failOnError: false, idOrKey: 'CLD-404', site: 'JIRA'
 
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl

@@ -4,7 +4,6 @@
 // Import libraries
 @Library('shared-libraries') _
 import groovy.json.JsonSlurperClassic
-import java.util.regex.*
 
 // Define local variables
 //githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
@@ -12,7 +11,7 @@ gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 
 // Define local funtions
 void PreBuildCheck() {
-	echo 'Initialize parameters as environment variables due to https://issues.jenkins-ci.org/browse/JENKINS-41929'
+	// Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
 	evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
 	if(params.BRANCH_OVERRIDE != ""){
@@ -26,6 +25,7 @@ void PreBuildCheck() {
 
 	// Extract Jira ticket number from branch name
 	def match = (BRANCH_NAME =~ /CLD-\d{3,4}/)
+	echo match
 	JIRA_ID = match[0]
 
 	if(JIRA_ID == ''){

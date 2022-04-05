@@ -25,7 +25,7 @@ void PreBuildCheck() {
 	echo "Branch name: " + BRANCH_NAME
 
 	// Extract Jira ticket number from branch name
-	def match = (BRANCH_NAME ==~ /CLD-\d{3,4}/)
+	def match = (BRANCH_NAME =~ /CLD-\d{3,4}/)
 	JIRA_ID = match[0]
 	echo "Jira ticket number: " + JIRA_ID
 
@@ -57,7 +57,7 @@ void PreBuildCheck() {
 	}
 	def obj=new abortPrevBuilds();
  	obj.abortPrevBuilds();
-	 
+
 	gitCheckout ".", REPO_URL, BRANCH_NAME, gitCredID
 }
 

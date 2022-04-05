@@ -23,7 +23,14 @@ void PreBuildCheck() {
 	}
 	echo "Branch name: " + BRANCH_NAME
 
-	//REPO_URL = params.REPO_URL
+	// Extract Jira ticket number from branch name
+	
+	JIRA_ID = (BRANCH_NAME =~ /CLD-[0-9]{3,4}/)[0][1]
+	if(JIRA_ID == ''){
+		echo "Jira ticket number is empty!"
+		JIRA_ID = false
+	}
+
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl
 
@@ -36,7 +43,7 @@ void PreBuildCheck() {
 	// echo "JIRA_ID: " + JIRA_ID
 	//echo "CHANGE_ID: " + CHANGE_ID
 	//echo "CHANGE_TITLE: " + env.CHANGE_TITLE
-	sh 'env'
+	
 
  if(env.CHANGE_ID){
 
@@ -174,21 +181,22 @@ def RunStructureTests() {
 }
 
 def RunServerRegressionTests() {
-	input "Server regression tests need to be executed manually. "
+	//TODO: we need to show the prompt with PR is for develop branch
+	// ultimately this still should trigger the job for server regression tests
+	echo "Server regression tests"
+	//input "Server regression tests need to be executed manually. "
 }
 
 def PublishToInternalRegestry() {
-	echo "Pretending to publish to internal registry"
-	// withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
-	// 	            sh """
-	// 	                docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
-	// 	                cd src/centos
-	// 	                make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
-	// 	            """
-	// }
+	withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+		            sh """
+		                docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry} 
+		                cd src/centos
+		                make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion} 
+		            """
+	}
 }
 
-// Define Jenkins build pipeline
 pipeline{
 	agent {
 				label{
@@ -217,7 +225,7 @@ pipeline{
 		choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
 		string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide an accessible path e.g. /project/engineering or /project/qa', trim: true)
 		string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
-		booleanParam(name: 'PUBLISH_IMAGE', defaultValue: true, description: 'Publish image to internal registry')
+		booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
 	}
 
 	stages{
@@ -264,7 +272,8 @@ pipeline{
 					expression{ return params.PUBLISH_IMAGE }
 			}
 			steps{
-					PublishToInternalRegistry()
+				echo 'Publishing Image'
+				//PublishToInternalRegistry()
 			} 
 		}
 
@@ -279,15 +288,22 @@ pipeline{
 		}
 		success {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
-			// jiraAddComment comment: "Jenkins build was successful: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			if(JIRA_ID){
+				jiraAddComment comment: "Jenkins build was successful: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			}
 		}  
 		failure {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD ERROR: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-			// jiraAddComment comment: "Jenkins build failed: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			if(JIRA_ID){
+				jiraAddComment comment: "Jenkins build failed: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			}
 		}  
 		unstable {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-			// jiraAddComment comment: "Jenkins build is unstable: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			if(JIRA_ID){
+
+				jiraAddComment comment: "Jenkins build is unstable: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			}
 		}   
 	}
 }

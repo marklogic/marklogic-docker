@@ -25,13 +25,14 @@ void PreBuildCheck() {
 
 	// Extract Jira ticket number from branch name
 	
-	JIRA_ID = (BRANCH_NAME =~ /CLD-[0-9]{3,4}/)[0][1]
+	JIRA_ID = (BRANCH_NAME =~ /CLD-[0-9]{3,4}/)
 	if(JIRA_ID == ''){
 		echo "Jira ticket number is empty!"
 		JIRA_ID = false
 	}
 	echo "Jira ticket number: " + JIRA_ID
-	jiraGetIssue failOnError: false, idOrKey: 'CLD-404', site: 'JIRA'
+	def issue = jiraGetIssue failOnError: false, idOrKey: 'CLD-404', site: 'JIRA'
+	echo issue.data.toString()
 
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl

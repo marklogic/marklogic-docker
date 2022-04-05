@@ -30,6 +30,7 @@ void PreBuildCheck() {
 		echo "Jira ticket number is empty!"
 		JIRA_ID = false
 	}
+	echo "Jira ticket number: " + JIRA_ID
 
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl

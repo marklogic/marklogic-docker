@@ -48,9 +48,12 @@ void PreBuildCheck() {
 
 @NonCPS
 def ExtractJiraID(branchName) {
+	def jiraId
 	def match = (branchName =~ /CLD-\d{3,4}/)
-	def jiraId = match[0]
-	if(jiraId == ''){
+	if(match != null){
+		jiraId = match[0]
+	}
+	else{
 		jiraId = false
 	}
 	return jiraId
@@ -165,7 +168,6 @@ def CopyRPMs() {
 		RPM = sh(returnStdout: true, script: "cd src/centos;file MarkLogic-*.rpm | cut -d: -f1").trim()
 		CONVERTERS = sh(returnStdout: true, script: "cd src/centos;file MarkLogicConverters-*.rpm | cut -d: -f1").trim()
 		mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
-		//def mlVersion = sh(returnStdout: true, script: "echo ${RPM}" ).trim()
 	}
 }
 
@@ -208,6 +210,7 @@ pipeline{
 	options {
 		checkoutToSubdirectory '.'
 		buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
+		skipStagesAfterUnstable()
 	}
 	environment {
 		buildServer = "distro.marklogic.com"

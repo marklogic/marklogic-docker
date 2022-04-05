@@ -24,7 +24,7 @@ void PreBuildCheck() {
 	echo "Branch name: " + BRANCH_NAME
 
 	// Extract Jira ticket number from branch name
-	def match = BRANCH_NAME ==~ /CLD-[0-9]{3,4}/
+	def match = BRANCH_NAME ==~ /CLD-\d{3,4}/
 	if (match) { 
 			println match[0][1]
 			println match[0][2]
@@ -38,8 +38,10 @@ void PreBuildCheck() {
 	// 	JIRA_ID = false
 	// }
 	// echo "Jira ticket number: " + JIRA_ID
-	def issue = jiraGetIssue failOnError: false, idOrKey: 'CLD-404', site: 'JIRA'
-	echo issue.data.toString()
+	// def issue = jiraGetIssue failOnError: false, idOrKey: 'CLD-404', site: 'JIRA'
+	// echo issue.data.toString()
+	def comment = [ body: 'pipeline test comment' ]
+	jiraAddComment site: 'JIRA', idOrKey: 'CLD-404', input: comment
 
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl

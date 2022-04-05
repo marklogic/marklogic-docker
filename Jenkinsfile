@@ -24,8 +24,13 @@ void PreBuildCheck() {
 
 	if(PRDraftCheck()){ sh 'exit 1' }
 
-	if((!env.CHANGE_TITLE.startsWith("CLD-"))){ sh 'exit 1' }
-	echo env.CHANGE_TITLE
+	if((!env.CHANGE_TITLE.startsWith("CLD-"))){
+		sh 'exit 1' 
+	}
+	else {
+		JIRA_ID=env.CHANGE_TITLE.split(':')[0]
+	}
+	echo "JIRA_ID: " + JIRA_ID
 
 	if(getReviewState().equalsIgnoreCase("CHANGES_REQUESTED")){
 		 println(reviewState)
@@ -275,12 +280,15 @@ pipeline{
 		}
 		success {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
+			jiraAddComment comment: "Jenkins build was successful: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
 		}  
 		failure {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD ERROR: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+			jiraAddComment comment: "Jenkins build failed: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
 		}  
 		unstable {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+			jiraAddComment comment: "Jenkins build is unstable: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
 		}   
 	}
 }

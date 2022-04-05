@@ -25,18 +25,17 @@ void PreBuildCheck() {
 	echo "Branch name: " + BRANCH_NAME
 
 	// Extract Jira ticket number from branch name
-	def match = (BRANCH_NAME =~ /CLD-\d{3,4}/)
-	//println match
+	def match = (BRANCH_NAME ==~ /CLD-\d{3,4}/)
 	JIRA_ID = match[0]
 	echo "Jira ticket number: " + JIRA_ID
 
-	sh 'exit 1'
-
-	//JIRA_ID = (BRANCH_NAME =~ /CLD-[0-9]{3,4}/)
-	// if(JIRA_ID == ''){
-	// 	echo "Jira ticket number is empty!"
-	// 	JIRA_ID = false
-	// }
+	if(JIRA_ID == ''){
+		echo "Jira ticket number is empty!"
+		JIRA_ID = false
+	}
+	else {
+		echo "Jira ticket number: " + JIRA_ID
+	}
 	// echo "Jira ticket number: " + JIRA_ID
 	// def issue = jiraGetIssue failOnError: false, idOrKey: 'CLD-404', site: 'JIRA'
 	// echo issue.data.toString()
@@ -46,31 +45,19 @@ void PreBuildCheck() {
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl
 
-	// if((!env.CHANGE_TITLE.startsWith("CLD-"))){
-	// 	sh 'exit 1' 
-	// }
-	// else {
-	// 	JIRA_ID=env.CHANGE_TITLE.split(':')[0]
-	// }
-	// echo "JIRA_ID: " + JIRA_ID
-	//echo "CHANGE_ID: " + CHANGE_ID
-	//echo "CHANGE_TITLE: " + env.CHANGE_TITLE
-	
-
  if(env.CHANGE_ID){
 
-	if(PRDraftCheck()){ sh 'exit 1' }
+		if(PRDraftCheck()){ sh 'exit 1' }
 
-	if(getReviewState().equalsIgnoreCase("CHANGES_REQUESTED")){
-		 println(reviewState)
-		 sh 'exit 1'
-	}
-
-	// if(!isChangeInUI() && isPRUITest()){env.NO_UI_TESTS=true}
+		if(getReviewState().equalsIgnoreCase("CHANGES_REQUESTED")){
+				println(reviewState)
+				sh 'exit 1'
+		}
 
 	}
 	def obj=new abortPrevBuilds();
  	obj.abortPrevBuilds();
+	 
 	gitCheckout ".", REPO_URL, BRANCH_NAME, gitCredID
 }
 

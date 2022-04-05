@@ -29,7 +29,7 @@ void PreBuildCheck() {
 	}
 	echo "JIRA_ID: " + JIRA_ID
 	echo "CHANGE_ID: " + CHANGE_ID
-	
+
  if(env.CHANGE_ID){
 
 	if(PRDraftCheck()){ sh 'exit 1' }
@@ -222,21 +222,24 @@ pipeline{
 
 		stage("Copy-RPMs") {
 			steps{
-				CopyRPMs()
+				//CopyRPMs()
+				echo 'Copying RPMs'
 			}
 			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Build-Image") {
 			steps{
-				sh "cd src/centos; make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
+				echo 'Building Image'
+				//sh "cd src/centos; make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
 			}
 			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Image-Test") {
 			steps{
-				RunStructureTests()
+				echo 'Running Image Tests'
+				// RunStructureTests()
 			}
 			post{
 				success{

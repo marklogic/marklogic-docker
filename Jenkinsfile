@@ -197,6 +197,13 @@ def PublishToInternalRegestry() {
 	}
 }
 
+def ResultNotification(message) {
+	mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+	if(JIRA_ID){
+		jiraAddComment comment: "Jenkins ${message}: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+	}
+}
+
 pipeline{
 	agent {
 				label{
@@ -287,23 +294,26 @@ pipeline{
 				"""
 		}
 		success {  
-			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
-			if(JIRA_ID){
-				jiraAddComment comment: "Jenkins build was successful: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
-			}
+			// mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
+			// if(JIRA_ID){
+			// 	jiraAddComment comment: "Jenkins build was successful: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			// }
+			ResultNotification(message: "BUILD SUCCESS")
 		}  
 		failure {  
-			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD ERROR: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-			if(JIRA_ID){
-				jiraAddComment comment: "Jenkins build failed: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
-			}
+			// mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD ERROR: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+			// if(JIRA_ID){
+			// 	jiraAddComment comment: "Jenkins build failed: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			// }
+			ResultNotification(message: "BUILD ERROR")
 		}  
 		unstable {  
-			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-			if(JIRA_ID){
+			// mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
+			// if(JIRA_ID){
 
-				jiraAddComment comment: "Jenkins build is unstable: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
-			}
+			// 	jiraAddComment comment: "Jenkins build is unstable: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			// }
+			ResultNotification(message: "BUILD UNSTABLE")
 		}   
 	}
 }

@@ -5,8 +5,8 @@
 @Library('shared-libraries')
 import groovy.json.JsonSlurperClassic
 
-def gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
-def JIRA_ID = ''
+gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
+JIRA_ID = ''
 
 // Define local funtions
 void PreBuildCheck() {

@@ -1,4 +1,5 @@
 // This Jenkinsfile defines internal MarkLogic build pipeline.
+// TODO: Before publishing, update git URL, remove commented code
 
 // Import libraries
 @Library('shared-libraries') _
@@ -21,7 +22,7 @@ void PreBuildCheck() {
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
 	echo "githubAPIUrl: " + githubAPIUrl
 
-		if((!env.CHANGE_TITLE.startsWith("CLD-"))){
+	if((!env.CHANGE_TITLE.startsWith("CLD-"))){
 		sh 'exit 1' 
 	}
 	else {
@@ -285,15 +286,15 @@ pipeline{
 		}
 		success {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.passEmail}";
-			jiraAddComment comment: "Jenkins build was successful: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			// jiraAddComment comment: "Jenkins build was successful: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
 		}  
 		failure {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD ERROR: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-			jiraAddComment comment: "Jenkins build failed: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			// jiraAddComment comment: "Jenkins build failed: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
 		}  
 		unstable {  
 			mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "BUILD UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.failEmail}";
-			jiraAddComment comment: "Jenkins build is unstable: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
+			// jiraAddComment comment: "Jenkins build is unstable: ${BUILD_URL}", idOrKey: JIRA_ID, site: 'JIRA'
 		}   
 	}
 }

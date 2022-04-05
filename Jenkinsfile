@@ -149,13 +149,17 @@ def RunStructureTests() {
 	sh """
 					cd test
 					#insert current version
-					#####debug######sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
+					sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
 					curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
 					./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
 					#fix junit output
 					sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
 				"""
 				junit testResults: '**/container-structure-test.xml'
+}
+
+def RunServerRegressionTests() {
+	input "Server regression tests need to be executed manually. "
 }
 
 def PublishToInternalRegestry() {
@@ -227,7 +231,28 @@ pipeline{
 			steps{
 				RunStructureTests()
 			}
-			post{failure{postStage('Stage Failed')}}
+			post{
+				success{
+					postStage('Stage Passed')
+				}
+				failure{
+					postStage('Stage Failed')
+				}
+			}
+		}
+
+		stage("Run-Server-Regression-Tests") {
+			steps{
+				RunServerRegressionTests()
+			}
+			post{
+				success{
+					postStage('Stage Passed')
+				}
+				failure{
+					postStage('Stage Failed')
+				}
+			}
 		}
 
 		stage("Publish-Image") {

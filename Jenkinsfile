@@ -4,6 +4,7 @@
 // Import libraries
 @Library('shared-libraries') _
 import groovy.json.JsonSlurperClassic
+import java.util.regex.*
 
 // Define local variables
 //githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
@@ -28,7 +29,7 @@ void PreBuildCheck() {
 	if (match.find()) { 
 			println match[0][1]
 			println match[0][2]
-			println match.group(1)
+			//println match.group(1)
 	} else {
 			println 'No match' 
 	}

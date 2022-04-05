@@ -439,6 +439,29 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
 
+# Upgrading from Dcoker Release 10.0-1 or later
+
+To upgrade MarkLogic Docker from release 10.0-1 to the current release, perform following steps:
+
+1. Stop MarkLogic Docker container
+Use following command to stop the container:
+
+```
+$ docker stop container_id
+```
+2. Run a MarkLogic Docker container using latest release of Docker image and use the same volume mounted to the container running older release.
+```
+$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
+     --name MarkLogic_cont_1 \
+     --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
+     -e MARKLOGIC_INIT=true \
+     -e MARKLOGIC_ADMIN_USERNAME=badmin101 \
+     -e MARKLOGIC_ADMIN_PASSWORD=badmin101 \
+    ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-2-centos-1.1.0
+```
+3. Open the Admin Interface in a browser (http://<vm_ip>:8001/).
+4. When the Admin Interface prompts you to upgrade the databases and the configuration files, click the button to confirm the upgrade.
+
 # Debugging
 
 ## Accessing a MarkLogic Container while it's running

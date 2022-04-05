@@ -26,7 +26,7 @@ void PreBuildCheck() {
 	echo "CHANGE_ID: " + env.CHANGE_ID
 	echo "CHANGE_TITLE: " + env.CHANGE_TITLE
 
-	JIRA_ID = ExtractJiraID(BRANCH_NAME)
+	JIRA_ID = ExtractJiraID()
 	echo "Jira ticket number: " + JIRA_ID
 
 	githubAPIUrl = REPO_URL.replace(".git","").replace("github.com","api.github.com/repos")
@@ -49,16 +49,21 @@ void PreBuildCheck() {
 }
 
 @NonCPS
-def ExtractJiraID(branchName) {
+def ExtractJiraID() {
 	def jiraId
-	def match = (branchName =~ /CLD-\d{3,4}/)
-	echo "DEBUG: about to check match"
-	if(match != null){
+	def match
+	if( env.CHANGE_ID != ''){
+		match = (env.CHANGE_TITLE =~ /CLD-\d{3,4}/)
+	} else {
+		match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
+	}
+
+	try(match){
 		jiraId = match[0]
+	} catch(Exception e){
+		jiraId = ''
 	}
-	else{
-		jiraId = false
-	}
+	
 	return jiraId
 }
 
@@ -104,7 +109,7 @@ def getServerPath(branchName) {
 
 def ResultNotification(message) {
 	mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.emailList}";
-	if(JIRA_ID){
+	if(JIRA_ID != ''){
 		def comment = [ body: "Jenkins pipeline build result: ${message}" ]
 		jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
 	}

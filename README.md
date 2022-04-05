@@ -14,6 +14,7 @@
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)
  * [Clustering](#Clustering)
+ * [Upgrading to a latest Docker Release](#Upgrading-to-a-latest-Docker-Release)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
@@ -25,6 +26,7 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 - How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
 - How to enable security using Docker secrets
 - How to mount volumes for Docker containers 
+- How to upgrade to a latest MarkLogic Docker release  
 - How to clean up MarkLogic Docker containers and resources
 
 # Prerequisites
@@ -439,9 +441,9 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
 
-# Upgrading from Dcoker Release 10.0-1 or later
+# Upgrading to a latest MarkLogic Docker Release
 
-To upgrade MarkLogic Docker from release 10.0-1 to the current release, perform following steps:
+To upgrade MarkLogic Docker from release 10.0-1 to the latest release, perform following steps:
 
 1. Stop MarkLogic Docker container
 Use following command to stop the container:
@@ -452,15 +454,16 @@ $ docker stop container_id
 2. Run a MarkLogic Docker container using latest release of Docker image and use the same volume mounted to the container running older release.
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     --name MarkLogic_cont_1 \
+     --name MarkLogic_cont_2 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME=badmin101 \
-     -e MARKLOGIC_ADMIN_PASSWORD=badmin101 \
-    ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-2-centos-1.1.0
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
+    store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0
 ```
 3. Open the Admin Interface in a browser (http://<vm_ip>:8001/).
-4. When the Admin Interface prompts you to upgrade the databases and the configuration files, click the button to confirm the upgrade.
+4. When the Admin Interface prompts you to upgrade the databases and the configuration files, click the Ok button to confirm the upgrade.
+5. Once the upgrade is complete, Admin interface will reload with the new MarkLogic release. 
 
 # Debugging
 

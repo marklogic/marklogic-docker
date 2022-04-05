@@ -8,6 +8,7 @@ import groovy.json.JsonSlurperClassic
 // Define local variables
 //githubAPIUrl="https://api.github.com/repos/vitalykorolev/marklogic-docker-fork"
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
+JIRA_ID=""
 
 // Define local funtions
 void PreBuildCheck() {
@@ -26,7 +27,7 @@ void PreBuildCheck() {
 	// Extract Jira ticket number from branch name
 	def match = (BRANCH_NAME =~ /CLD-\d{3,4}/)
 	println match
-	def JIRA_ID = match[0]
+	JIRA_ID = match[0]
 
 	if(JIRA_ID == ''){
 		echo "Jira ticket number is empty!"

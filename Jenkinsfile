@@ -243,28 +243,14 @@ pipeline{
 				echo 'Running Image Tests'
 				// RunStructureTests()
 			}
-			post{
-				success{
-					postStage('Stage Passed')
-				}
-				failure{
-					postStage('Stage Failed')
-				}
-			}
+			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Run-Server-Regression-Tests") {
 			steps{
 				RunServerRegressionTests()
 			}
-			post{
-				success{
-					postStage('Stage Passed')
-				}
-				failure{
-					postStage('Stage Failed')
-				}
-			}
+			post{failure{postStage('Stage Failed')}}
 		}
 
 		stage("Publish-Image") {

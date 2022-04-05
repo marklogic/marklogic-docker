@@ -25,8 +25,11 @@ void PreBuildCheck() {
 	echo "Branch name: " + BRANCH_NAME
 
 	// Extract Jira ticket number from branch name
-	def match = (BRANCH_NAME =~ /CLD-\d{3,4}/).findAll()
-	echo match[0]
+	//def match = (BRANCH_NAME =~ /CLD-\d{3,4}/).findAll()
+		def pattern = ~/CLD-\d{3,4}/
+    def m = pattern.matcher(BRANCH_NAME)
+    println m[0][0]
+    println m[0][1]
 
 	sh 'exit 1'
 

@@ -26,22 +26,9 @@ void PreBuildCheck() {
 
 	// Extract Jira ticket number from branch name
 	def match = (BRANCH_NAME =~ /CLD-\d{3,4}/)
-	println match
-	println match[0]
-	println match[0][0]
-// 		text = 'Some 42 number #12 more'
-// def ma = (text =~ /\d+/)
-// println ma              // java.util.regex.Matcher[pattern=\d+ region=0,23 lastmatch=]
-// println ma[0]           // 42
- 
-// def mb = (text =~ /#\d+/)
-// println mb              // java.util.regex.Matcher[pattern=#\d+ region=0,23 lastmatch=]
-// println mb[0]           //  #12
- 
-// def mc = (text =~ /#(\d+)/)
-// println mc[0]          // [#12, 12]
-// println mc[0][0]       // #12
-// println mc[0][1]       // 12
+	//println match
+	JIRA_ID = match[0]
+	echo "Jira ticket number: " + JIRA_ID
 
 	sh 'exit 1'
 

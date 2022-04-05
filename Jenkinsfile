@@ -11,7 +11,7 @@ def JIRA_ID = ''
 // Define local funtions
 void PreBuildCheck() {
     // Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
-    evaluate '''${ def script = ""; params.each { k, v -> script += "env.${ k } = '''${v}'''\n" }; return script }'''
+    evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
     if (params.BRANCH_OVERRIDE != '') {
         BRANCH_NAME = params.BRANCH_OVERRIDE

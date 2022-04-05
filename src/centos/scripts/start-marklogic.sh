@@ -13,6 +13,41 @@
 
 cd ~
 
+################################################################
+# Read in ENV values
+################################################################
+
+# If an ENV value exists in a list Append it the /etc/marklogic.conf file 
+if [[ -z $OVERWRITE_ML_CONF ]] || [[ "$OVERWRITE_ML_CONF" = "false" ]] ; then
+    echo "Not writing to /etc/marklogic.conf"
+else
+    echo "Deleting previous /etc/marklogic.conf ,if it exists, and overwriting with env variables"
+    rm -f /etc/marklogic.conf
+    sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
+
+    if [[ $MARKLOGIC_INSTALL_DIR ]] ; then sudo echo MARKLOGIC_INSTALL_DIR=$MARKLOGIC_INSTALL_DIR >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_FSTYPE ]] ; then sudo echo MARKLOGIC_FSTYPE=$MARKLOGIC_FSTYPE >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_USER ]] ; then sudo echo MARKLOGIC_USER=$MARKLOGIC_USER >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_PID_FILE ]] ; then sudo echo MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_UMASK ]] ; then sudo echo MARKLOGIC_UMASK=$MARKLOGIC_UMASK >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_DISABLE_JVM ]] ; then sudo echo MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_EC2_HOST ]] ; then sudo echo MARKLOGIC_EC2_HOST=$MARKLOGIC_EC2_HOST >> /etc/marklogic.conf; fi
+    if [[ $TZ ]] ; then sudo echo TZ=$TZ >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_CLUSTER_NAME ]] ; then sudo echo MARKLOGIC_CLUSTER_NAME=$MARKLOGIC_CLUSTER_NAME >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_NODE_NAME ]] ; then sudo echo MARKLOGIC_NODE_NAME=$MARKLOGIC_NODE_NAME >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_ADMIN_USERNAME ]] ; then sudo echo MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_ADMIN_PASSWORD ]] ; then sudo echo MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_CLUSTER_MASTER ]] ; then sudo echo MARKLOGIC_CLUSTER_MASTER=$MARKLOGIC_CLUSTER_MASTER >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_LICENSEE ]] ; then sudo echo MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_LICENSE_KEY ]] ; then sudo echo MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY >> /etc/marklogic.conf; fi
+    if [[ $MARKLOGIC_DISABLE_JVM ]] ; then sudo echo MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM >> /etc/marklogic.conf; fi
+    if [[ $JAVA_HOME ]] ; then sudo echo JAVA_HOME=$JAVA_HOME >> /etc/marklogic.conf; fi
+    if [[ $CLASSPATH ]] ; then sudo echo CLASSPATH=$CLASSPATH >> /etc/marklogic.conf; fi
+    if [[ $ML_HUGEPAGES_TOTAL ]] ; then sudo echo ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL >> /etc/marklogic.conf; fi
+fi
+
+
+
 
 ################################################################
 # Install Converters if required

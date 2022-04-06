@@ -14,14 +14,6 @@ void PreBuildCheck() {
     // Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
     evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
-    if (params.BRANCH_OVERRIDE != '') {
-            BRANCH_NAME = params.BRANCH_OVERRIDE
-    }
-    if (BRANCH_NAME == '') {
-            echo 'Branch name is empty!'
-            sh 'exit 1'
-    }
-    echo 'Branch name: ' + BRANCH_NAME
     echo 'CHANGE_ID: ' + env.CHANGE_ID
     echo 'CHANGE_TITLE: ' + env.CHANGE_TITLE
 
@@ -40,8 +32,6 @@ void PreBuildCheck() {
     }
     def obj = new abortPrevBuilds()
     obj.abortPrevBuilds()
-
-    gitCheckout '.', REPO_URL, BRANCH_NAME, gitCredID
 }
 
 @NonCPS
@@ -231,7 +221,6 @@ pipeline {
         string(name: 'REPO_URL', defaultValue: 'https://github.com/marklogic/marklogic-docker.git', description: 'Docker repository URL', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
-        string(name: 'BRANCH_OVERRIDE', defaultValue: '', description: 'define branch for docker repo')
         choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)

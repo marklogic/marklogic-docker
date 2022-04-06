@@ -181,10 +181,10 @@ def RunStructureTests() {
 }
 
 def RunServerRegressionTests() {
-    //TODO: we need to show the prompt with PR is for develop branch
-    // ultimately this still should trigger the job for server regression tests
-    echo 'Server regression tests'
-//input "Server regression tests need to be executed manually. "
+    //TODO: run this conditionally for develop and master branches only
+    echo 'Server regression tests would execute here'
+    // The following can be uncommented to show an interactive prompt for manual regresstion tests
+    // input "Server regression tests need to be executed manually. "
 }
 
 def PublishToInternalRegistry() {

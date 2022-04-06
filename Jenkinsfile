@@ -2,6 +2,7 @@
 
 /* groovylint-disable CatchException, CompileStatic, DuplicateStringLiteral, LineLength, MethodName, MethodParameterTypeRequired, MethodReturnTypeRequired, NoDef, UnnecessaryGetter, UnusedVariable, VariableName, VariableTypeRequired */
 
+//Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
 @Library('shared-libraries')
 import groovy.json.JsonSlurperClassic
 
@@ -88,16 +89,16 @@ def getReviewState() {
 }
 
 def getServerPath(branchName) {
-            switch (branchName) {
-                                                                            case '10.1':
-                                                                                                            return 'rh7v-10-tst-bld-1.eng.marklogic.com/b10_1'
-                                                                            case '11.0':
-                                                                                                            return 'rh7v-i64-11-build/HEAD'
-                                                                            case '9.0':
-                                                                                                            return 'rh7v-90-tst-bld-1.marklogic.com/b9_0'
-                                                                            default:
-                                                                                                            return 'INVALID BRANCH'
-            }
+    switch (branchName) {
+            case '10.1':
+            return 'rh7v-10-tst-bld-1.eng.marklogic.com/b10_1'
+    case '11.0':
+            return 'rh7v-i64-11-build/HEAD'
+            case '9.0':
+    return 'rh7v-90-tst-bld-1.marklogic.com/b9_0'
+            default:
+            return 'INVALID BRANCH'
+    }
 }
 
 def ResultNotification(message) {

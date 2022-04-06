@@ -14,11 +14,11 @@ void PreBuildCheck() {
     evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
     if (params.BRANCH_OVERRIDE != '') {
-        BRANCH_NAME = params.BRANCH_OVERRIDE
+            BRANCH_NAME = params.BRANCH_OVERRIDE
     }
     if (BRANCH_NAME == '') {
-        echo 'Branch name is empty!'
-        sh 'exit 1'
+            echo 'Branch name is empty!'
+            sh 'exit 1'
     }
     echo 'Branch name: ' + BRANCH_NAME
     echo 'CHANGE_ID: ' + env.CHANGE_ID
@@ -30,17 +30,15 @@ void PreBuildCheck() {
     githubAPIUrl = REPO_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
     echo 'githubAPIUrl: ' + githubAPIUrl
 
- if (env.CHANGE_ID) {
-
-        if (PRDraftCheck()) { sh 'exit 1' }
-
-        if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
-                println(reviewState)
-                sh 'exit 1'
-        }
- }
+    if (env.CHANGE_ID) {
+            if (PRDraftCheck()) { sh 'exit 1' }
+                if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
+                    println(reviewState)
+                    sh 'exit 1'
+                }
+    }
     def obj = new abortPrevBuilds()
-     obj.abortPrevBuilds()
+    obj.abortPrevBuilds()
 
     gitCheckout '.', REPO_URL, BRANCH_NAME, gitCredID
 }
@@ -85,6 +83,7 @@ def getReviewState() {
     def commit_id = jsonObj.head.sha
     println(commit_id)
     def reviewState = getReviewStateOfPR reviewResponse, 2, commit_id
+    echo reviewState
     return reviewState
 }
 
@@ -102,7 +101,11 @@ def getServerPath(branchName) {
 }
 
 def ResultNotification(message) {
-    mail bcc: '', body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}", to: "${params.emailList}"
+    if (env.CHANGE_AUTHOR != '') {
+      author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
+      authorEmail = getEmailFromGITUser author
+    }
+    mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList},${authorEmail}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     if (JIRA_ID != '') {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment

@@ -24,11 +24,11 @@ void PreBuildCheck() {
     echo 'githubAPIUrl: ' + githubAPIUrl
 
     if (env.CHANGE_ID) {
-            if (PRDraftCheck()) { sh 'exit 1' }
-                if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
-                    println(reviewState)
-                    sh 'exit 1'
-                }
+        if (PRDraftCheck()) { sh 'exit 1' }
+            if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
+                println(reviewState)
+                sh 'exit 1'
+            }
     }
     def obj = new abortPrevBuilds()
     obj.abortPrevBuilds()
@@ -80,21 +80,24 @@ def getReviewState() {
 
 def getServerPath(branchName) {
     switch (branchName) {
-            case '10.1':
+        case '10.1':
             return 'rh7v-10-tst-bld-1.eng.marklogic.com/b10_1'
-    case '11.0':
+            break
+        case '11.0':
             return 'rh7v-i64-11-build/HEAD'
-            case '9.0':
-    return 'rh7v-90-tst-bld-1.marklogic.com/b9_0'
-            default:
+            break
+        case '9.0':
+            return 'rh7v-90-tst-bld-1.marklogic.com/b9_0'
+            break
+        default:
             return 'INVALID BRANCH'
     }
 }
 
 def ResultNotification(message) {
     if (env.CHANGE_AUTHOR != '') {
-      author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
-      authorEmail = getEmailFromGITUser author
+        author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
+        authorEmail = getEmailFromGITUser author
     }
     mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList},${authorEmail}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     if (JIRA_ID != '') {
@@ -169,15 +172,15 @@ def CopyRPMs() {
 
 def RunStructureTests() {
     sh """
-                    cd test
-                    #insert current version
-                    sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
-                    curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-                    ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
-                    #fix junit output
-                    sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
-                """
-                junit testResults: '**/container-structure-test.xml'
+        cd test
+        #insert current version
+        sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
+        curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+        ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
+        #fix junit output
+        sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
+    """
+    junit testResults: '**/container-structure-test.xml'
 }
 
 def RunServerRegressionTests() {
@@ -189,19 +192,19 @@ def RunServerRegressionTests() {
 
 def PublishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
-                    sh """
-                        docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry}
-                        cd src/centos
-                        make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
-                    """
+        sh """
+            docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry}
+            cd src/centos
+            make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
+        """
     }
 }
 
 pipeline {
     agent {
-                label {
-                    label 'docker-vitaly'
-                }
+        label {
+            label 'docker-vitaly'
+        }
     }
     options {
         checkoutToSubdirectory '.'
@@ -270,10 +273,10 @@ pipeline {
 
     post {
         always {
-                sh '''
-                    cd src/centos
-                    rm -rf *.rpm
-                '''
+            sh '''
+                cd src/centos
+                rm -rf *.rpm
+            '''
         }
         success {
             ResultNotification('BUILD SUCCESS ✅')

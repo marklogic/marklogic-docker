@@ -14,7 +14,7 @@
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)
  * [Clustering](#Clustering)
- * [Upgrading to a latest Docker Release](#Upgrading-to-a-latest-Docker-Release)
+ * [Upgrading to the latest Docker Release](#Upgrading-to-the-latest-Docker-Release)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
@@ -26,7 +26,7 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 - How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
 - How to enable security using Docker secrets
 - How to mount volumes for Docker containers 
-- How to upgrade to a latest MarkLogic Docker release  
+- How to upgrade to the latest MarkLogic Docker release  
 - How to clean up MarkLogic Docker containers and resources
 
 # Prerequisites
@@ -441,7 +441,9 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 
 When you complete these steps, you will have multiple containers; one on each VM, and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
 
-# Upgrading to a latest MarkLogic Docker Release
+# Upgrading to the latest MarkLogic Docker Release
+
+MarkLogic has extensive documentation about upgrades, see [https://docs.marklogic.com/guide/relnotes/chap2](https://docs.marklogic.com/guide/relnotes/chap2). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.marklogic.com/guide/admin/rolling-upgrades](https://docs.marklogic.com/guide/admin/rolling-upgrades) if you need to upgrade with zero downtime.
 
 To upgrade MarkLogic Docker from release 10.0-1 to the latest release, perform following steps:
 
@@ -451,7 +453,7 @@ Use following command to stop the container:
 ```
 $ docker stop container_id
 ```
-2. Now, run a MarkLogic Docker container using latest release of Docker image. Use the same volume, mounted to the container that was running the older release.
+2. Now, run a MarkLogic Docker container using the latest release of the Docker image. Use the same volume, mounted to the container that was running the older release.
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      --name MarkLogic_cont_2 \
@@ -461,9 +463,9 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0
 ```
-3. Open the MarkLogic Admin Interface for the container, in a browser (http://<vm_ip>:8001/).
+3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
 4. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
-5. Once the upgrade is complete, Admin interface will reload with the new MarkLogic release. 
+5. Once the upgrade is complete, the Admin interface will reload with the new MarkLogic release. 
 
 # Debugging
 

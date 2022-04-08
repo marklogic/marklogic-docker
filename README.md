@@ -440,7 +440,6 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 ```
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
-l-cluster-network' network. All the containers will be part of same cluster.
 
 # Backing Up and Restoring a Database
 

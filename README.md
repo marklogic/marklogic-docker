@@ -445,7 +445,8 @@ When you complete these steps, you will have multiple containers; one on each VM
 
 MarkLogic has extensive documentation about upgrades, see [https://docs.marklogic.com/guide/relnotes/chap2](https://docs.marklogic.com/guide/relnotes/chap2). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.marklogic.com/guide/admin/rolling-upgrades](https://docs.marklogic.com/guide/admin/rolling-upgrades) if you need to upgrade with zero downtime.
 
-To upgrade MarkLogic Docker from release 10.0-1 to the latest release, perform following steps:
+To upgrade MarkLogic Docker from release 10.x to the latest release, perform following steps:
+Note: In the below example, we are upgrading the container to marklogic-server:10.0-9.1-centos-1.0.0.
 
 1. Stop the MarkLogic Docker container.
 Use following command to stop the container:

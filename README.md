@@ -148,6 +148,21 @@ local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
 local     MarkLogic_vol_1
 ```
 
+## Configuring swap space
+
+MarkLogic recommends that swap space be configured for production deployments to reduce the possibility of ‘out of memory’ errors. Please find more details on [MarkLogic recommendations for swap space](https://help.marklogic.com/knowledgebase/article/View/21/19/swap-space-requirements) and [configuring "swappiness"](https://help.marklogic.com/Knowledgebase/Article/View/linux-swappiness).
+
+Check on how [Docker allocates swap space](https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details). The amount of memory and swap that are available to MarkLogic can be controlled using the "--memory" and "--memory-swap" settings. For example, if you wanted to run a MarkLogic container with you 64GB of memory and 32GB of swap, you would specify the following with your docker run command:
+```
+--memory="64g" --memory-swap="96g"
+```
+If you want to limit memory to 64GB but allow MarkLogic to use unlimited swap, up to the amount available on the host system, specify the following with your docker run command:
+```
+--memory="64g" --memory-swap="-1"
+```
+To allow MarkLogic to be able to use unlimited memory and swap, up to the amount available on the host system, do not specify either "--memory" or "--memory-swap".
+
+
 # Configuration
 
 MarkLogic Server Docker containers are configured using a set of environment variables.

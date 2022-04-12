@@ -14,11 +14,9 @@ void PreBuildCheck() {
     // Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
     evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
-    echo 'CHANGE_ID: ' + env.CHANGE_ID
-    echo 'CHANGE_TITLE: ' + env.CHANGE_TITLE
-
     JIRA_ID = ExtractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
+    sh 'env'
 
     githubAPIUrl = REPO_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
     echo 'githubAPIUrl: ' + githubAPIUrl
@@ -36,6 +34,12 @@ void PreBuildCheck() {
 
 @NonCPS
 def ExtractJiraID() {
+    // DEBUG
+    echo 'CHANGE_ID: ' + env.CHANGE_ID
+    echo 'CHANGE_TITLE: ' + env.CHANGE_TITLE
+    sh 'env'
+    // DEBUG
+
     def match
     if (env.CHANGE_ID != '') {
             match = (env.CHANGE_TITLE =~ /CLD-\d{3,4}/)
@@ -43,6 +47,7 @@ def ExtractJiraID() {
             match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
     }
     try {
+            echo match
             return match[0]
     } catch (Exception e) {
             return ''

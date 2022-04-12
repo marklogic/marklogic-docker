@@ -16,9 +16,9 @@ void PreBuildCheck() {
 
     JIRA_ID = ExtractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
-    sh 'env'
 
-    githubAPIUrl = REPO_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
+    // handle REPO_URL with GIT_URL
+    githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
     echo 'githubAPIUrl: ' + githubAPIUrl
 
     if (env.CHANGE_ID) {
@@ -35,9 +35,11 @@ void PreBuildCheck() {
 @NonCPS
 def ExtractJiraID() {
     // DEBUG
-    echo 'CHANGE_ID: ' + env.CHANGE_ID
-    echo 'CHANGE_TITLE: ' + env.CHANGE_TITLE
-    sh 'env'
+    echo 'env.CHANGE_ID: ' + env.CHANGE_ID
+    echo 'env.CHANGE_TITLE: ' + env.CHANGE_TITLE
+    echo 'env.BRANCH_NAME: ' + env.BRANCH_NAME
+    echo 'env.GIT_BRANCH: ' + env.GIT_BRANCH
+    //sh 'env'
     // DEBUG
 
     def match
@@ -226,7 +228,6 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: 'vkorolev@marklogic.com', description: 'List of email for build notification', trim: true)
-        string(name: 'REPO_URL', defaultValue: 'https://github.com/marklogic/marklogic-docker.git', description: 'Docker repository URL', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
         choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')

@@ -17,9 +17,13 @@ void PreBuildCheck() {
     JIRA_ID = ExtractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
-    // handle REPO_URL with GIT_URL
-    githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
-    echo 'githubAPIUrl: ' + githubAPIUrl
+    if ( env.GIT_URL != '' ) {
+        githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
+        echo 'githubAPIUrl: ' + githubAPIUrl
+    } else {
+        echo 'ERROR: GIT_URL is not defined'
+        sh 'exit 1'
+    }
 
     if (env.CHANGE_ID) {
         if (PRDraftCheck()) { sh 'exit 1' }
@@ -43,13 +47,20 @@ def ExtractJiraID() {
     // DEBUG
 
     def match
-    if (env.CHANGE_ID != '') {
-            match = (env.CHANGE_TITLE =~ /CLD-\d{3,4}/)
-    } else {
-            match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
+    if (env.CHANGE_TITLE != '') {
+        match = (env.CHANGE_TITLE =~ /CLD-\d{3,4}/)
+    } 
+    else if (env.BRANCH_NAME != '') {
+        match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
+    }
+    else if (env.GIT_BRANCH != '') {
+        match = (env.GIT_BRANCH =~ /CLD-\d{3,4}/)
+    }
+    else {
+        echo 'ERROR: Jira ticket number not detected.'
+        return ''
     }
     try {
-            echo match
             return match[0]
     } catch (Exception e) {
             return ''

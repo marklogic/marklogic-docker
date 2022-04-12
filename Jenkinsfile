@@ -48,12 +48,15 @@ def ExtractJiraID() {
 
     def match
     if (env.CHANGE_TITLE != '') {
+        echo 'trying to match Jira ID from CHANGE_TITLE'
         match = (env.CHANGE_TITLE =~ /CLD-\d{3,4}/)
     } 
     else if (env.BRANCH_NAME != '') {
+        echo 'trying to match Jira ID from BRANCH_NAME'
         match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
     }
     else if (env.GIT_BRANCH != '') {
+        echo 'trying to match Jira ID from GIT_BRANCH'
         match = (env.GIT_BRANCH =~ /CLD-\d{3,4}/)
     }
     else {
@@ -61,9 +64,12 @@ def ExtractJiraID() {
         return ''
     }
     try {
-            return match[0]
+        echo match.group(0)
+        echo match[0]
+        return match[0]
     } catch (Exception e) {
-            return ''
+        echo 'ERROR: matching failed.'
+        return ''
     }
 }
 

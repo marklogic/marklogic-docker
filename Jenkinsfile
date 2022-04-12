@@ -8,6 +8,7 @@ import groovy.json.JsonSlurperClassic
 
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 JIRA_ID = ''
+JIRA_ID_PATTERN = /CLD-\d{3,4}/
 
 // Define local funtions
 void PreBuildCheck() {
@@ -49,26 +50,24 @@ def ExtractJiraID() {
     def match
     if (env.CHANGE_TITLE != null) {
         echo 'trying to match Jira ID from CHANGE_TITLE'
-        match = (env.CHANGE_TITLE =~ /CLD-\d{3,4}/)
+        match = env.CHANGE_TITLE =~ JIRA_ID_PATTERN
     } 
     else if (env.BRANCH_NAME != null) {
         echo 'trying to match Jira ID from BRANCH_NAME'
-        match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
+        match = env.BRANCH_NAME =~ JIRA_ID_PATTERN
     }
     else if (env.GIT_BRANCH != null) {
         echo 'trying to match Jira ID from GIT_BRANCH'
-        match = (env.GIT_BRANCH =~ /CLD-\d{3,4}/)
+        match = env.GIT_BRANCH =~ JIRA_ID_PATTERN
     }
     else {
         echo 'ERROR: Jira ticket number not detected.'
         return ''
     }
     try {
-        echo match.group(0)
-        echo match[0]
         return match[0]
-    } catch (Exception e) {
-        echo 'ERROR: matching failed.'
+    } catch (IndexOutOfBoundsException e) {
+        echo 'ERROR: Jira ticket number not detected.'
         return ''
     }
 }

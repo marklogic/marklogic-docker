@@ -44,6 +44,8 @@ else
     if [[ $JAVA_HOME ]] ; then sudo echo JAVA_HOME=$JAVA_HOME >> /etc/marklogic.conf; fi
     if [[ $CLASSPATH ]] ; then sudo echo CLASSPATH=$CLASSPATH >> /etc/marklogic.conf; fi
     if [[ $ML_HUGEPAGES_TOTAL ]] ; then sudo echo ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL >> /etc/marklogic.conf; fi
+
+    sudo chmod 400 /etc/marklogic.conf
 fi
 
 

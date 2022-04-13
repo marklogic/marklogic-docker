@@ -115,7 +115,7 @@ fi
 ################################################################
 # check bootstrap marklogic (eg. MARKLOGIC_INIT is set)
 ################################################################
-if [ -z $MARKLOGIC_INIT ]
+if [ -z $MARKLOGIC_INIT ] || [[ "$MARKLOGIC_INIT" = "false" ]]
 then
 echo "MARKLOGIC_INIT is not defined, no bootstrap"
 else
@@ -150,7 +150,7 @@ fi
 ################################################################
 # check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set)
 ################################################################
-if [ -z $MARKLOGIC_JOIN_CLUSTER ]
+if [ -z $MARKLOGIC_JOIN_CLUSTER ] || [[ "$MARKLOGIC_JOIN_CLUSTER" = "false" ]]
 then
 echo "MARKLOGIC_JOIN_CLUSTER is not defined, not joining cluster"
 else

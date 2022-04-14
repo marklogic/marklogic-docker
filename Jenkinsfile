@@ -117,6 +117,7 @@ def ResultNotification(message) {
     } else {
         emailList = params.emailList
     }
+
     mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]

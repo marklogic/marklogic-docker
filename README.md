@@ -9,7 +9,7 @@
  * [Introduction](#Introduction)
  * [Prerequisites](#Prerequisites)
  * [Supported tags](#Supported-tags)
- * [Quick reference](#Quick-reference)
+ * [Architecture reference](#Architecture-reference)
  * [MarkLogic](#MarkLogic)
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)

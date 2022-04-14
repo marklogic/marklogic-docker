@@ -3,25 +3,28 @@
 /* groovylint-disable CatchException, CompileStatic, DuplicateStringLiteral, LineLength, MethodName, MethodParameterTypeRequired, MethodReturnTypeRequired, NoDef, UnnecessaryGetter, UnusedVariable, VariableName, VariableTypeRequired */
 
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
-@Library('shared-libraries')
+@Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
 
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 JIRA_ID = ''
+JIRA_ID_PATTERN = /CLD-\d{3,4}/
 
 // Define local funtions
 void PreBuildCheck() {
     // Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
     evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
-    echo 'CHANGE_ID: ' + env.CHANGE_ID
-    echo 'CHANGE_TITLE: ' + env.CHANGE_TITLE
-
     JIRA_ID = ExtractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
-    githubAPIUrl = REPO_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
-    echo 'githubAPIUrl: ' + githubAPIUrl
+    if ( env.GIT_URL ) {
+        githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
+        echo 'githubAPIUrl: ' + githubAPIUrl
+    } else {
+        echo 'ERROR: GIT_URL is not defined'
+        sh 'exit 1'
+    }
 
     if (env.CHANGE_ID) {
         if (PRDraftCheck()) { sh 'exit 1' }
@@ -30,22 +33,33 @@ void PreBuildCheck() {
                 sh 'exit 1'
             }
     }
-    def obj = new abortPrevBuilds()
-    obj.abortPrevBuilds()
+
+    // def obj = new abortPrevBuilds()
+    // obj.abortPrevBuilds()
 }
 
 @NonCPS
 def ExtractJiraID() {
+    // Extract Jira ID from one of the environment variables
     def match
-    if (env.CHANGE_ID != '') {
-            match = (env.CHANGE_TITLE =~ /CLD-\d{3,4}/)
-    } else {
-            match = (env.BRANCH_NAME =~ /CLD-\d{3,4}/)
+    if (env.CHANGE_TITLE) {
+        match = env.CHANGE_TITLE =~ JIRA_ID_PATTERN
+    } 
+    else if (env.BRANCH_NAME) {
+        match = env.BRANCH_NAME =~ JIRA_ID_PATTERN
+    }
+    else if (env.GIT_BRANCH) {
+        match = env.GIT_BRANCH =~ JIRA_ID_PATTERN
+    }
+    else {
+        echo 'ERROR: Jira ticket number not detected.'
+        return ''
     }
     try {
-            return match[0]
-    } catch (Exception e) {
-            return ''
+        return match[0]
+    } catch (any) {
+        echo 'ERROR: Jira ticket number not detected.'
+        return ''
     }
 }
 
@@ -95,12 +109,12 @@ def getServerPath(branchName) {
 }
 
 def ResultNotification(message) {
-    if (env.CHANGE_AUTHOR != '') {
+    if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
         authorEmail = getEmailFromGITUser author
     }
     mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList},${authorEmail}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-    if (JIRA_ID != '') {
+    if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
     }
@@ -221,7 +235,6 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: 'vkorolev@marklogic.com', description: 'List of email for build notification', trim: true)
-        string(name: 'REPO_URL', defaultValue: 'https://github.com/marklogic/marklogic-docker.git', description: 'Docker repository URL', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
         choice(name: 'ML_SERVER_BRANCH', choices: '10.1\n11.0\n9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')

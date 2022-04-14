@@ -18,7 +18,7 @@ void PreBuildCheck() {
     JIRA_ID = ExtractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
-    if ( env.GIT_URL != '' ) {
+    if ( env.GIT_URL ) {
         githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
         echo 'githubAPIUrl: ' + githubAPIUrl
     } else {
@@ -33,31 +33,22 @@ void PreBuildCheck() {
                 sh 'exit 1'
             }
     }
+
     // def obj = new abortPrevBuilds()
     // obj.abortPrevBuilds()
 }
 
 @NonCPS
 def ExtractJiraID() {
-    // DEBUG
-    echo 'env.CHANGE_ID: ' + env.CHANGE_ID
-    echo 'env.CHANGE_TITLE: ' + env.CHANGE_TITLE
-    echo 'env.BRANCH_NAME: ' + env.BRANCH_NAME
-    echo 'env.GIT_BRANCH: ' + env.GIT_BRANCH
-    //sh 'env'
-    // DEBUG
-
+    // Extract Jira ID from one of the environment variables
     def match
-    if (env.CHANGE_TITLE != null) {
-        echo 'trying to match Jira ID from CHANGE_TITLE'
+    if (env.CHANGE_TITLE) {
         match = env.CHANGE_TITLE =~ JIRA_ID_PATTERN
     } 
-    else if (env.BRANCH_NAME != null) {
-        echo 'trying to match Jira ID from BRANCH_NAME'
+    else if (env.BRANCH_NAME) {
         match = env.BRANCH_NAME =~ JIRA_ID_PATTERN
     }
-    else if (env.GIT_BRANCH != null) {
-        echo 'trying to match Jira ID from GIT_BRANCH'
+    else if (env.GIT_BRANCH) {
         match = env.GIT_BRANCH =~ JIRA_ID_PATTERN
     }
     else {
@@ -66,7 +57,7 @@ def ExtractJiraID() {
     }
     try {
         return match[0]
-    } catch (IndexOutOfBoundsException e) {
+    } catch (any) {
         echo 'ERROR: Jira ticket number not detected.'
         return ''
     }
@@ -118,12 +109,12 @@ def getServerPath(branchName) {
 }
 
 def ResultNotification(message) {
-    if (env.CHANGE_AUTHOR != '') {
+    if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
         authorEmail = getEmailFromGITUser author
     }
     mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList},${authorEmail}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-    if (JIRA_ID != '') {
+    if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
     }

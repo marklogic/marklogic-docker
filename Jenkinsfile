@@ -23,7 +23,6 @@ void PreBuildCheck() {
         echo 'githubAPIUrl: ' + githubAPIUrl
     } else {
         echo 'ERROR: GIT_URL is not defined'
-        sh 'exit 1'
     }
 
     if (env.CHANGE_ID) {
@@ -211,7 +210,7 @@ def ServerRegressionTests() {
 
 def DockerRunTests() {
     def dockerImage = "marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
-
+    sh 'docker container ls'
 }
 
 def PublishToInternalRegistry() {
@@ -251,6 +250,8 @@ pipeline {
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
+        booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
+        booleanParam(name: 'SERVER_REGRESSION', defaultValue: true, description: 'Run server regression tests')
     }
 
     stages {
@@ -273,6 +274,9 @@ pipeline {
         }
 
         stage('Image-Test') {
+            when {
+                expression { return params.TEST_STRUCTURE }
+            }
             steps {
                 StructureTests()
             }
@@ -285,6 +289,9 @@ pipeline {
         }
 
         stage('Run-Server-Regression-Tests') {
+            when {
+                expression { return params.SERVER_REGRESSION }
+            }
             steps {
                 ServerRegressionTests()
             }

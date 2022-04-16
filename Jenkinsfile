@@ -189,7 +189,7 @@ def CopyRPMs() {
     }
 }
 
-def RunStructureTests() {
+def StructureTests() {
     sh """
         cd test
         #insert current version
@@ -202,11 +202,16 @@ def RunStructureTests() {
     junit testResults: '**/container-structure-test.xml'
 }
 
-def RunServerRegressionTests() {
+def ServerRegressionTests() {
     //TODO: run this conditionally for develop and master branches only
     echo 'Server regression tests would execute here'
     // The following can be uncommented to show an interactive prompt for manual regresstion tests
     // input "Server regression tests need to be executed manually. "
+}
+
+def DockerRunTests() {
+    def dockerImage = "marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
+
 }
 
 def PublishToInternalRegistry() {
@@ -269,19 +274,28 @@ pipeline {
 
         stage('Image-Test') {
             steps {
-                RunStructureTests()
+                StructureTests()
+            }
+        }
+
+        stage('Docker-Run-Tests') {
+            steps {
+                DockerRunTests()
             }
         }
 
         stage('Run-Server-Regression-Tests') {
             steps {
-                RunServerRegressionTests()
+                ServerRegressionTests()
             }
         }
 
         stage('Publish-Image') {
             when {
-                    expression { return params.PUBLISH_IMAGE }
+                    anyOf {
+                        branch 'develop'
+                        expression { return params.PUBLISH_IMAGE }
+                    }
             }
             steps {
                 PublishToInternalRegistry()

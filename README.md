@@ -9,12 +9,13 @@
  * [Introduction](#Introduction)
  * [Prerequisites](#Prerequisites)
  * [Supported tags](#Supported-tags)
- * [Quick reference](#Quick-reference)
+ * [Architecture reference](#Architecture-reference)
  * [MarkLogic](#MarkLogic)
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)
  * [Clustering](#Clustering)
- * [Upgrading to the latest Docker Release](#Upgrading-to-the-latest-Docker-Release)
+ * [Upgrading to the latest MarkLogic Docker Release](#Upgrading-to-the-latest-MarkLogic-Docker-Release)
+ * [Backing Up and Restoring a Database](#Backing-Up-and-Restoring-a-Database)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
@@ -27,6 +28,7 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 - How to enable security using Docker secrets
 - How to mount volumes for Docker containers 
 - How to upgrade to the latest MarkLogic Docker release  
+- How to back up and restore a database
 - How to clean up MarkLogic Docker containers and resources
 
 # Prerequisites
@@ -149,6 +151,21 @@ local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019
 local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
 local     MarkLogic_vol_1
 ```
+
+## Configuring swap space
+
+MarkLogic recommends that swap space be configured for production deployments to reduce the possibility of ‘out of memory’ errors. For more details, see [MarkLogic recommendations for swap space](https://help.marklogic.com/knowledgebase/article/View/21/19/swap-space-requirements) and [configuring "swappiness"](https://help.marklogic.com/Knowledgebase/Article/View/linux-swappiness).
+
+In Docker, the amount of memory and swap space that are available to MarkLogic Server can be controlled using the "--memory" and "--memory-swap" settings. See the Docker documentation [--memory-swap-details](https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details) for more details. For example, if you want to run a MarkLogic container with 64GB of memory and 32GB of swap, you would specify the following with your docker run command:
+```
+--memory="64g" --memory-swap="96g"
+```
+If you want to limit memory to 64GB but allow MarkLogic Server to use swap space (up to the amount available on host system), specify the following with your docker run command:
+```
+--memory="64g" --memory-swap="-1"
+```
+To allow MarkLogic Server to use unlimited memory and swap space (up to the amount available on the host system), do not specify either "--memory" or "--memory-swap".
+
 
 # Configuration
 
@@ -467,6 +484,22 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
 4. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
 5. Once the upgrade is complete, the Admin interface will reload with the new MarkLogic release. 
+
+# Backing Up and Restoring a Database
+
+When creating a backup for a database on a MarkLogic Docker container, verify that the directory used for the backup is mounted to a directory on the Docker host machine or Docker volume. This is so that the database backup persists even after the container is stopped.
+
+This command is an example of mounting the directory /space used for backup on a Docker volume, while running the MarkLogic Docker container.
+```
+$ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
+     --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
+     --mount src=MarkLogic_vol_1,dst=/space \
+     -e MARKLOGIC_INIT=true \
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0
+```
+The /space mounted on the Docker volume can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
 
 # Debugging
 

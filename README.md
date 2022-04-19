@@ -14,7 +14,7 @@
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)
  * [Clustering](#Clustering)
- * [Upgrading to the latest Docker Release](#Upgrading-to-the-latest-Docker-Release)
+ * [Upgrading to the latest MarkLogic Docker Release](#Upgrading-to-the-latest-MarkLogic-Docker-Release)
  * [Backing Up and Restoring a Database](#Backing-Up-and-Restoring-a-Database)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)

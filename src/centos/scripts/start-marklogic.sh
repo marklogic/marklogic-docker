@@ -25,13 +25,10 @@ else
     rm -f /etc/marklogic.conf
     sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
 
-    if [[ $MARKLOGIC_INSTALL_DIR ]] ; then sudo echo MARKLOGIC_INSTALL_DIR=$MARKLOGIC_INSTALL_DIR >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_FSTYPE ]] ; then sudo echo MARKLOGIC_FSTYPE=$MARKLOGIC_FSTYPE >> /etc/marklogic.conf; fi
     if [[ $MARKLOGIC_USER ]] ; then sudo echo MARKLOGIC_USER=$MARKLOGIC_USER >> /etc/marklogic.conf; fi
     if [[ $MARKLOGIC_PID_FILE ]] ; then sudo echo MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE >> /etc/marklogic.conf; fi
     if [[ $MARKLOGIC_UMASK ]] ; then sudo echo MARKLOGIC_UMASK=$MARKLOGIC_UMASK >> /etc/marklogic.conf; fi
     if [[ $MARKLOGIC_DISABLE_JVM ]] ; then sudo echo MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_EC2_HOST ]] ; then sudo echo MARKLOGIC_EC2_HOST=$MARKLOGIC_EC2_HOST >> /etc/marklogic.conf; fi
     if [[ $TZ ]] ; then sudo echo TZ=$TZ >> /etc/marklogic.conf; fi
     if [[ $MARKLOGIC_CLUSTER_NAME ]] ; then sudo echo MARKLOGIC_CLUSTER_NAME=$MARKLOGIC_CLUSTER_NAME >> /etc/marklogic.conf; fi
     if [[ $MARKLOGIC_NODE_NAME ]] ; then sudo echo MARKLOGIC_NODE_NAME=$MARKLOGIC_NODE_NAME >> /etc/marklogic.conf; fi

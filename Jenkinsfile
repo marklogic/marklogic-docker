@@ -22,7 +22,7 @@ void PreBuildCheck() {
         githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
         echo 'githubAPIUrl: ' + githubAPIUrl
     } else {
-        echo 'ERROR: GIT_URL is not defined'
+        echo 'Warning: GIT_URL is not defined'
     }
 
     if (env.CHANGE_ID) {
@@ -51,13 +51,13 @@ def ExtractJiraID() {
         match = env.GIT_BRANCH =~ JIRA_ID_PATTERN
     }
     else {
-        echo 'ERROR: Jira ticket number not detected.'
+        echo 'Warning: Jira ticket number not detected.'
         return ''
     }
     try {
         return match[0]
     } catch (any) {
-        echo 'ERROR: Jira ticket number not detected.'
+        echo 'Warning: Jira ticket number not detected.'
         return ''
     }
 }
@@ -65,7 +65,7 @@ def ExtractJiraID() {
 def PRDraftCheck() {
     withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
         PrObj = sh(returnStdout: true, script:'''
-                     curl -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
+                     curl -s -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
                      ''')
     }
     def jsonObj = new JsonSlurperClassic().parseText(PrObj.toString().trim())
@@ -77,10 +77,10 @@ def getReviewState() {
     def commitHash
     withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
         reviewResponse = sh(returnStdout: true, script:'''
-                            curl -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID/reviews
+                            curl -s -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID/reviews
                              ''')
          commitHash = sh(returnStdout: true, script:'''
-                         curl -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
+                         curl -s -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
                          ''')
     }
     def jsonObj = new JsonSlurperClassic().parseText(commitHash.toString().trim())
@@ -193,7 +193,7 @@ def StructureTests() {
         cd test
         #insert current version
         sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
-        curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+        curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
         ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
@@ -210,7 +210,22 @@ def ServerRegressionTests() {
 
 def DockerRunTests() {
     def dockerImage = "marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
-    sh 'docker container ls'
+    sh 'test-docker-run.sh'
+}
+
+class MyTestCase extends GroovyTestCase {
+
+    void testAssertions() {
+        assertTrue(1 == 1)
+        assertEquals("test", "test")
+
+        def x = "42"
+        assertNotNull "x must not be null", x
+        assertNull null
+
+        assertSame x, x
+    }
+
 }
 
 def PublishToInternalRegistry() {
@@ -226,7 +241,7 @@ def PublishToInternalRegistry() {
 pipeline {
     agent {
         label {
-            label 'docker-vitaly'
+            label 'cld-docker'
         }
     }
     options {
@@ -273,7 +288,7 @@ pipeline {
             }
         }
 
-        stage('Image-Test') {
+        stage('Structure-Tests') {
             when {
                 expression { return params.TEST_STRUCTURE }
             }
@@ -315,6 +330,8 @@ pipeline {
             sh '''
                 cd src/centos
                 rm -rf *.rpm
+                docker system prune --force --filter "until=720h"
+                docker volume prune --force
             '''
         }
         success {

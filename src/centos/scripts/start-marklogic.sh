@@ -25,22 +25,22 @@ else
     rm -f /etc/marklogic.conf
     sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
 
-    if [[ $MARKLOGIC_USER ]] ; then sudo echo MARKLOGIC_USER=$MARKLOGIC_USER >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_PID_FILE ]] ; then sudo echo MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_UMASK ]] ; then sudo echo MARKLOGIC_UMASK=$MARKLOGIC_UMASK >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_DISABLE_JVM ]] ; then sudo echo MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM >> /etc/marklogic.conf; fi
-    if [[ $TZ ]] ; then sudo echo TZ=$TZ >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_CLUSTER_NAME ]] ; then sudo echo MARKLOGIC_CLUSTER_NAME=$MARKLOGIC_CLUSTER_NAME >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_NODE_NAME ]] ; then sudo echo MARKLOGIC_NODE_NAME=$MARKLOGIC_NODE_NAME >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_ADMIN_USERNAME ]] ; then sudo echo MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_ADMIN_PASSWORD ]] ; then sudo echo MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_CLUSTER_MASTER ]] ; then sudo echo MARKLOGIC_CLUSTER_MASTER=$MARKLOGIC_CLUSTER_MASTER >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_LICENSEE ]] ; then sudo echo MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_LICENSE_KEY ]] ; then sudo echo MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY >> /etc/marklogic.conf; fi
-    if [[ $MARKLOGIC_DISABLE_JVM ]] ; then sudo echo MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM >> /etc/marklogic.conf; fi
-    if [[ $JAVA_HOME ]] ; then sudo echo JAVA_HOME=$JAVA_HOME >> /etc/marklogic.conf; fi
-    if [[ $CLASSPATH ]] ; then sudo echo CLASSPATH=$CLASSPATH >> /etc/marklogic.conf; fi
-    if [[ $ML_HUGEPAGES_TOTAL ]] ; then sudo echo ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL >> /etc/marklogic.conf; fi
+    [[ $MARKLOGIC_USER ]] && sudo echo MARKLOGIC_USER=$MARKLOGIC_USER >> /etc/marklogic.conf
+    [[ $MARKLOGIC_PID_FILE ]] && sudo echo MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE >> /etc/marklogic.conf
+    [[ $MARKLOGIC_UMASK ]] && sudo echo MARKLOGIC_UMASK=$MARKLOGIC_UMASK >> /etc/marklogic.conf
+    [[ $MARKLOGIC_DISABLE_JVM ]] && sudo echo MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM >> /etc/marklogic.conf
+    [[ $TZ ]] && sudo echo TZ=$TZ >> /etc/marklogic.conf
+    [[ $MARKLOGIC_CLUSTER_NAME ]] && sudo echo MARKLOGIC_CLUSTER_NAME=$MARKLOGIC_CLUSTER_NAME >> /etc/marklogic.conf
+    [[ $MARKLOGIC_NODE_NAME ]] && sudo echo MARKLOGIC_NODE_NAME=$MARKLOGIC_NODE_NAME >> /etc/marklogic.conf
+    [[ $MARKLOGIC_ADMIN_USERNAME ]] && sudo echo MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME >> /etc/marklogic.conf
+    [[ $MARKLOGIC_ADMIN_PASSWORD ]] && sudo echo MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD >> /etc/marklogic.conf
+    [[ $MARKLOGIC_CLUSTER_MASTER ]] && sudo echo MARKLOGIC_CLUSTER_MASTER=$MARKLOGIC_CLUSTER_MASTER >> /etc/marklogic.conf
+    [[ $MARKLOGIC_LICENSEE ]] && sudo echo MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE >> /etc/marklogic.conf
+    [[ $MARKLOGIC_LICENSE_KEY ]] && sudo echo MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY >> /etc/marklogic.conf
+    [[ $MARKLOGIC_DISABLE_JVM ]] && sudo echo MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM >> /etc/marklogic.conf
+    [[ $JAVA_HOME ]] && sudo echo JAVA_HOME=$JAVA_HOME >> /etc/marklogic.conf
+    [[ $CLASSPATH ]] && sudo echo CLASSPATH=$CLASSPATH >> /etc/marklogic.conf
+    [[ $ML_HUGEPAGES_TOTAL ]] && sudo echo ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL >> /etc/marklogic.conf
 
     sudo chmod 400 /etc/marklogic.conf
 fi

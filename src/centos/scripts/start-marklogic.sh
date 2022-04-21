@@ -30,11 +30,9 @@ else
     [[ $MARKLOGIC_UMASK ]] && sudo echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >> /etc/marklogic.conf
     [[ $MARKLOGIC_DISABLE_JVM ]] && sudo echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >> /etc/marklogic.conf
     [[ $TZ ]] && sudo echo "export  TZ=$TZ " >> /etc/marklogic.conf
-    [[ $MARKLOGIC_CLUSTER_NAME ]] && sudo echo "export MARKLOGIC_CLUSTER_NAME=$MARKLOGIC_CLUSTER_NAME" >> /etc/marklogic.conf
     [[ $MARKLOGIC_NODE_NAME ]] && sudo echo "export MARKLOGIC_NODE_NAME=$MARKLOGIC_NODE_NAME" >> /etc/marklogic.conf
     [[ $MARKLOGIC_ADMIN_USERNAME ]] && sudo echo "export MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME" >> /etc/marklogic.conf
     [[ $MARKLOGIC_ADMIN_PASSWORD ]] && sudo echo "export MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD" >> /etc/marklogic.conf
-    [[ $MARKLOGIC_CLUSTER_MASTER ]] && sudo echo "export MARKLOGIC_CLUSTER_MASTER=$MARKLOGIC_CLUSTER_MASTER" >> /etc/marklogic.conf
     [[ $MARKLOGIC_LICENSEE ]] && sudo echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >> /etc/marklogic.conf
     [[ $MARKLOGIC_LICENSE_KEY ]] && sudo echo "export MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY" >> /etc/marklogic.conf
     [[ $MARKLOGIC_DISABLE_JVM ]] && sudo echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >> /etc/marklogic.conf

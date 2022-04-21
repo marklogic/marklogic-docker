@@ -178,10 +178,10 @@ MarkLogic Server also can be configured through a configuration file on the imag
 | MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to marklogic through umask                          |
 | MARKLOGIC_DISABLE_JVM                | true                            | no                                |           | disable the use of the JVM within marklogic           |
 | TZ      | /etc/localtime                        | no | n/a       | Timezone information setting for marklogic                           |                      |
-| MARKLOGIC_ADMIN_USERNAME                | jane_doe                            | required if MARKLOGIC_INIT is set                                |           | set MarkLogic Server admin user           |
+| MARKLOGIC_ADMIN_USERNAME                | jane_doe                            | required if MARKLOGIC_INIT is set                                |   n/a        | set MarkLogic Server admin user           |
 | MARKLOGIC_ADMIN_PASSWORD      | pass                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                           |
 | MARKLOGIC_LICENSEE      | licensee information                         | no | n/a       | set MarkLogic licensee information                           |
-| MARKLOGIC_LICENSE_KEY                | true                            | no                                |           | set MarkLogic license key             |
+| MARKLOGIC_LICENSE_KEY                | true                            | no                                |   n/a        | set MarkLogic license key             |
 | MARKLOGIC_DISABLE_JVM      | 0                        | no | n/a       | disable the JVM for MarkLogic
 | JAVA_HOME                | /var/opt/java                            | no                                |  n/a         | set the java home location for MarkLogic           |
 | CLASSPATH      | /var/opt/class/path                        | no| n/a       | set the java env class path                          |

@@ -168,28 +168,24 @@ MarkLogic Server Docker containers are configured using a set of environment var
 |OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
 
 
-MarkLogic Server also can be configured through a configuration file on the image to `/etc/marklogic.conf`. To interface with the configuration file pass in `OVERWRITE_ML_CONF` set to `true` and the following env variables can be written to `/etc/marklogic.conf`
+MarkLogic Server also can be configured through a configuration file on the image to `/etc/marklogic.conf`. To interface with the configuration file pass in `OVERWRITE_ML_CONF` set to `true` and the following env variables can be written, if set, to `/etc/marklogic.conf`. 
 
 
  | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
-| MARKLOGIC_USER                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| MARKLOGIC_PID_FILE      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_USER                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| MARKLOGIC_UMASK      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_DISABLE_JVM                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| TZ      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_CLUSTER_NAME                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| MARKLOGIC_NODE_NAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_ADMIN_USERNAME                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| MARKLOGIC_ADMIN_PASSWORD      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_CLUSTER_MASTER                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| MARKLOGIC_LICENSEE      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_LICENSE_KEY                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| MARKLOGIC_DISABLE_JVM      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user 
-| JAVA_HOME                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
-| CLASSPATH      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| ML_HUGEPAGES_TOTAL      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_USER                | daniel                            | no                                |     n/a      | The username running MarkLogic within the docker container           |
+| MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
+| MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to marklogic through umask                          |
+| MARKLOGIC_DISABLE_JVM                | true                            | no                                |           | disable the use of the JVM within marklogic           |
+| TZ      | /etc/localtime                        | no | n/a       | Timezone information setting for marklogic                           |                      |
+| MARKLOGIC_ADMIN_USERNAME                | jane_doe                            | required if MARKLOGIC_INIT is set                                |           | set MarkLogic Server admin user           |
+| MARKLOGIC_ADMIN_PASSWORD      | pass                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                           |
+| MARKLOGIC_LICENSEE      | licensee information                         | no | n/a       | set MarkLogic licensee information                           |
+| MARKLOGIC_LICENSE_KEY                | true                            | no                                |           | set MarkLogic license key             |
+| MARKLOGIC_DISABLE_JVM      | 0                        | no | n/a       | disable the JVM for MarkLogic
+| JAVA_HOME                | /var/opt/java                            | no                                |  n/a         | set the java home location for MarkLogic           |
+| CLASSPATH      | /var/opt/class/path                        | no| n/a       | set the java env class path                          |
+| ML_HUGEPAGES_TOTAL      | 1000                        | no | n/a       | set the number of huge pages marklogic can utilize                          |
 
 
 **IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is new in the store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.

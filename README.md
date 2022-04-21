@@ -175,8 +175,7 @@ MarkLogic Server also can be configured through a configuration file on the imag
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
 | MARKLOGIC_USER                | daniel                            | no                                |     n/a      | The username running MarkLogic within the docker container           |
 | MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
-| MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to marklogic through umask                          |
-| MARKLOGIC_DISABLE_JVM                | true                            | no                                |           | disable the use of the JVM within marklogic           |
+| MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to marklogic through umask                          |s
 | TZ      | /etc/localtime                        | no | n/a       | Timezone information setting for marklogic                           |                      |
 | MARKLOGIC_ADMIN_USERNAME                | jane_doe                            | required if MARKLOGIC_INIT is set                                |   n/a        | set MarkLogic Server admin user           |
 | MARKLOGIC_ADMIN_PASSWORD      | pass                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                           |

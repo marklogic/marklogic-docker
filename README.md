@@ -167,6 +167,31 @@ MarkLogic Server Docker containers are configured using a set of environment var
 |INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
 |OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
 
+
+MarkLogic Server also can be configured through a configuration file on the image to `/etc/marklogic.conf`. To interface with the configuration file pass in `OVERWRITE_ML_CONF` set to `true` and the following env variables can be written to `/etc/marklogic.conf`
+
+
+ | env var                       | value                           | required                          | default   | description                                        |
+| ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
+| MARKLOGIC_USER                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| MARKLOGIC_PID_FILE      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_USER                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| MARKLOGIC_UMASK      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_DISABLE_JVM                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| TZ      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_CLUSTER_NAME                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| MARKLOGIC_NODE_NAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_ADMIN_USERNAME                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| MARKLOGIC_ADMIN_PASSWORD      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_CLUSTER_MASTER                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| MARKLOGIC_LICENSEE      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| MARKLOGIC_LICENSE_KEY                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| MARKLOGIC_DISABLE_JVM      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user 
+| JAVA_HOME                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
+| CLASSPATH      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+| ML_HUGEPAGES_TOTAL      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
+
+
 **IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is new in the store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.
 
 # Clustering

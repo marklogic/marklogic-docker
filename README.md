@@ -173,7 +173,6 @@ MarkLogic Server also can be configured through a configuration file on the imag
 
  | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
-
 | MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
 | MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to marklogic through umask                          |s
 | TZ      | /etc/localtime                        | no | n/a       | Timezone information setting for marklogic                           |                      |
@@ -182,6 +181,9 @@ MarkLogic Server also can be configured through a configuration file on the imag
 | MARKLOGIC_LICENSEE      | licensee information                         | no | n/a       | set MarkLogic licensee information                           |
 | MARKLOGIC_LICENSE_KEY                | license key                             | no                                |   n/a        | set MarkLogic license key             |
 | ML_HUGEPAGES_TOTAL      | 1000                        | no | n/a       | set the number of huge pages marklogic can utilize                          |
+
+
+
 
 
 #### Advanced Configuration 

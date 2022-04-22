@@ -30,7 +30,6 @@ else
     [[ $MARKLOGIC_UMASK ]] && sudo echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >> /etc/marklogic.conf
     [[ $MARKLOGIC_DISABLE_JVM ]] && sudo echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >> /etc/marklogic.conf
     [[ $TZ ]] && sudo echo "export  TZ=$TZ " >> /etc/marklogic.conf
-    [[ $MARKLOGIC_NODE_NAME ]] && sudo echo "export MARKLOGIC_NODE_NAME=$MARKLOGIC_NODE_NAME" >> /etc/marklogic.conf
     [[ $MARKLOGIC_ADMIN_USERNAME ]] && sudo echo "export MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME" >> /etc/marklogic.conf
     [[ $MARKLOGIC_ADMIN_PASSWORD ]] && sudo echo "export MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD" >> /etc/marklogic.conf
     [[ $MARKLOGIC_LICENSEE ]] && sudo echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >> /etc/marklogic.conf

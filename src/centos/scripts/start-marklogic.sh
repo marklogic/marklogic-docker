@@ -17,7 +17,7 @@ cd ~
 # Read in ENV values
 ################################################################
 
-# If an ENV value exists in a list Append it the /etc/marklogic.conf file 
+# If an ENV value exists in a list, append it to the /etc/marklogic.conf file 
 if [[ -z $OVERWRITE_ML_CONF ]] || [[ "$OVERWRITE_ML_CONF" = "false" ]] ; then
     echo "Not writing to /etc/marklogic.conf"
 else

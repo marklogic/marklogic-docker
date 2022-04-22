@@ -168,7 +168,7 @@ MarkLogic Server Docker containers are configured using a set of environment var
 |OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
 
 
-MarkLogic Server also can be configured through a configuration file on the image to `/etc/marklogic.conf`. To interface with the configuration file pass in `OVERWRITE_ML_CONF` set to `true` and the following env variables can be written, if set, to `/etc/marklogic.conf`. 
+MarkLogic Server also can be configured through a configuration file on the image at `/etc/marklogic.conf`. To change the configuration file, pass in the parameter `OVERWRITE_ML_CONF` set to `true` The following env variables can also be written to the `/etc/marklogic.conf` file if the parameter is set. 
 
 
  | env var                       | value                           | required                          | default   | description                                        |

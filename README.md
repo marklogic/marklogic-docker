@@ -37,7 +37,7 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 
 Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
 
-- 10.0-9-centos-1.0.0-ea4 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
+- 10.0-9.1-centos-1.0.0-ea4 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
 
 # Architecture reference
@@ -48,7 +48,7 @@ Supported Docker architectures: x86_64
 
 Base OS: CentOS
 
-Latest supported MarkLogic Server version: 10.0-9
+Latest supported MarkLogic Server version: 10.0-9.1
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/_/marklogic
 
@@ -77,7 +77,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      -e LICENSE_KEY="{insert license}" \
      -e LICENSEE="{insert licensee}" \
-     store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
 ```
 Example run:
 ```
@@ -85,7 +85,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=admin \
      -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
-     store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
 ```
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
@@ -96,7 +96,7 @@ To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docke
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
 ```
 The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
@@ -130,7 +130,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-     store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
 ```
 
 Above command will start a Docker container `MarkLogic_cont_1` running MarkLogic Server and associate the named Docker volume `MarkLogic_vol_1` with it.
@@ -186,7 +186,7 @@ Create these files on your host machine: `marklogic-centos.yml`, `mldb_admin_use
 version: '3.6'
 services:
     bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+      image: store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
       container_name: bootstrap
       dns_search: ""
       environment:
@@ -257,7 +257,7 @@ The following is an example of a three-node MarkLogic server cluster created usi
 version: '3.6'
 services:
     bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+      image: store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
       container_name: bootstrap_3n
       dns_search: ""
       environment:
@@ -276,7 +276,7 @@ services:
       networks:
       - external_net
     node2:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+      image: store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
       container_name: node2
       dns_search: ""
       environment:
@@ -298,7 +298,7 @@ services:
       networks:
       - external_net
     node3:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+      image: store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
       container_name: node3
       dns_search: ""
       environment:
@@ -408,7 +408,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      --dns-search "marklogic.com" \
-     store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
 ```
 If successful, the command will output the ID for the new container. Give the container a couple of minutes to get initialized. Continue with the next section to create additional nodes for the cluster.
 
@@ -434,7 +434,7 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      -e MARKLOGIC_JOIN_CLUSTER=true \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
-     store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
+     store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4
 ```
 
 When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
@@ -449,9 +449,9 @@ The following is a set of steps to run to access a container while it is running
 2. Get the container ID for the MarkLogic container running on the machine. To do this, run the following command:
 
 ```
-$ docker container ps --filter ancestor=store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4 -q
+$ docker container ps --filter ancestor=store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4 -q
 ```
-In this example command `store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4` is an image ID. Your container ID may be different for your machine.
+In this example command `store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4` is an image ID. Your container ID may be different for your machine.
 
 Example output:
 
@@ -469,7 +469,7 @@ Here's an example of unfiltered output from that command:
 
 ```
 CONTAINER ID   IMAGE                                                        COMMAND                  CREATED          STATUS          PORTS                                  NAMES
-f484a784d998   store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002 8000-8002/tcp   vibrant_burnell
+f484a784d998   store/marklogicdb/marklogic-server:10.0-9.1-centos-1.0.0-ea4   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002 8000-8002/tcp   vibrant_burnell
 ```
 
 3. Run a command to access a remote shell on the container.
@@ -560,7 +560,7 @@ If the process is successful, a message saying the node has left the swarm will 
 
 # Known Issues and Limitations
 
-10.0-9-centos-1.0.0-ea4
+10.0-9.1-centos-1.0.0-ea4
 
 1. Enabling huge pages for clusters containing single-host, multi-container configurations may lead to failure, due to incorrect memory allocation. MarkLogic recommends that you disable huge pages in such architectures.
 2. Database replication will only work for configurations having a single container per host, with matching hostname.

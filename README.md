@@ -185,7 +185,7 @@ MarkLogic Server also can be configured through a configuration file on the imag
 
 
 #### Advanced Configuration 
-The following environment variables are only useful when building and extending the current docker image. For instance setting `MARKLOGIC_USER` only will work if a user is setup and configured in the image. 
+The following environment variables are only useful when building and extending the current docker image. For instance, setting `MARKLOGIC_USER` only will work if a user is set up and configured in the image. 
 
 | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
@@ -194,7 +194,7 @@ The following environment variables are only useful when building and extending 
 | JAVA_HOME                | /var/opt/java                            | no                                |  n/a         | set the java home location for MarkLogic           |
 | CLASSPATH      | /var/opt/class/path                        | no| n/a       | set the java env class path                          |
 | MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
-| MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to marklogic through umask                          |
+| MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to MarkLogic through umask                          |
 
 **IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is new in the store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.
 

@@ -173,7 +173,6 @@ MarkLogic Server also can be configured through a configuration file on the imag
 
  | env var                       | value                           | required                          | default   | description                                        |
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
-
 | TZ      | /etc/localtime                        | no | n/a       | Timezone information setting for marklogic                           |                      |
 | MARKLOGIC_ADMIN_USERNAME                | jane_doe                            | required if MARKLOGIC_INIT is set                                |   n/a        | set MarkLogic Server admin user           |
 | MARKLOGIC_ADMIN_PASSWORD      | pass                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                           |

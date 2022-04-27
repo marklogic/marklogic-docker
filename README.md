@@ -389,7 +389,7 @@ In the previous examples, Docker secrets files were used to specify admin creden
 
 Using Docker secrets, username and password information are secured when transmitting the sensitive data from Docker host to Docker containers. To prevent any attacks, the login information is not available as an environment variable. However, these values are stored in a text file and persisted in an in-memory file system inside the container. We recommend that you delete the Docker secrets information once the cluster is up and running.
 
-### How to use and rotate secrets using docker stack deployment
+### How to use Docker Secrets with Docker Stack
 
 1. Run below to initialize swarm setup:
 
@@ -405,7 +405,7 @@ Using Docker secrets, username and password information are secured when transmi
 ```
 $docker secret create mldb_admin_password_v1 mldb_admin_password_v1.txt
 ```
-3. create marklogic-multi-centos.yml using below:
+3. Create marklogic-multi-centos.yml using below:
 ```
 version: '3.6'
 services:
@@ -490,7 +490,7 @@ volumes:
   MarkLogic_3n_vol2:
   MarkLogic_3n_vol3:
 ```
-4. Use docker stack to deploy the cluster using below command:
+4. Use Docker stack to deploy the cluster using below command:
 ```
   $docker stack deploy -c marklogic-multi-centos_v1.yml mlstack
 ```
@@ -507,7 +507,7 @@ Now we will rotate secrets.
 ```
   $docker secret create mldb_admin_password_v2 mldb_admin_password_v2.txt
 ```
-6. Update the docker compose file and refer to v2 secrets in the source of the secret definition as below:
+6. Update the Docker compose file and refer to new secrets in the source of the secret definition as below:
 ```
 version: '3.6'
 services:

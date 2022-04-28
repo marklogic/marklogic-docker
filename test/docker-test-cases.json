@@ -1,0 +1,110 @@
+{
+    "docker-1": {
+        "description": "Uninitialized MarkLogic Server",
+        "params": "",
+        "expected": {
+            "unauthenticated": {
+                "8000": "403 Forbidden",
+                "8001": "This server must now self-install the initial databases and application servers. Click OK to continue.",
+                "8002": "403 Forbidden"
+            },
+            "authenticated": {
+                "8000": "403 Forbidden",
+                "8001": "This server must now self-install the initial databases and application servers. Click OK to continue.",
+                "8002": "403 Forbidden"
+            }
+        }
+    },
+    "docker-2": {
+        "description": "Initialized MarkLogic Server",
+        "params": "-e MARKLOGIC_INIT=false -e MARKLOGIC_ADMIN_USERNAME=test_admin -e MARKLOGIC_ADMIN_PASSWORD=test_admin_pass",
+        "expected": {
+            "unauthenticated": {
+                "8000": "401 Unauthorized",
+                "8001": "401 Unauthorized",
+                "8002": "401 Unauthorized"
+            },
+            "authenticated": {
+                "8000": "Query Console",
+                "8001": "No license key has been entered",
+                "8002": "Monitoring Dashboard"
+            }
+        }
+    },
+    "docker-3": {
+        "description": "Initialized MarkLogic Server with License Key",
+        "params": "-e MARKLOGIC_INIT=false -e MARKLOGIC_ADMIN_USERNAME=test_admin -e MARKLOGIC_ADMIN_PASSWORD=test_admin_pass -e LICENSE_PLACEHOLDER -e INSTALL_CONVERTERS=false",
+        "expected": {
+            "unauthenticated": {
+                "8000": "401 Unauthorized",
+                "8001": "401 Unauthorized",
+                "8002": "401 Unauthorized"
+            },
+            "authenticated": {
+                "8000": "Query Console",
+                "8001": "MarkLogic - Version 9 QA Test License",
+                "8002": "Monitoring Dashboard"
+            }
+        }
+    },
+    "docker-4": {
+        "description": "Initialized MarkLogic Server with missing credentials",
+        "params": "-e MARKLOGIC_INIT=true",
+        "expected": {
+            "unauthenticated": {
+                "8000": "401 Unauthorized",
+                "8001": "Join a Cluster",
+                "8002": "401 Unauthorized"
+            },
+            "authenticated": {
+                "8000": "401 Unauthorized",
+                "8001": "Join a Cluster",
+                "8002": "401 Unauthorized"
+            }
+        }
+    },
+    "compose-1": {
+        "description": "Compose single node",
+        "params": "marklogic-centos.yml",
+        "expected": {
+            "unauthenticated": {
+                "8000": "401 Unauthorized",
+                "8001": "401 Unauthorized",
+                "8002": "401 Unauthorized"
+            },
+            "authenticated": {
+                "8000": "Query Console",
+                "8001": "No license key has been entered",
+                "8002": "Monitoring Dashboard"
+            }
+        }
+    },
+    "compose-2": {
+        "description": "Compose three node",
+        "params": "marklogic-cluster-centos.yml",
+        "expected": {
+            "unauthenticated": {
+                "7100": "401 Unauthorized",
+                "7101": "401 Unauthorized",
+                "7102": "401 Unauthorized",
+                "7200": "401 Unauthorized",
+                "7201": "401 Unauthorized",
+                "7202": "401 Unauthorized",
+                "7300": "401 Unauthorized",
+                "7301": "401 Unauthorized",
+                "7302": "401 Unauthorized"
+            },
+            "authenticated": {
+                "7100": "Query Console",
+                "7101": "No license key has been entered",
+                "7102": "Monitoring Dashboard",
+                "7200": "Query Console",
+                "7201": "No license key has been entered",
+                "7202": "Monitoring Dashboard",
+                "7300": "Query Console",
+                "7301": "No license key has been entered",
+                "7302": "Monitoring Dashboard"
+            }
+        }
+    }
+}

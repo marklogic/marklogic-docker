@@ -419,6 +419,154 @@ In the previous examples, Docker secrets files were used to specify admin creden
 
 Using Docker secrets, username and password information are secured when transmitting the sensitive data from Docker host to Docker containers. To prevent any attacks, the login information is not available as an environment variable. However, these values are stored in a text file and persisted in an in-memory file system inside the container. We recommend that you delete the Docker secrets information once the cluster is up and running.
 
+### How to use Docker Secrets with Docker Stack
+
+1. Run this command to initialize the swarm setup:
+
+```
+  $docker swarm init
+```
+2. Create docker secrets using the following commands:
+ - Create mldb_admin_username_v1.txt file to add the mldb_admin_username_v1 secret for the admin username using the following command:
+```
+  $docker secret create mldb_admin_username_v1 mldb_admin_username_v1.txt
+```
+  - Create mldb_admin_password_v1.txt file to add the mldb_admin_password_v1 secret for the admin password using the following command:
+```
+$docker secret create mldb_admin_password_v1 mldb_admin_password_v1.txt
+```
+3. Create marklogic-multi-centos.yml using below:
+```
+version: '3.6'
+services:
+    bootstrap:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: bootstrap
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+    node2:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: node2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+      ports:
+        - 7200-7210:8000-8010
+        - 7297:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
+    node3:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: node3
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol3:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+      ports:
+        - 7300-7310:8000-8010
+        - 7397:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
+secrets:
+  mldb_admin_password_v1:
+    external: true
+  mldb_admin_username_v1:
+    external: true
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_3n_vol1:
+  MarkLogic_3n_vol2:
+  MarkLogic_3n_vol3:
+```
+4. Use the Docker stack command to deploy the cluster:
+```
+  $docker stack deploy -c marklogic-multi-centos.yaml mlstack
+```
+All the cluster nodes will now be up and running.
+Now that the nodes have been initialized, we rotate the secrets files to overwrite the initial secrets files.
+
+5. Create docker secrets v2 using these commands:
+
+- Create mldb_admin_username_v2.txt file and use the following command to add a new docker secret for the admin username:
+```
+  $docker secret create mldb_admin_username_v2 mldb_admin_username_v2.txt
+```
+- Create mldb_admin_password_v2.txt and use the following command to add a new docker secret for the admin password:
+```
+  $docker secret create mldb_admin_password_v2 mldb_admin_password_v2.txt
+```
+6. Use the following commands to rotate the docker secrets for all the docker services created above using docker stack:
+```
+docker service update \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
+    mlstack_bootstrap
+```
+```
+docker service update \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
+    mlstack_node2
+```
+```
+docker service update \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
+    mlstack_node3
+```
+Above commands will remove secrets v1 and update services with new v2 secrets.
+
+Wait for all the services to be updated. Secrets inside the containers under the /run/secrets directory will be updated with new v2 secrets.
+Note: The MarkLogic cluster will still use the admin credentials set in the initial stack deployment with the v1 secrets.
+
 ## Three node cluster setup on multiple VMs
 This next example shows how to create containers on separate VMs and connect them with each other using Docker Swarm. For more details on Docker Swarm, see https://docs.docker.com/engine/swarm/. All of the nodes inside the cluster must be part of the same network in order to communicate with each other. We use the overlay network that allows for container communication on separate hosts. For more information on overlay networks, please refer https://docs.docker.com/network/overlay/.
 

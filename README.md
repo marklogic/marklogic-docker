@@ -396,7 +396,7 @@ Using Docker secrets, username and password information are secured when transmi
 ```
   $docker swarm init
 ```
-2. Create secrets using the following commands:
+2. Create docker secrets using the following commands:
  - Create mldb_admin_username_v1.txt file to add the mldb_admin_username_v1 secret for the admin username using the following command:
 ```
   $docker secret create mldb_admin_username_v1 mldb_admin_username_v1.txt
@@ -405,7 +405,7 @@ Using Docker secrets, username and password information are secured when transmi
 ```
 $docker secret create mldb_admin_password_v1 mldb_admin_password_v1.txt
 ```
-3. Create marklogic-multi-centos.yaml using below:
+3. Create marklogic-multi-centos.yml using below:
 ```
 version: '3.6'
 services:
@@ -497,13 +497,13 @@ volumes:
 All the cluster nodes will now be up and running.
 Now that the nodes have been initialized, we rotate the secrets files to overwrite the initial secrets files.
 
-5. Create secrets v2 using these commands:
+5. Create docker secrets v2 using these commands:
 
-- Create mldb_admin_username_v2.txt and use the following command to add a new secret for the admin username:
+- Create mldb_admin_username_v2.txt file and use the following command to add a new docker secret for the admin username:
 ```
   $docker secret create mldb_admin_username_v2 mldb_admin_username_v2.txt
 ```
-- Create mldb_admin_password_v2.txt and use the following command to add a new secret for the admin password:
+- Create mldb_admin_password_v2.txt and use the following command to add a new docker secret for the admin password:
 ```
   $docker secret create mldb_admin_password_v2 mldb_admin_password_v2.txt
 ```

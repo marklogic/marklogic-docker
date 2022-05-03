@@ -409,194 +409,132 @@ $docker secret create mldb_admin_password_v1 mldb_admin_password_v1.txt
 ```
 version: '3.6'
 services:
-    bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
-      hostname: bootstrap_3n
-      dns_search: ""
-      environment:
-        - MARKLOGIC_INIT=true
-        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
-        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
-        - TZ=Europe/Prague
-      volumes:
-        - MarkLogic_3n_vol1:/var/opt/MarkLogic
-      secrets:
-          - source: mldb_admin_username_v1
-            target: mldb_admin_username
-          - source: mldb_admin_password_v1
-            target: mldb_admin_password
-      ports:
-        - 7100-7110:8000-8010
-        - 7197:7997
-      networks:
-      - external_net
-    node2:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
-      hostname: node2
-      dns_search: ""
-      environment:
-        - MARKLOGIC_INIT=true
-        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
-        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
-        - MARKLOGIC_JOIN_CLUSTER=true
-        - TZ=Europe/Prague
-      volumes:
-        - MarkLogic_3n_vol2:/var/opt/MarkLogic
-      secrets:
-          - source: mldb_admin_username_v1
-            target: mldb_admin_username
-          - source: mldb_admin_password_v1
-            target: mldb_admin_password
-      ports:
-        - 7200-7210:8000-8010
-        - 7297:7997
-      depends_on:
-      - bootstrap
-      networks:
-      - external_net
-    node3:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
-      hostname: node3
-      dns_search: ""
-      environment:
-        - MARKLOGIC_INIT=true
-        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
-        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
-        - MARKLOGIC_JOIN_CLUSTER=true
-        - TZ=Europe/Prague
-      volumes:
-        - MarkLogic_3n_vol3:/var/opt/MarkLogic
-      secrets:
-          - source: mldb_admin_username_v1
-            target: mldb_admin_username
-          - source: mldb_admin_password_v1
-            target: mldb_admin_password
-      ports:
-        - 7300-7310:8000-8010
-        - 7397:7997
-      depends_on:
-      - bootstrap
-      networks:
-      - external_net
+    bootstrap:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: bootstrap
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+    node2:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: node2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+      ports:
+        - 7200-7210:8000-8010
+        - 7297:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
+    node3:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: node3
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol3:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+      ports:
+        - 7300-7310:8000-8010
+        - 7397:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
 secrets:
-  mldb_admin_password_v1:
-    external: true
-  mldb_admin_username_v1:
-    external: true
+  mldb_admin_password_v1:
+    external: true
+  mldb_admin_username_v1:
+    external: true
 networks:
-  external_net: {}
+  external_net: {}
 volumes:
-  MarkLogic_3n_vol1:
-  MarkLogic_3n_vol2:
-  MarkLogic_3n_vol3:
+  MarkLogic_3n_vol1:
+  MarkLogic_3n_vol2:
+  MarkLogic_3n_vol3:
 ```
 4. Use the Docker stack command to deploy the cluster:
 ```
-  $docker stack deploy -c marklogic-multi-centos_v1.yml mlstack
+  $docker stack deploy -c marklogic-multi-centos.yaml mlstack
 ```
 All the cluster nodes will now be up and running.
 Now that the nodes have been initialized, we rotate the secrets files to overwrite the initial secrets files.
 
-5. Create secrets v2 file using the these commands:
+5. Create secrets v2 using these commands:
 
-- Use the following command to create mldb_admin_username_v2.txt and add a new secret for the admin username:
+- Create mldb_admin_username_v2.txt and use the following command to add a new secret for the admin username:
 ```
   $docker secret create mldb_admin_username_v2 mldb_admin_username_v2.txt
 ```
-- Use this command to create mldb_admin_password_v2.txt and add a new secret for the admin password:
+- Create mldb_admin_password_v2.txt and use the following command to add a new secret for the admin password:
 ```
   $docker secret create mldb_admin_password_v2 mldb_admin_password_v2.txt
 ```
-6. Update the Docker compose file, and refer to new secrets in the source of the secret definition as shown below:
+6. Use the following commands to rotate the docker secrets for all the docker services created above using docker stack:
 ```
-version: '3.6'
-services:
-    bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
-      hostname: bootstrap_3n
-      dns_search: ""
-      environment:
-        - MARKLOGIC_INIT=true
-        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
-        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
-        - TZ=Europe/Prague
-      volumes:
-        - MarkLogic_3n_vol1:/var/opt/MarkLogic
-      secrets:
-          - source: mldb_admin_username_v2
-            target: mldb_admin_username
-          - source: mldb_admin_password_v2
-            target: mldb_admin_password
-      ports:
-        - 7100-7110:8000-8010
-        - 7197:7997
-      networks:
-      - external_net
-    node2:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
-      hostname: node2
-      dns_search: ""
-      environment:
-        - MARKLOGIC_INIT=true
-        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
-        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
-        - MARKLOGIC_JOIN_CLUSTER=true
-        - TZ=Europe/Prague
-      volumes:
-        - MarkLogic_3n_vol2:/var/opt/MarkLogic
-      secrets:
-          - source: mldb_admin_username_v2
-            target: mldb_admin_username
-          - source: mldb_admin_password_v2
-            target: mldb_admin_password
-      ports:
-        - 7200-7210:8000-8010
-        - 7297:7997
-      depends_on:
-      - bootstrap
-      networks:
-      - external_net
-    node3:
-      image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
-      hostname: node3
-      dns_search: ""
-      environment:
-        - MARKLOGIC_INIT=true
-        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
-        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
-        - MARKLOGIC_JOIN_CLUSTER=true
-        - TZ=Europe/Prague
-      volumes:
-        - MarkLogic_3n_vol3:/var/opt/MarkLogic
-      secrets:
-          - source: mldb_admin_username_v2
-            target: mldb_admin_username
-          - source: mldb_admin_password_v2
-            target: mldb_admin_password
-      ports:
-        - 7300-7310:8000-8010
-        - 7397:7997
-      depends_on:
-      - bootstrap
-      networks:
-      - external_net
-secrets:
-  mldb_admin_password_v2:
-    external: true
-  mldb_admin_username_v2:
-    external: true
-networks:
-  external_net: {}
-volumes:
-  MarkLogic_3n_vol1:
-  MarkLogic_3n_vol2:
-  MarkLogic_3n_vol3:
+docker service update \
+    --secret-rm mldb_admin_password_v2 \
+    --secret-rm mldb_admin_username_v2 \
+    --secret-add source=mldb_admin_password_v3,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v3,target=mldb_admin_username \
+    mlstack_bootstrap
 ```
-7. Now redeploy the stack to rotate the secrets inside the container and use the new secrets files:
 ```
-  $docker stack deploy -c marklogic-multi-centos_v2.yml mlstack
+docker service update \
+    --secret-rm mldb_admin_password_v2 \
+    --secret-rm mldb_admin_username_v2 \
+    --secret-add source=mldb_admin_password_v3,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v3,target=mldb_admin_username \
+    mlstack_node2
 ```
-Wait for all the containers to be updated. Secrets inside the containers under the /run/secrets directory will be updated with new v2 secrets.
+```
+docker service update \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
+    mlstack_node3
+```
+Above commands will remove secrets v1 and update services with new v2 secrets.
+
+Wait for all the services to be updated. Secrets inside the containers under the /run/secrets directory will be updated with new v2 secrets.
 Note: The MarkLogic cluster will still use the admin credentials set in the initial stack deployment with the v1 secrets.
 
 ## Three node cluster setup on multiple VMs

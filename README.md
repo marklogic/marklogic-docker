@@ -510,18 +510,18 @@ Now that the nodes have been initialized, we rotate the secrets files to overwri
 6. Use the following commands to rotate the docker secrets for all the docker services created above using docker stack:
 ```
 docker service update \
-    --secret-rm mldb_admin_password_v2 \
-    --secret-rm mldb_admin_username_v2 \
-    --secret-add source=mldb_admin_password_v3,target=mldb_admin_password \
-    --secret-add source=mldb_admin_username_v3,target=mldb_admin_username \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
     mlstack_bootstrap
 ```
 ```
 docker service update \
-    --secret-rm mldb_admin_password_v2 \
-    --secret-rm mldb_admin_username_v2 \
-    --secret-add source=mldb_admin_password_v3,target=mldb_admin_password \
-    --secret-add source=mldb_admin_username_v3,target=mldb_admin_username \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
     mlstack_node2
 ```
 ```

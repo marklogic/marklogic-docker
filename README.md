@@ -184,6 +184,36 @@ MarkLogic Server Docker containers are configured using a set of environment var
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
 |INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
+|OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
+
+
+MarkLogic Server also can be configured through a configuration file on the image at `/etc/marklogic.conf`. To change the configuration file, pass in the parameter `OVERWRITE_ML_CONF` set to `true` The following env variables can also be written to the `/etc/marklogic.conf` file if the parameter is set. 
+
+
+ | env var                       | value                           | required                          | default   | description                                        |
+| ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
+| TZ      | /etc/localtime                        | no | n/a       | Timezone information setting for marklogic                           |                      |
+| MARKLOGIC_ADMIN_USERNAME                | jane_doe                            | required if MARKLOGIC_INIT is set                                |   n/a        | set MarkLogic Server admin user           |
+| MARKLOGIC_ADMIN_PASSWORD      | pass                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                           |
+| MARKLOGIC_LICENSEE      | licensee information                         | no | n/a       | set MarkLogic licensee information                           |
+| MARKLOGIC_LICENSE_KEY                | license key                             | no                                |   n/a        | set MarkLogic license key             |
+| ML_HUGEPAGES_TOTAL      | 1000                        | no | n/a       | set the number of huge pages marklogic can utilize                          |
+
+
+
+
+
+#### Advanced Configuration 
+The following environment variables are only useful when building and extending the current docker image. For instance, setting `MARKLOGIC_USER` only will work if a user is set up and configured in the image. 
+
+| env var                       | value                           | required                          | default   | description                                        |
+| ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
+| MARKLOGIC_USER                | daniel                            | no                                |     n/a      | The username running MarkLogic within the docker container           |
+| MARKLOGIC_DISABLE_JVM      | 0                        | no | n/a       | disable the JVM for MarkLogic
+| JAVA_HOME                | /var/opt/java                            | no                                |  n/a         | set the java home location for MarkLogic           |
+| CLASSPATH      | /var/opt/class/path                        | no| n/a       | set the java env class path                          |
+| MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
+| MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to MarkLogic through umask                          |
 
 **IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is new in the store/marklogicdb/marklogic-server:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.
 

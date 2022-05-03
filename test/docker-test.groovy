@@ -24,6 +24,10 @@ def testCases = jsonSlurper.parseText(testCasesFile.text)
 //validate JSON
 assert testCases instanceof Map
 
+if (args) {
+	testImage = args[0]
+}
+println "Using ${testImage}"
 def QA_LICENSE_KEY = System.getenv("QA_LICENSE_KEY")
 if(QA_LICENSE_KEY) {
 	println "QA_LICENSE_KEY is set to: ${QA_LICENSE_KEY}"

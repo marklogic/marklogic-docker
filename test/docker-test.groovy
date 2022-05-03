@@ -3,6 +3,7 @@
 import groovy.json.JsonSlurper
 import groovy.xml.XmlParser
 import groovy.xml.XmlUtil
+import groovy.cli.commons.CliBuilder
 
 // Define test parameters
 def testImage='marklogic-centos/marklogic-server-centos:10.0-20220128-centos-1.0.0-ea3-test'
@@ -18,9 +19,16 @@ jUnitXML.@name = "Docker Run Tests"
 
 // Read test cases for Docker run and Docker Compose
 File testCasesFile = new File("./test/docker-test-cases.json")
+//testCasesFile.text = testCasesFile.text.replaceAll("LICENSE_PLACEHOLDER", "LICENSEE=ABC -e LICENSE_KEY=123")
 def testCases = jsonSlurper.parseText(testCasesFile.text)
 //validate JSON
 assert testCases instanceof Map
+
+def QA_LICENSE_KEY = System.getenv("QA_LICENSE_KEY")
+if(QA_LICENSE_KEY) {
+	println "QA_LICENSE_KEY is set to: ${QA_LICENSE_KEY}"
+}
+System.exit(1)
 
 //create compose credential files
 File usernameFile = new File("${composePath}mldb_admin_username.txt")

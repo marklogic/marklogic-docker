@@ -190,7 +190,7 @@ To allow MarkLogic Server to use unlimited memory and swap space (up to the amou
 
 By default, if HugePages are configured on the host, the MarkLogic instance running in a container will attempt to allocate up to 3/8 of the container memory limit as HugePages. For example, consider a host with 128GB of RAM, 48GB HugePages, and running two MarkLogic containers, each with 64GB memory limit. The MarkLogic instance in each container will only allocate up to 24GB in HugePages (3/8 * 64GB).
 
-You can change the number of HugePages available to each MarkLogic container by setting the "ML_HUGEPAGES_TOTAL" environment variable. Set the variable for each MarkLogic container to the desired number of HugePages. For example, to disable the HugePages for specific container, specify the following with your Docker run command:
+You can change the number of HugePages available to each MarkLogic container by setting the `ML_HUGEPAGES_TOTAL` environment variable. Set the variable for each MarkLogic container to the desired number of HugePages. For example, to disable the HugePages for specific container, specify the following with your Docker run command:
 ```
 -e ML_HUGEPAGES_TOTAL=0
 ```

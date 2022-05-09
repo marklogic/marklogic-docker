@@ -212,23 +212,109 @@ def ServerRegressionTests() {
 }
 
 def DockerRunTests() {
-    def dockerImage = "marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
-    sh 'test-docker-run.sh'
-}
+    echo "----------------- Docker Tests -----------------"
+    // Define test parameters
+    def testImage="marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
+    def defaultParams='-it -d -p 8000:8000 -p 8001:8001 -p 8002:8002 -p7997:7997'
+    def curlCommand='curl -sL'
+    def curlCommandAuth='curl -sL --anyauth -u test_admin:test_admin_pass'
+    def composePath='./docker-compose/'
+    def jUnitReport = "docker-test-results.xml"
+    def testCases = readJSON file: './test/docker-test-cases.json'
 
-class MyTestCase extends GroovyTestCase {
+    //validate JSON data
+    assert testCases instanceof Map
 
-    void testAssertions() {
-        assertTrue(1 == 1)
-        assertEquals("test", "test")
+    //create credential files for compose
+    writeFile(file: "${composePath}mldb_admin_username.txt", text: "test_admin")
+    writeFile(file: "${composePath}mldb_admin_password.txt", text: "test_admin_pass")
+    
+    def testResults = ''
+    def totalTests = 0
+    def totalErrors = 0
+    def cmdOutput
+    def composeFile
+    def testCont
 
-        def x = "42"
-        assertNotNull "x must not be null", x
-        assertNull null
+    // Run test cases
+    testCases.each { key, value ->
 
-        assertSame x, x
+        echo "Running "+key+": "+value.description
+        // if .yml config is provided in params, start compose. otherwise docker run is used
+        if ( value.params.toString().contains(".yml")) {
+            //update image label in yml file
+            composeFile = readFile(composePath + value.params)
+            composeFile = composeFile.replaceFirst(/image: .*/, "image: "+testImage)
+            writeFile( file: composePath + value.params, text: composeFile)
+            // start docker compose
+            sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} up -d" )
+        } else {
+            //insert valid license data in parameters
+            value.params = value.params.toString().replaceAll("LICENSE_PLACEHOLDER", "LICENSEE='MarkLogic - Version 9 QA Test License' -e LICENSE_KEY=\"${env.QA_LICENSE_KEY}\"")
+            // start docker container
+            testCont = sh( returnStdout: true, script: "docker run ${defaultParams} ${value.params} ${testImage}" )
+        }
+
+        // TODO find a good way to skip the test on error from invalid params
+        // TODO: Find a way to check for server status instead of a wait. (log: Database Modules is online)
+        sleep(60)
+
+        echo "-Unauthenticated requests"
+        value.expected.unauthenticated.each { test, verify ->
+            //TODO if key is 'log' then check for log message
+            try {
+                cmdOutput = sh( returnStdout: true, script: "${curlCommand} http://localhost:${test}" )
+            } catch (e) {
+                cmdOutput = 'Curl retured error: '+e.message
+            }
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials"'
+            totalTests += 1
+            echo "--Port ${test}: "
+            if ( cmdOutput.contains(verify) ) {
+                echo "PASS"
+                testResults = testResults + '/>'
+            } else {
+                echo "FAIL"
+                testResults = testResults + '><failure type="Text mismatch">'+cmdOutput+'</failure></testcase>'
+                totalErrors += 1
+            }
+            sleep(1)
+        }
+        echo "-Authenticated requests"
+        value.expected.authenticated.each { test, verify ->
+            try {
+            cmdOutput = sh( returnStdout: true, script: "${curlCommandAuth} http://localhost:${test}" )
+            } catch (e) {
+                cmdOutput = 'Curl retured error: '+e.message
+            }
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials"'
+            totalTests += 1
+            echo "--Port ${test}: "
+            if ( cmdOutput.contains(verify) ) {
+                echo "PASS"
+                testResults = testResults + '/>'
+            } else {
+                echo "FAIL"
+                testResults = testResults + '><failure type="Text mismatch">'+cmdOutput+'</failure></testcase>'
+                totalErrors += 1
+            }
+            sleep(1)
+        }
+        echo "-Deleting resources"
+        if ( value.params.toString().contains(".yml")) {
+            sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} down" )
+        } else {
+            sh( returnStdout: true, script: "docker rm -f ${testCont}" )
+        }
+        sh( returnStdout: true, script: "docker volume prune -f")
     }
-
+    // Generate JUnit XML file for Jenkins report
+    // TODO: find a better way to generate junit file
+    def jUnitXML = '<testsuite name="Docker Run Tests" tests="'+totalTests+'" failures="'+totalErrors+'">'
+    jUnitXML = jUnitXML + testResults + "</testsuite>"
+    writeFile( file: jUnitReport, text: jUnitXML )
+    junit testResults: jUnitReport
+    echo "-------------- End of Docker Tests --------------"
 }
 
 def PublishToInternalRegistry() {
@@ -258,6 +344,7 @@ pipeline {
         buildServerPlatform = 'linux64-rh7'
         buildServerPath = getServerPath(params.ML_SERVER_BRANCH)
         dockerRegistry = 'https://ml-docker-dev.marklogic.com'
+        QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
     }
 
     parameters {
@@ -269,6 +356,7 @@ pipeline {
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
+        booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run server regression tests')
         booleanParam(name: 'SERVER_REGRESSION', defaultValue: true, description: 'Run server regression tests')
     }
 
@@ -301,6 +389,9 @@ pipeline {
         }
 
         stage('Docker-Run-Tests') {
+            when {
+                expression { return params.DOCKER_TESTS }
+            }
             steps {
                 DockerRunTests()
             }

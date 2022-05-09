@@ -42,7 +42,7 @@
             },
             "authenticated": {
                 "8000": "Query Console",
-                "8001": "MarkLogic - Version 9 QA Test License",
+                "8001/license.xqy": "MarkLogic - Version 9 QA Test License",
                 "8002": "Monitoring Dashboard"
             }
         }

@@ -13,6 +13,38 @@
 
 cd ~
 
+################################################################
+# Read in ENV values
+################################################################
+
+# If an ENV value exists in a list, append it to the /etc/marklogic.conf file 
+if [[ -z $OVERWRITE_ML_CONF ]] || [[ "$OVERWRITE_ML_CONF" = "false" ]] ; then
+    echo "Not writing to /etc/marklogic.conf"
+else
+    echo "Deleting previous /etc/marklogic.conf ,if it exists, and overwriting with env variables"
+    rm -f /etc/marklogic.conf
+    sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
+
+  
+    [[ $MARKLOGIC_PID_FILE ]] && sudo echo "export MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE" >> /etc/marklogic.conf
+    [[ $MARKLOGIC_UMASK ]] && sudo echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >> /etc/marklogic.conf
+    [[ $TZ ]] && sudo echo "export  TZ=$TZ " >> /etc/marklogic.conf
+    [[ $MARKLOGIC_ADMIN_USERNAME ]] && sudo echo "export MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME" >> /etc/marklogic.conf
+    [[ $MARKLOGIC_ADMIN_PASSWORD ]] && sudo echo "export MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD" >> /etc/marklogic.conf
+    [[ $MARKLOGIC_LICENSEE ]] && sudo echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >> /etc/marklogic.conf
+    [[ $MARKLOGIC_LICENSE_KEY ]] && sudo echo "export MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY" >> /etc/marklogic.conf
+    [[ $ML_HUGEPAGES_TOTAL ]] && sudo echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >> /etc/marklogic.conf
+    [[ $MARKLOGIC_DISABLE_JVM ]] && sudo echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >> /etc/marklogic.conf
+    [[ $MARKLOGIC_USER ]] && sudo echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >> /etc/marklogic.conf
+    [[ $JAVA_HOME ]] && sudo echo "export JAVA_HOME=$JAVA_HOME" >> /etc/marklogic.conf
+    [[ $CLASSPATH ]] && sudo echo "export CLASSPATH=$CLASSPATH" >> /etc/marklogic.conf
+
+
+    sudo chmod 400 /etc/marklogic.conf
+fi
+
+
+
 
 ################################################################
 # Install Converters if required
@@ -78,7 +110,7 @@ fi
 ################################################################
 # check bootstrap marklogic (eg. MARKLOGIC_INIT is set)
 ################################################################
-if [ -z $MARKLOGIC_INIT ]
+if [ -z $MARKLOGIC_INIT ] || [[ "$MARKLOGIC_INIT" = "false" ]]
 then
 echo "MARKLOGIC_INIT is not defined, no bootstrap"
 else
@@ -113,7 +145,7 @@ fi
 ################################################################
 # check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set)
 ################################################################
-if [ -z $MARKLOGIC_JOIN_CLUSTER ]
+if [ -z $MARKLOGIC_JOIN_CLUSTER ] || [[ "$MARKLOGIC_JOIN_CLUSTER" = "false" ]]
 then
 echo "MARKLOGIC_JOIN_CLUSTER is not defined, not joining cluster"
 else

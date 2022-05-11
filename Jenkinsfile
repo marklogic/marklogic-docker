@@ -257,7 +257,7 @@ def DockerRunTests() {
 
         // TODO find a good way to skip the test on error from invalid params
         // TODO: Find a way to check for server status instead of a wait. (log: Database Modules is online)
-        sleep(60)
+        sleep(80)
 
         echo "-Unauthenticated requests"
         value.expected.unauthenticated.each { test, verify ->
@@ -267,7 +267,7 @@ def DockerRunTests() {
             } catch (e) {
                 cmdOutput = 'Curl retured error: '+e.message
             }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials"'
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials on port '+test+'"'
             totalTests += 1
             echo "--Port ${test}: "
             if ( cmdOutput.contains(verify) ) {
@@ -287,7 +287,7 @@ def DockerRunTests() {
             } catch (e) {
                 cmdOutput = 'Curl retured error: '+e.message
             }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials"'
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials on port '+test+'"'
             totalTests += 1
             echo "--Port ${test}: "
             if ( cmdOutput.contains(verify) ) {

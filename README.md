@@ -52,7 +52,7 @@ Base OS: CentOS
 
 Latest supported MarkLogic Server version: 10.0-9.1
 
-Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/_/marklogic
+Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/marklogicdb/marklogic-db
 
 # MarkLogic
 

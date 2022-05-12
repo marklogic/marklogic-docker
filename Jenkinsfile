@@ -22,8 +22,7 @@ void PreBuildCheck() {
         githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
         echo 'githubAPIUrl: ' + githubAPIUrl
     } else {
-        echo 'ERROR: GIT_URL is not defined'
-        sh 'exit 1'
+        echo 'Warning: GIT_URL is not defined'
     }
 
     if (env.CHANGE_ID) {
@@ -52,13 +51,13 @@ def ExtractJiraID() {
         match = env.GIT_BRANCH =~ JIRA_ID_PATTERN
     }
     else {
-        echo 'ERROR: Jira ticket number not detected.'
+        echo 'Warning: Jira ticket number not detected.'
         return ''
     }
     try {
         return match[0]
     } catch (any) {
-        echo 'ERROR: Jira ticket number not detected.'
+        echo 'Warning: Jira ticket number not detected.'
         return ''
     }
 }
@@ -66,7 +65,7 @@ def ExtractJiraID() {
 def PRDraftCheck() {
     withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
         PrObj = sh(returnStdout: true, script:'''
-                     curl -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
+                     curl -s -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
                      ''')
     }
     def jsonObj = new JsonSlurperClassic().parseText(PrObj.toString().trim())
@@ -78,10 +77,10 @@ def getReviewState() {
     def commitHash
     withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
         reviewResponse = sh(returnStdout: true, script:'''
-                            curl -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID/reviews
+                            curl -s -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID/reviews
                              ''')
          commitHash = sh(returnStdout: true, script:'''
-                         curl -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
+                         curl -s -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
                          ''')
     }
     def jsonObj = new JsonSlurperClassic().parseText(commitHash.toString().trim())
@@ -118,10 +117,13 @@ def ResultNotification(message) {
         emailList = params.emailList
     }
 
-    mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}<br>https://project.marklogic.com/jira/browse/${JIRA_ID}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+    } else {
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+
     }
 }
 
@@ -189,12 +191,12 @@ def CopyRPMs() {
     }
 }
 
-def RunStructureTests() {
+def StructureTests() {
     sh """
         cd test
         #insert current version
         sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
-        curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+        curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
         ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
@@ -202,11 +204,117 @@ def RunStructureTests() {
     junit testResults: '**/container-structure-test.xml'
 }
 
-def RunServerRegressionTests() {
+def ServerRegressionTests() {
     //TODO: run this conditionally for develop and master branches only
     echo 'Server regression tests would execute here'
     // The following can be uncommented to show an interactive prompt for manual regresstion tests
     // input "Server regression tests need to be executed manually. "
+}
+
+def DockerRunTests() {
+    echo "----------------- Docker Tests -----------------"
+    // Define test parameters
+    def testImage="marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
+    def defaultParams='-it -d -p 8000:8000 -p 8001:8001 -p 8002:8002 -p7997:7997'
+    def curlCommand='curl -sL'
+    def curlCommandAuth='curl -sL --anyauth -u test_admin:test_admin_pass'
+    def composePath='./docker-compose/'
+    def jUnitReport = "docker-test-results.xml"
+    def testCases = readJSON file: './test/docker-test-cases.json'
+
+    //validate JSON data
+    assert testCases instanceof Map
+
+    //create credential files for compose
+    writeFile(file: "${composePath}mldb_admin_username.txt", text: "test_admin")
+    writeFile(file: "${composePath}mldb_admin_password.txt", text: "test_admin_pass")
+    
+    def testResults = ''
+    def totalTests = 0
+    def totalErrors = 0
+    def cmdOutput
+    def composeFile
+    def testCont
+
+    // Run test cases
+    testCases.each { key, value ->
+
+        echo "Running "+key+": "+value.description
+        // if .yml config is provided in params, start compose. otherwise docker run is used
+        if ( value.params.toString().contains(".yml")) {
+            //update image label in yml file
+            composeFile = readFile(composePath + value.params)
+            composeFile = composeFile.replaceFirst(/image: .*/, "image: "+testImage)
+            writeFile( file: composePath + value.params, text: composeFile)
+            // start docker compose
+            sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} up -d" )
+        } else {
+            //insert valid license data in parameters
+            value.params = value.params.toString().replaceAll("LICENSE_PLACEHOLDER", "LICENSEE='MarkLogic - Version 9 QA Test License' -e LICENSE_KEY=\"${env.QA_LICENSE_KEY}\"")
+            // start docker container
+            testCont = sh( returnStdout: true, script: "docker run ${defaultParams} ${value.params} ${testImage}" )
+        }
+
+        // TODO find a good way to skip the test on error from invalid params
+        // TODO: Find a way to check for server status instead of a wait. (log: Database Modules is online)
+        sleep(60)
+
+        echo "-Unauthenticated requests"
+        value.expected.unauthenticated.each { test, verify ->
+            //TODO if key is 'log' then check for log message
+            try {
+                cmdOutput = sh( returnStdout: true, script: "${curlCommand} http://localhost:${test}" )
+            } catch (e) {
+                cmdOutput = 'Curl retured error: '+e.message
+            }
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials"'
+            totalTests += 1
+            echo "--Port ${test}: "
+            if ( cmdOutput.contains(verify) ) {
+                echo "PASS"
+                testResults = testResults + '/>'
+            } else {
+                echo "FAIL"
+                testResults = testResults + '><failure type="Text mismatch">'+cmdOutput+'</failure></testcase>'
+                totalErrors += 1
+            }
+            sleep(1)
+        }
+        echo "-Authenticated requests"
+        value.expected.authenticated.each { test, verify ->
+            try {
+            cmdOutput = sh( returnStdout: true, script: "${curlCommandAuth} http://localhost:${test}" )
+            } catch (e) {
+                cmdOutput = 'Curl retured error: '+e.message
+            }
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials"'
+            totalTests += 1
+            echo "--Port ${test}: "
+            if ( cmdOutput.contains(verify) ) {
+                echo "PASS"
+                testResults = testResults + '/>'
+            } else {
+                echo "FAIL"
+                testResults = testResults + '><failure type="Text mismatch">'+cmdOutput+'</failure></testcase>'
+                totalErrors += 1
+            }
+            sleep(1)
+        }
+        echo "-Deleting resources"
+        if ( value.params.toString().contains(".yml")) {
+            sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} down" )
+        } else {
+            sh( returnStdout: true, script: "docker rm -f ${testCont}" )
+        }
+        sh( returnStdout: true, script: "docker volume prune -f")
+    }
+    // Generate JUnit XML file for Jenkins report
+    // TODO: find a better way to generate junit file
+    def jUnitXML = '<testsuite name="Docker Run Tests" tests="'+totalTests+'" failures="'+totalErrors+'">'
+    jUnitXML = jUnitXML + testResults + "</testsuite>"
+    writeFile( file: jUnitReport, text: jUnitXML )
+    junit testResults: jUnitReport
+    echo "-------------- End of Docker Tests --------------"
 }
 
 def PublishToInternalRegistry() {
@@ -222,7 +330,7 @@ def PublishToInternalRegistry() {
 pipeline {
     agent {
         label {
-            label 'docker-vitaly'
+            label 'cld-docker'
         }
     }
     options {
@@ -236,6 +344,7 @@ pipeline {
         buildServerPlatform = 'linux64-rh7'
         buildServerPath = getServerPath(params.ML_SERVER_BRANCH)
         dockerRegistry = 'https://ml-docker-dev.marklogic.com'
+        QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
     }
 
     parameters {
@@ -246,6 +355,9 @@ pipeline {
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
+        booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
+        booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run server regression tests')
+        booleanParam(name: 'SERVER_REGRESSION', defaultValue: true, description: 'Run server regression tests')
     }
 
     stages {
@@ -267,21 +379,39 @@ pipeline {
             }
         }
 
-        stage('Image-Test') {
+        stage('Structure-Tests') {
+            when {
+                expression { return params.TEST_STRUCTURE }
+            }
             steps {
-                RunStructureTests()
+                StructureTests()
+            }
+        }
+
+        stage('Docker-Run-Tests') {
+            when {
+                expression { return params.DOCKER_TESTS }
+            }
+            steps {
+                DockerRunTests()
             }
         }
 
         stage('Run-Server-Regression-Tests') {
+            when {
+                expression { return params.SERVER_REGRESSION }
+            }
             steps {
-                RunServerRegressionTests()
+                ServerRegressionTests()
             }
         }
 
         stage('Publish-Image') {
             when {
-                    expression { return params.PUBLISH_IMAGE }
+                    anyOf {
+                        branch 'develop'
+                        expression { return params.PUBLISH_IMAGE }
+                    }
             }
             steps {
                 PublishToInternalRegistry()
@@ -294,6 +424,8 @@ pipeline {
             sh '''
                 cd src/centos
                 rm -rf *.rpm
+                docker system prune --force --filter "until=720h"
+                docker volume prune --force
             '''
         }
         success {

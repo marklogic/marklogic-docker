@@ -1,7 +1,5 @@
 // This Jenkinsfile defines internal MarkLogic build pipeline.
 
-/* groovylint-disable CatchException, CompileStatic, DuplicateStringLiteral, LineLength, MethodName, MethodParameterTypeRequired, MethodReturnTypeRequired, NoDef, UnnecessaryGetter, UnusedVariable, VariableName, VariableTypeRequired */
-
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic

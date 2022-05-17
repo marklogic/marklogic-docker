@@ -195,9 +195,9 @@ def StructureTests() {
     sh """
         cd test
         #insert current version
-        sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
+        sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yaml
         curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-        ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
+        ./container-structure-test test --config ./structure-test.yaml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
     """
@@ -240,9 +240,9 @@ def DockerRunTests() {
     testCases.each { key, value ->
 
         echo "Running "+key+": "+value.description
-        // if .yml config is provided in params, start compose. otherwise docker run is used
-        if ( value.params.toString().contains(".yml")) {
-            //update image label in yml file
+        // if .yaml config is provided in params, start compose. otherwise docker run is used
+        if ( value.params.toString().contains(".yaml")) {
+            //update image label in yaml file
             composeFile = readFile(composePath + value.params)
             composeFile = composeFile.replaceFirst(/image: .*/, "image: "+testImage)
             writeFile( file: composePath + value.params, text: composeFile)
@@ -301,7 +301,7 @@ def DockerRunTests() {
             sleep(1)
         }
         echo "-Deleting resources"
-        if ( value.params.toString().contains(".yml")) {
+        if ( value.params.toString().contains(".yaml")) {
             sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} down" )
         } else {
             sh( returnStdout: true, script: "docker rm -f ${testCont}" )

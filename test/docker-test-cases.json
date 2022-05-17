@@ -65,7 +65,7 @@
     },
     "compose-1": {
         "description": "Compose single node",
-        "params": "marklogic-centos.yml",
+        "params": "marklogic-centos.yaml",
         "expected": {
             "unauthenticated": {
                 "8000": "401 Unauthorized",
@@ -81,7 +81,7 @@
     },
     "compose-2": {
         "description": "Compose three node",
-        "params": "marklogic-cluster-centos.yml",
+        "params": "marklogic-cluster-centos.yaml",
         "expected": {
             "unauthenticated": {
                 "7100": "401 Unauthorized",

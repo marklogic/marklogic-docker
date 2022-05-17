@@ -1,7 +1,5 @@
 // This Jenkinsfile defines internal MarkLogic build pipeline.
 
-/* groovylint-disable CatchException, CompileStatic, DuplicateStringLiteral, LineLength, MethodName, MethodParameterTypeRequired, MethodReturnTypeRequired, NoDef, UnnecessaryGetter, UnusedVariable, VariableName, VariableTypeRequired */
-
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
@@ -257,7 +255,7 @@ def DockerRunTests() {
 
         // TODO find a good way to skip the test on error from invalid params
         // TODO: Find a way to check for server status instead of a wait. (log: Database Modules is online)
-        sleep(60)
+        sleep(80)
 
         echo "-Unauthenticated requests"
         value.expected.unauthenticated.each { test, verify ->
@@ -267,7 +265,7 @@ def DockerRunTests() {
             } catch (e) {
                 cmdOutput = 'Curl retured error: '+e.message
             }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials"'
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials on port '+test+'"'
             totalTests += 1
             echo "--Port ${test}: "
             if ( cmdOutput.contains(verify) ) {
@@ -287,7 +285,7 @@ def DockerRunTests() {
             } catch (e) {
                 cmdOutput = 'Curl retured error: '+e.message
             }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials"'
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials on port '+test+'"'
             totalTests += 1
             echo "--Port ${test}: "
             if ( cmdOutput.contains(verify) ) {

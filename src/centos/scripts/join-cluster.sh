@@ -1,7 +1,7 @@
 #! /bin/bash
 ###############################################################
 #
-#   Copyright 2019 MarkLogic Corporation.  All Rights Reserved.
+#   Copyright 2022 MarkLogic Corporation.  All Rights Reserved.
 #
 ###############################################################
 #   join host to cluster

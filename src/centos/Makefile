@@ -22,7 +22,7 @@ lint:
 # test docker images ** TBD **
 #***************************************************************************
 test:
-	${container_test_tool} test --image ${REPONAME}/marklogic-server-centos:${version} --config "test/test-marklogic-server-centos:${version}.yml"
+	${container_test_tool} test --image ${REPONAME}/marklogic-server-centos:${version} --config "test/test-marklogic-server-centos:${version}.yaml"
 
 #***************************************************************************
 # push docker images to mlregistry.marklogic.com

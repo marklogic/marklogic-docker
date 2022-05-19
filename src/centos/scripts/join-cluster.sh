@@ -17,22 +17,20 @@
 SECRET_USR_FILE=/run/secrets/${MARKLOGIC_ADMIN_USERNAME_FILE}
 SECRET_PWD_FILE=/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}
 
-if [[ -f "$SECRET_PWD_FILE" ]] && [[ ! -z "$(<"$SECRET_PWD_FILE")" ]]
-then
-echo "using docker secrets for credentials"
-ML_ADMIN_PASSWORD=$(<"$SECRET_PWD_FILE")
+if [[ -f "$SECRET_PWD_FILE" ]] && [[ ! -z "$(<"$SECRET_PWD_FILE")" ]]; then
+        echo "using docker secrets for credentials"
+        ML_ADMIN_PASSWORD=$(<"$SECRET_PWD_FILE")
 else
-echo "using ENV for credentials"
-ML_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD
+        echo "using ENV for credentials"
+        ML_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD
 fi
 
-if [[ -f "$SECRET_USR_FILE" ]] && [[ ! -z "$(<"$SECRET_USR_FILE")" ]]
-then
-echo "using docker secrets for credentials"
-ML_ADMIN_USERNAME=$(<"$SECRET_USR_FILE")
+if [[ -f "$SECRET_USR_FILE" ]] && [[ ! -z "$(<"$SECRET_USR_FILE")" ]]; then
+        echo "using docker secrets for credentials"
+        ML_ADMIN_USERNAME=$(<"$SECRET_USR_FILE")
 else
-echo "using ENV for credentials"
-ML_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME
+        echo "using ENV for credentials"
+        ML_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME
 fi
 
 cluster=${1:-${MARKLOGIC_BOOTSTRAP_HOST}}

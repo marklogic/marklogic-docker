@@ -234,9 +234,9 @@ The credentials for the admin user are configured using Docker secrets, and are 
 ## Single node MarkLogic Server on a single VM
 Single node configurations are used primarily on a development machine with a single user.
 
-Create these files on your host machine: `marklogic-centos.yml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created. 
+Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created. 
 
-**marklogic-centos.yml**
+**marklogic-centos.yaml**
 
 ```
 #Docker compose file sample to setup single node cluster
@@ -291,7 +291,7 @@ volumes:
 Once the files are ready, run this command to start the MarkLogic Server container.
 
 ```
-$ docker-compose -f marklogic-centos.yml up -d
+$ docker-compose -f marklogic-centos.yaml up -d
 ```
 The previous command starts a container running MarkLogic Server named "bootstrap".
 
@@ -305,9 +305,9 @@ After the container is initialized, you can access the MarkLogic Query Console o
 
 ## Three node cluster on a single VM
 
-The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
+The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
 
-**marklogic-cluster-centos.yml**
+**marklogic-cluster-centos.yaml**
 
 ```
 #Docker compose file sample to setup a three node cluster
@@ -406,7 +406,7 @@ volumes:
 Once the files have been created, run the following command to start the MarkLogic Server container:
 
 ```
-$ docker-compose -f marklogic-cluster-centos.yml up -d
+$ docker-compose -f marklogic-cluster-centos.yaml up -d
 ```
 
 This command will start three Docker containers running MarkLogic Server, named "bootstrap_3n", "node2" and, "node3".
@@ -423,7 +423,7 @@ As in the previous single-node example, each node of the cluster can be accessed
 
 ### Using ENV for admin credentials in Docker compose
 
-In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure, but it is commonly used in development environments. This is not recommended for production environments. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
+In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure, but it is commonly used in development environments. This is not recommended for production environments. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yaml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
 
 Using Docker secrets, username and password information are secured when transmitting the sensitive data from Docker host to Docker containers. To prevent any attacks, the login information is not available as an environment variable. However, these values are stored in a text file and persisted in an in-memory file system inside the container. We recommend that you delete the Docker secrets information once the cluster is up and running.
 
@@ -443,7 +443,7 @@ Using Docker secrets, username and password information are secured when transmi
 ```
 $docker secret create mldb_admin_password_v1 mldb_admin_password_v1.txt
 ```
-3. Create marklogic-multi-centos.yml using below:
+3. Create marklogic-multi-centos.yaml using below:
 ```
 version: '3.6'
 services:
@@ -778,7 +778,7 @@ This section describes the teardown process for clusters set up on a single VM u
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
 ```
-$ docker-compose -f marklogic-centos.yml down
+$ docker-compose -f marklogic-centos.yaml down
 ```
 
 ### Remove volumes

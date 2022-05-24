@@ -17,7 +17,7 @@
     },
     "docker-2": {
         "description": "Initialized MarkLogic Server",
-        "params": "-e MARKLOGIC_INIT=false -e MARKLOGIC_ADMIN_USERNAME=test_admin -e MARKLOGIC_ADMIN_PASSWORD=test_admin_pass",
+        "params": "-e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=test_admin -e MARKLOGIC_ADMIN_PASSWORD=test_admin_pass",
         "expected": {
             "unauthenticated": {
                 "8000": "401 Unauthorized",
@@ -33,7 +33,7 @@
     },
     "docker-3": {
         "description": "Initialized MarkLogic Server with License Key",
-        "params": "-e MARKLOGIC_INIT=false -e MARKLOGIC_ADMIN_USERNAME=test_admin -e MARKLOGIC_ADMIN_PASSWORD=test_admin_pass -e LICENSE_PLACEHOLDER -e INSTALL_CONVERTERS=false",
+        "params": "-e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=test_admin -e MARKLOGIC_ADMIN_PASSWORD=test_admin_pass -e LICENSE_PLACEHOLDER -e INSTALL_CONVERTERS=false",
         "expected": {
             "unauthenticated": {
                 "8000": "401 Unauthorized",
@@ -65,7 +65,7 @@
     },
     "compose-1": {
         "description": "Compose single node",
-        "params": "marklogic-centos.yml",
+        "params": "marklogic-centos.yaml",
         "expected": {
             "unauthenticated": {
                 "8000": "401 Unauthorized",
@@ -81,7 +81,7 @@
     },
     "compose-2": {
         "description": "Compose three node",
-        "params": "marklogic-cluster-centos.yml",
+        "params": "marklogic-cluster-centos.yaml",
         "expected": {
             "unauthenticated": {
                 "7100": "401 Unauthorized",

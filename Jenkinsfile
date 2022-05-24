@@ -1,7 +1,5 @@
 // This Jenkinsfile defines internal MarkLogic build pipeline.
 
-/* groovylint-disable CatchException, CompileStatic, DuplicateStringLiteral, LineLength, MethodName, MethodParameterTypeRequired, MethodReturnTypeRequired, NoDef, UnnecessaryGetter, UnusedVariable, VariableName, VariableTypeRequired */
-
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
@@ -195,9 +193,9 @@ def StructureTests() {
     sh """
         cd test
         #insert current version
-        sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yml
+        sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yaml
         curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-        ./container-structure-test test --config ./structure-test.yml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
+        ./container-structure-test test --config ./structure-test.yaml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
     """
@@ -240,9 +238,9 @@ def DockerRunTests() {
     testCases.each { key, value ->
 
         echo "Running "+key+": "+value.description
-        // if .yml config is provided in params, start compose. otherwise docker run is used
-        if ( value.params.toString().contains(".yml")) {
-            //update image label in yml file
+        // if .yaml config is provided in params, start compose. otherwise docker run is used
+        if ( value.params.toString().contains(".yaml")) {
+            //update image label in yaml file
             composeFile = readFile(composePath + value.params)
             composeFile = composeFile.replaceFirst(/image: .*/, "image: "+testImage)
             writeFile( file: composePath + value.params, text: composeFile)
@@ -257,7 +255,7 @@ def DockerRunTests() {
 
         // TODO find a good way to skip the test on error from invalid params
         // TODO: Find a way to check for server status instead of a wait. (log: Database Modules is online)
-        sleep(60)
+        sleep(80)
 
         echo "-Unauthenticated requests"
         value.expected.unauthenticated.each { test, verify ->
@@ -267,7 +265,7 @@ def DockerRunTests() {
             } catch (e) {
                 cmdOutput = 'Curl retured error: '+e.message
             }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials"'
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials on port '+test+'"'
             totalTests += 1
             echo "--Port ${test}: "
             if ( cmdOutput.contains(verify) ) {
@@ -287,7 +285,7 @@ def DockerRunTests() {
             } catch (e) {
                 cmdOutput = 'Curl retured error: '+e.message
             }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials"'
+            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials on port '+test+'"'
             totalTests += 1
             echo "--Port ${test}: "
             if ( cmdOutput.contains(verify) ) {
@@ -301,7 +299,7 @@ def DockerRunTests() {
             sleep(1)
         }
         echo "-Deleting resources"
-        if ( value.params.toString().contains(".yml")) {
+        if ( value.params.toString().contains(".yaml")) {
             sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} down" )
         } else {
             sh( returnStdout: true, script: "docker rm -f ${testCont}" )

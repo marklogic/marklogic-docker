@@ -154,11 +154,6 @@ if [ "$HOSTNAME" != "$ML_BOOTSTRAP_HOST" && $REPLICA_COUNT ]; then
     rm -f cluster.zip
 fi
 
-# If Kubernetes, Mark Kubernetes Pod Ready.
-if [ $REPLICA_COUNT ]; then
-    sudo touch /var/opt/MarkLogic/ready
-fi
-
 ################################################################
 # tail ErrorLog for docker logs
 ################################################################

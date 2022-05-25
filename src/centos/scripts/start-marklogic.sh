@@ -12,9 +12,6 @@
 ###############################################################
 
 cd ~
-echo '### Begin ML Container Config ###'
-HOST_URL="$HOSTNAME.$DOMAIN_SUFFIX"
-AUTH_CURL="curl --anyauth --user $MARKLOGIC_ADMIN_USERNAME:$MARKLOGIC_ADMIN_PASSWORD -m 20 -s "
 
 ################################################################
 # Install Converters if required
@@ -110,41 +107,20 @@ else
     fi
 fi
 
-################################################################
-# change host url
-################################################################
-echo "### changing host URL for $HOSTNAME ###"
-HOST_ID=$($AUTH_CURL http://localhost:8002/manage/v2/hosts | grep -o '<idref>[^<]*' | grep -o '[^>]*$')
-sleep 2s
-echo "HOST_ID: $HOST_ID"
-PREV_HOST_NAME=$($AUTH_CURL http://localhost:8002/manage/v2/hosts/$HOST_ID/properties | grep -o '<host-name>[^<]*' | grep -o '[^>]*$')
-sleep 2s
-NEW_HOST_URL="$HOSTNAME.$DOMAIN_SUFFIX"
-echo "change host from $PREV_HOST_NAME to $NEW_HOST_URL"
-$AUTH_CURL -H "Content-type: application/json" -X PUT localhost:8002/manage/v2/hosts/$HOST_ID/properties -d '{"host-name":"'$NEW_HOST_URL'"}'
-sleep 10s
-echo 'done changing host URL'
+
 
 ################################################################
-# check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set)
+# check join cluster
 ################################################################
-if [ -z $MARKLOGIC_JOIN_CLUSTER ]; then
-    echo "MARKLOGIC_JOIN_CLUSTER is not defined, not joining cluster"
-else
-    echo "MARKLOGIC_JOIN_CLUSTER is defined, joining cluster"
+if [[ "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
+    echo "### Joining cluster ###"
     sleep 5s
-    /usr/local/bin/join-cluster.sh $MARKLOGIC_BOOTSTRAP_HOST $HOSTNAME
-fi
-
-# Join Cluster Kubernetes
-if [ "$HOSTNAME" != "$ML_BOOTSTRAP_HOST" && $REPLICA_COUNT ]; then
-    echo "### joining cluster ###"
-    joiner=$HOST_URL
-    cluster="$ML_BOOTSTRAP_HOST.$DOMAIN_SUFFIX"
+    joiner="${HOSTNAME}"
+    cluster="${ML_BOOTSTRAP_HOST}"
+    AUTH_CURL="curl --anyauth --user ${ML_ADMIN_USER}:${ML_ADMIN_PASS} -m 20 -s "
+    
     $AUTH_CURL -o host.xml -X GET -H "Accept: application/xml" http://${joiner}:8001/admin/v1/server-config
-
     $AUTH_CURL -X POST -d "group=Default" --data-urlencode "server-config@./host.xml" -H "Content-type: application/x-www-form-urlencoded" -o cluster.zip http://${cluster}:8001/admin/v1/cluster-config
-
     sleep 10s
 
     $AUTH_CURL -X POST -H "Content-type: application/zip" --data-binary @./cluster.zip http://${joiner}:8001/admin/v1/cluster-config
@@ -152,9 +128,17 @@ if [ "$HOSTNAME" != "$ML_BOOTSTRAP_HOST" && $REPLICA_COUNT ]; then
 
     rm -f host.xml
     rm -f cluster.zip
+else
+    echo "### Not Joining Cluster ###"
 fi
+
+################################################################
+# mark container ready
+################################################################
+echo "### Marking Container Ready ###"
+sudo touch /var/opt/MarkLogic/ready
 
 ################################################################
 # tail ErrorLog for docker logs
 ################################################################
-tail -f $MARKLOGIC_DATA_DIR/Logs/ErrorLog.txt
+tail -f "${MARKLOGIC_DATA_DIR}"/Logs/ErrorLog.txt

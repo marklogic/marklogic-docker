@@ -45,7 +45,3 @@ fileExistenceTests:
   path: '/opt/MarkLogic/bin/MarkLogic'
   isExecutableBy: 'any'
   shouldExist: true
-- name: 'joiner script'
-  path: '/usr/local/bin/join-cluster.sh'
-  isExecutableBy: 'any'
-  shouldExist: true

@@ -14,7 +14,7 @@
 ###############################################################
 # Prepare script
 ###############################################################
-cd ~
+cd ~ || exit
 # Convert booleans to lowercase
 for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do
   declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
@@ -22,10 +22,10 @@ done
 
 # define log and err functions
 log() {
-    echo "$(basename $0): ${*}"
+    echo "$(basename "${0}"): ${*}"
 }
 err() {
-    echo "$(basename $0) ERROR: ${*}" >&2
+    echo "$(basename "${0}") ERROR: ${*}" >&2
     exit 1
 }
 
@@ -35,22 +35,22 @@ err() {
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
 if [[ "${OVERWRITE_ML_CONF}" = "true" ]]; then
-    log "Deleting previous /etc/marklogic.conf ,if it exists, and overwriting with env variables"
+    log "Deleting previous /etc/marklogic.conf, if it exists, and overwriting with env variables."
     rm -f /etc/marklogic.conf
     sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
 
-    [[ "${MARKLOGIC_PID_FILE}" ]] && sudo echo "export MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_UMASK}" ]] && sudo echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >>/etc/marklogic.conf
-    [[ "${TZ}" ]] && sudo echo "export  TZ=$TZ " >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_ADMIN_USERNAME}" ]] && sudo echo "export MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_ADMIN_PASSWORD}" ]] && sudo echo "export MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_LICENSEE}" ]] && sudo echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_LICENSE_KEY}" ]] && sudo echo "export MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY" >>/etc/marklogic.conf
-    [[ "${ML_HUGEPAGES_TOTAL}" ]] && sudo echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_DISABLE_JVM}" ]] && sudo echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_USER}" ]] && sudo echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >>/etc/marklogic.conf
-    [[ "${JAVA_HOME}" ]] && sudo echo "export JAVA_HOME=$JAVA_HOME" >>/etc/marklogic.conf
-    [[ "${CLASSPATH}" ]] && sudo echo "export CLASSPATH=$CLASSPATH" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_PID_FILE}" ]] && echo "export MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_UMASK}" ]] && echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >>/etc/marklogic.conf
+    [[ "${TZ}" ]] && echo "export TZ=$TZ " >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_ADMIN_USERNAME}" ]] && echo "export MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_ADMIN_PASSWORD}" ]] && echo "export MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_LICENSEE}" ]] && echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_LICENSE_KEY}" ]] && echo "export MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY" >>/etc/marklogic.conf
+    [[ "${ML_HUGEPAGES_TOTAL}" ]] && echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_DISABLE_JVM}" ]] && echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_USER}" ]] && echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >>/etc/marklogic.conf
+    [[ "${JAVA_HOME}" ]] && echo "export JAVA_HOME=$JAVA_HOME" >>/etc/marklogic.conf
+    [[ "${CLASSPATH}" ]] && echo "export CLASSPATH=$CLASSPATH" >>/etc/marklogic.conf
 
     sudo chmod 400 /etc/marklogic.conf
 
@@ -82,8 +82,8 @@ fi
 ################################################################
 if [ -n "${TZ}" ]; then
     log "Setting timezone to ${TZ}"
-    sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-    echo $TZ | sudo tee /etc/timezone
+    sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
+    echo "${TZ}" | sudo tee /etc/timezone
 fi
 
 ################################################################
@@ -142,12 +142,12 @@ elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
     curl -s --anyauth -i -X POST \
         -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
-        http://${HOSTNAME}:8001/admin/v1/init
+        "http://${HOSTNAME}:8001/admin/v1/init"
     sleep 5s
     curl -s -X POST -H "Content-type: application/x-www-form-urlencoded" \
         --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
         --data "realm=public" \
-        http://${HOSTNAME}:8001/admin/v1/instance-admin
+        "http://${HOSTNAME}:8001/admin/v1/instance-admin"
     sleep 5s
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" = "false" ]]; then
     log "MARKLOGIC_INIT is set to false or not defined, no bootstrap."

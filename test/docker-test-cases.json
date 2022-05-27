@@ -65,7 +65,7 @@
     },
     "compose-1": {
         "description": "Compose single node",
-        "params": "marklogic-centos.yaml",
+        "params": "./docker-compose/marklogic-centos.yaml",
         "expected": {
             "unauthenticated": {
                 "8000": "401 Unauthorized",
@@ -81,7 +81,7 @@
     },
     "compose-2": {
         "description": "Compose three node",
-        "params": "marklogic-cluster-centos.yaml",
+        "params": "./docker-compose/marklogic-cluster-centos.yaml",
         "expected": {
             "unauthenticated": {
                 "7100": "401 Unauthorized",
@@ -104,6 +104,57 @@
                 "7300": "Query Console",
                 "7301": "No license key has been entered",
                 "7302": "Monitoring Dashboard"
+            }
+        }
+    },
+    "compose-3": {
+        "description": "Two node compose with credentials in env",
+        "params": "./test/compose-test-3.yaml",
+        "expected": {
+            "unauthenticated": {
+                "7100": "401 Unauthorized",
+                "7101": "401 Unauthorized",
+                "7102": "401 Unauthorized",
+                "7200": "401 Unauthorized",
+                "7201": "401 Unauthorized",
+                "7202": "401 Unauthorized"
+            },
+            "authenticated": {
+                "7100": "Query Console",
+                "7101": "No license key has been entered",
+                "7102": "Monitoring Dashboard",
+                "7200": "Query Console",
+                "7201": "No license key has been entered"
+            }
+        }
+    },
+    "compose-4": {
+        "description": "Two node compose with second node uncoupled",
+        "params": "./test/compose-test-4.yaml",
+        "expected": {
+            "unauthenticated": {
+                "7101": "401 Unauthorized",
+                "7201": "401 Unauthorized"
+            },
+            "authenticated": {
+                "7101": "testbootstrap",
+                "7201": "testnode"
+            }
+        }
+    },
+    "compose-5": {
+        "description": "Two node compose with second node uninitialized",
+        "params": "./test/compose-test-5.yaml",
+        "expected": {
+            "unauthenticated": {
+                "7101": "401 Unauthorized",
+                "7201": "401 Unauthorized"
+            },
+            "authenticated": {
+                "7101": "testbootstrap",
+                "7200": "403 Forbidden",
+                "7201": "This server must now self-install the initial databases and application servers. Click OK to continue.",
+                "7202": "403 Forbidden"
             }
         }
     }

@@ -1,6 +1,6 @@
 ###############################################################
 #
-#   Copyright (c) 2021 MarkLogic Corporation
+#   Copyright (c) 2022 MarkLogic Corporation
 #
 ###############################################################
 FROM ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-7.3_1.0.0_EA

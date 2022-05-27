@@ -128,7 +128,6 @@ if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
     log "MARKLOGIC_INIT is already initialized, no bootstrap."
 elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
     log "MARKLOGIC_INIT is true, bootstrapping."
-    sudo touch /opt/MarkLogic/DOCKER_INIT
 
     # generate JSON payload conditionally with license details.
     if [[ -z "${LICENSE_KEY}" ]] || [[ -z "${LICENSEE}" ]]; then
@@ -149,6 +148,7 @@ elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
         --data "realm=public" \
         "http://${HOSTNAME}:8001/admin/v1/instance-admin"
     sleep 5s
+    sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" = "false" ]]; then
     log "MARKLOGIC_INIT is set to false or not defined, no bootstrap."
 else
@@ -163,8 +163,8 @@ if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" = "true" ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is true, joining cluster."
     sleep 5s
-    sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
     /usr/local/bin/join-cluster.sh "${MARKLOGIC_BOOTSTRAP_HOST}" "${HOSTNAME}" "${ML_ADMIN_USERNAME}" "${ML_ADMIN_PASSWORD}"
+    sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
 elif [ -z "${MARKLOGIC_JOIN_CLUSTER}" ] || [[ "${MARKLOGIC_JOIN_CLUSTER}" = "false" ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else

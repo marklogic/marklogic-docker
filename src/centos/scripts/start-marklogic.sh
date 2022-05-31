@@ -12,12 +12,20 @@
 ###############################################################
 
 ###############################################################
+# Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set. 
+###############################################################
+if [[ ! -z "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
+    HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
+fi
+
+###############################################################
 # Prepare script
 ###############################################################
 cd ~ || exit
 # Convert booleans to lowercase
 for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do
-  declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
+    declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
 done
 
 # define log and err functions
@@ -122,12 +130,12 @@ else
 fi
 
 ################################################################
-# check bootstrap marklogic (eg. MARKLOGIC_INIT is set)
+# check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
-    log "MARKLOGIC_INIT is already initialized, no bootstrap."
+    log "MARKLOGIC_INIT is already initialized."
 elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
-    log "MARKLOGIC_INIT is true, bootstrapping."
+    log "MARKLOGIC_INIT is true, initialzing."
 
     # generate JSON payload conditionally with license details.
     if [[ -z "${LICENSE_KEY}" ]] || [[ -z "${LICENSEE}" ]]; then
@@ -137,7 +145,7 @@ elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
         LICENSE_PAYLOAD="{\"license-key\" : \"${LICENSE_KEY}\",\"licensee\" : \"${LICENSEE}\"}"
     fi
 
-    log "Bootstrapping MarkLogic on ${HOSTNAME}."
+    log "Initialzing MarkLogic on ${HOSTNAME}."
     curl -s --anyauth -i -X POST \
         -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
@@ -150,26 +158,43 @@ elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
     sleep 5s
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" = "false" ]]; then
-    log "MARKLOGIC_INIT is set to false or not defined, no bootstrap."
+    log "MARKLOGIC_INIT is set to false or not defined, not initialzing."
 else
     err "MARKLOGIC_INIT must be true or false."
 fi
 
 ################################################################
-# mark container ready
+# check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster."
-elif [[ "${MARKLOGIC_JOIN_CLUSTER}" = "true" ]]; then
-    log "MARKLOGIC_JOIN_CLUSTER is true, joining cluster."
+elif [[ "${MARKLOGIC_JOIN_CLUSTER}" = "true" ]] || ([[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]] && [[ ! -z "${MARKLOGIC_BOOTSTRAP_HOST}" ]]); then
+    log "Join conditions met, Joining cluster."
     sleep 5s
-    /usr/local/bin/join-cluster.sh "${MARKLOGIC_BOOTSTRAP_HOST}" "${HOSTNAME}" "${ML_ADMIN_USERNAME}" "${ML_ADMIN_PASSWORD}"
+    joiner="${HOSTNAME}"
+    cluster="${MARKLOGIC_BOOTSTRAP_HOST}"
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -o host.xml -X GET -H "Accept: application/xml" http://${joiner}:8001/admin/v1/server-config
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -d "group=Default" --data-urlencode "server-config@./host.xml" -H "Content-type: application/x-www-form-urlencoded" -o cluster.zip http://${cluster}:8001/admin/v1/cluster-config
+
+    sleep 10s
+
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -H "Content-type: application/zip" --data-binary @./cluster.zip http://${joiner}:8001/admin/v1/cluster-config
+    sleep 5s
+
+    rm -f host.xml
+    rm -f cluster.zip
     sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
 elif [ -z "${MARKLOGIC_JOIN_CLUSTER}" ] || [[ "${MARKLOGIC_JOIN_CLUSTER}" = "false" ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else
     err "MARKLOGIC_JOIN_CLUSTER must be true or false."
 fi
+
+################################################################
+# mark the node ready
+################################################################
+log "Cluster config complete, marking node as ready"
+sudo touch /var/opt/MarkLogic/ready
 
 ################################################################
 # tail ErrorLog for docker logs

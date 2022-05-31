@@ -216,7 +216,6 @@ def DockerRunTests() {
     def defaultParams='-it -d -p 8000:8000 -p 8001:8001 -p 8002:8002 -p7997:7997'
     def curlCommand='curl -sL'
     def curlCommandAuth='curl -sL --anyauth -u test_admin:test_admin_pass'
-    def composePath='./docker-compose/'
     def jUnitReport = "docker-test-results.xml"
     def testCases = readJSON file: './test/docker-test-cases.json'
 
@@ -224,8 +223,8 @@ def DockerRunTests() {
     assert testCases instanceof Map
 
     //create credential files for compose
-    writeFile(file: "${composePath}mldb_admin_username.txt", text: "test_admin")
-    writeFile(file: "${composePath}mldb_admin_password.txt", text: "test_admin_pass")
+    writeFile(file: "./docker-compose/mldb_admin_username.txt", text: "test_admin")
+    writeFile(file: "./docker-compose/mldb_admin_password.txt", text: "test_admin_pass")
     
     def testResults = ''
     def totalTests = 0
@@ -241,11 +240,11 @@ def DockerRunTests() {
         // if .yaml config is provided in params, start compose. otherwise docker run is used
         if ( value.params.toString().contains(".yaml")) {
             //update image label in yaml file
-            composeFile = readFile(composePath + value.params)
+            composeFile = readFile(value.params)
             composeFile = composeFile.replaceFirst(/image: .*/, "image: "+testImage)
-            writeFile( file: composePath + value.params, text: composeFile)
+            writeFile( file: value.params, text: composeFile)
             // start docker compose
-            sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} up -d" )
+            sh( returnStdout: true, script: "docker compose -f ${value.params} up -d" )
         } else {
             //insert valid license data in parameters
             value.params = value.params.toString().replaceAll("LICENSE_PLACEHOLDER", "LICENSEE='MarkLogic - Version 9 QA Test License' -e LICENSE_KEY=\"${env.QA_LICENSE_KEY}\"")
@@ -300,7 +299,7 @@ def DockerRunTests() {
         }
         echo "-Deleting resources"
         if ( value.params.toString().contains(".yaml")) {
-            sh( returnStdout: true, script: "docker compose -f ${composePath}${value.params} down" )
+            sh( returnStdout: true, script: "docker compose -f ${value.params} down" )
         } else {
             sh( returnStdout: true, script: "docker rm -f ${testCont}" )
         }

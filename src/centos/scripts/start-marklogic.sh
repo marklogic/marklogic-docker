@@ -12,7 +12,7 @@
 ###############################################################
 
 ###############################################################
-# Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set. 
+# Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set.
 ###############################################################
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"

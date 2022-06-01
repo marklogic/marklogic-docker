@@ -14,7 +14,7 @@
 ###############################################################
 # Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set. 
 ###############################################################
-if [[ ! -z "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
+if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
     echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
 fi
@@ -42,7 +42,7 @@ err() {
 ################################################################
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
-if [[ "${OVERWRITE_ML_CONF}" = "true" ]]; then
+if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     log "Deleting previous /etc/marklogic.conf, if it exists, and overwriting with env variables."
     rm -f /etc/marklogic.conf
     sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
@@ -62,7 +62,7 @@ if [[ "${OVERWRITE_ML_CONF}" = "true" ]]; then
 
     sudo chmod 400 /etc/marklogic.conf
 
-elif [[ -z ${OVERWRITE_ML_CONF} ]] || [[ "${OVERWRITE_ML_CONF}" = "false" ]]; then
+elif [[ -z ${OVERWRITE_ML_CONF} ]] || [[ "${OVERWRITE_ML_CONF}" == "false" ]]; then
     log "Not writing to /etc/marklogic.conf"
 else
     err "OVERWRITE_ML_CONF must be true or false."
@@ -79,7 +79,7 @@ if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
         CONVERTERS_PATH="/converters.rpm"
         sudo yum localinstall -y $CONVERTERS_PATH
     fi
-elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" = "false" ]]; then
+elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" == "false" ]]; then
     log "Not Installing Converters"
 else
     err "INSTALL_CONVERTERS must be true or false."
@@ -134,7 +134,7 @@ fi
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
     log "MARKLOGIC_INIT is already initialized."
-elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
+elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     log "MARKLOGIC_INIT is true, initialzing."
 
     # generate JSON payload conditionally with license details.
@@ -157,34 +157,34 @@ elif [[ "${MARKLOGIC_INIT}" = "true" ]]; then
         "http://${HOSTNAME}:8001/admin/v1/instance-admin"
     sleep 5s
     sudo touch /opt/MarkLogic/DOCKER_INIT
-elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" = "false" ]]; then
+elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
     log "MARKLOGIC_INIT is set to false or not defined, not initialzing."
 else
     err "MARKLOGIC_INIT must be true or false."
 fi
 
 ################################################################
-# check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set)
+# check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set and host is not bootstrap host)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster."
-elif [[ "${MARKLOGIC_JOIN_CLUSTER}" = "true" ]] || ([[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]] && [[ ! -z "${MARKLOGIC_BOOTSTRAP_HOST}" ]]); then
+elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     log "Join conditions met, Joining cluster."
     sleep 5s
     joiner="${HOSTNAME}"
     cluster="${MARKLOGIC_BOOTSTRAP_HOST}"
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -o host.xml -X GET -H "Accept: application/xml" http://${joiner}:8001/admin/v1/server-config
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -d "group=Default" --data-urlencode "server-config@./host.xml" -H "Content-type: application/x-www-form-urlencoded" -o cluster.zip http://${cluster}:8001/admin/v1/cluster-config
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -o host.xml -X GET -H "Accept: application/xml" http://"${joiner}":8001/admin/v1/server-config
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -d "group=Default" --data-urlencode "server-config@./host.xml" -H "Content-type: application/x-www-form-urlencoded" -o cluster.zip http://"${cluster}":8001/admin/v1/cluster-config
 
     sleep 10s
 
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -H "Content-type: application/zip" --data-binary @./cluster.zip http://${joiner}:8001/admin/v1/cluster-config
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -H "Content-type: application/zip" --data-binary @./cluster.zip http://"${joiner}":8001/admin/v1/cluster-config
     sleep 5s
 
     rm -f host.xml
     rm -f cluster.zip
     sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
-elif [ -z "${MARKLOGIC_JOIN_CLUSTER}" ] || [[ "${MARKLOGIC_JOIN_CLUSTER}" = "false" ]]; then
+elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]] || [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else
     err "MARKLOGIC_JOIN_CLUSTER must be true or false."

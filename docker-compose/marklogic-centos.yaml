@@ -4,6 +4,7 @@ services:
     bootstrap:
       image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
       container_name: bootstrap
+      hostname: bootstrap
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true

@@ -245,6 +245,7 @@ services:
     bootstrap:
       image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
       container_name: bootstrap
+      hostname: bootstrap
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -316,6 +317,7 @@ services:
     bootstrap:
       image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
       container_name: bootstrap_3n
+      hostname: bootstrap_3n
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -335,6 +337,7 @@ services:
     node2:
       image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
       container_name: node2
+      hostname: node2
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -357,6 +360,7 @@ services:
     node3:
       image: store/marklogicdb/marklogic-server:10.0-9-centos-1.0.0-ea4
       container_name: node3
+      hostname: node3
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true

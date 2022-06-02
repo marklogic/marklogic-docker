@@ -21,7 +21,6 @@ ARG ML_CONVERTERS=marklogic.converters
 ###############################################################
 
 COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
-COPY scripts/join-cluster.sh /usr/local/bin/join-cluster.sh
 
 ###############################################################
 # install MarkLogic server and sudo

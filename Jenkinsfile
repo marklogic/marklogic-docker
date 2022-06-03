@@ -241,7 +241,7 @@ def DockerRunTests() {
         if ( value.params.toString().contains(".yaml")) {
             //update image label in yaml file
             composeFile = readFile(value.params)
-            composeFile = composeFile.replaceFirst(/image: .*/, "image: "+testImage)
+            composeFile = composeFile.replaceAll(/image: .*/, "image: "+testImage)
             writeFile( file: value.params, text: composeFile)
             // start docker compose
             sh( returnStdout: true, script: "docker compose -f ${value.params} up -d" )

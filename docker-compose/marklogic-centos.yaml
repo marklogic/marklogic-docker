@@ -2,7 +2,7 @@
 version: '3.6'
 services:
     bootstrap:
-      image: store/marklogicdb/marklogic-server:10.0-8.3-centos-1.0.0-ea3
+      image: marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0-ea4
       container_name: bootstrap
       dns_search: ""
       environment:

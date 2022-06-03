@@ -423,6 +423,7 @@ pipeline {
                 rm -rf *.rpm
                 docker system prune --force --filter "until=720h"
                 docker volume prune --force
+                docker image prune --force
             '''
         }
         success {

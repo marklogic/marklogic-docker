@@ -195,7 +195,7 @@ def StructureTests() {
         #insert current version
         sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yaml
         curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-        ./container-structure-test test --config ./structure-test.yaml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
+        make structure-test version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
     """
@@ -314,6 +314,14 @@ def DockerRunTests() {
     echo "-------------- End of Docker Tests --------------"
 }
 
+def Lint() {
+    sh( returnStdout: true, script: "make lint" )
+}
+
+def Scan() {
+    sh( returnStdout: true, script: "make scan" )
+}
+
 def PublishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
@@ -376,6 +384,19 @@ pipeline {
             }
         }
 
+        stage('Lint') {
+            steps {
+                Lint()
+            }
+        }
+
+        stage('Scan') {
+            steps {
+                Scan()
+            }
+        }
+
+        
         stage('Structure-Tests') {
             when {
                 expression { return params.TEST_STRUCTURE }

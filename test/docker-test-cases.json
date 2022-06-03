@@ -148,7 +148,7 @@
         "expected": {
             "unauthenticated": {
                 "7101": "401 Unauthorized",
-                "7201": "401 Unauthorized"
+                "7201": "This server must now self-install the initial databases and application servers. Click OK to continue."
             },
             "authenticated": {
                 "7101": "testbootstrap",

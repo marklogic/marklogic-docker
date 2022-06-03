@@ -117,7 +117,7 @@ def ResultNotification(message) {
 
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
-        jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, input: comment
+        jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}<br>https://project.marklogic.com/jira/browse/${JIRA_ID}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     } else {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
@@ -241,7 +241,7 @@ def DockerRunTests() {
         if ( value.params.toString().contains(".yaml")) {
             //update image label in yaml file
             composeFile = readFile(value.params)
-            composeFile = composeFile.replaceFirst(/image: .*/, "image: "+testImage)
+            composeFile = composeFile.replaceAll(/image: .*/, "image: "+testImage)
             writeFile( file: value.params, text: composeFile)
             // start docker compose
             sh( returnStdout: true, script: "docker compose -f ${value.params} up -d" )
@@ -335,6 +335,7 @@ pipeline {
         buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
         skipStagesAfterUnstable()
     }
+    triggers { cron(env.BRANCH_NAME == 'develop' ? '01 01 * * *' : '') }
     environment {
         buildServer = 'distro.marklogic.com'
         buildServerBasePath = '/space/nightly/builds/'
@@ -423,6 +424,7 @@ pipeline {
                 rm -rf *.rpm
                 docker system prune --force --filter "until=720h"
                 docker volume prune --force
+                docker image prune --force
             '''
         }
         success {

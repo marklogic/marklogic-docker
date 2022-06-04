@@ -10,15 +10,6 @@ docker_build_options=--compress
 build:
 	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-deps-centos:${version}" -f ../../dockerFiles/marklogic-deps-centos:base .
 	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-centos:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-centos:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} -f ../../dockerFiles/marklogic-server-centos:base .
-
-#***************************************************************************
-# run lint checker on Dockerfiles 
-#***************************************************************************
-lint:
-	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/centos/scripts/start-marklogic.sh
-	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/dockerfile-marklogic-server-centos; exit 0;
-	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base; exit 0;
-	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base; exit 0;
  
 #***************************************************************************
 # strcture test docker images
@@ -44,6 +35,15 @@ test: structure-test docker-tests
 push-mlregistry:
 	docker tag ${REPONAME}/marklogic-server-centos:${version} ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
 	docker push ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
+
+#***************************************************************************
+# run lint checker on Dockerfiles 
+#***************************************************************************
+lint:
+	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/centos/scripts/start-marklogic.sh $(if $(Jenkins), > start-marklogic-lint.txt,)
+	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/dockerfile-marklogic-server-centos $(if $(Jenkins), > marklogic-server-centos-lint.txt,);exit 0; 
+	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base $(if $(Jenkins), > marklogic-deps-centos-base-lint.txt,);exit 0;
+	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base $(if $(Jenkins), > marklogic-server-centos-base-lint.txt,);exit 0;
 
 #***************************************************************************
 # security scan docker images

@@ -15,7 +15,7 @@ build:
 # run lint checker on Dockerfiles 
 #***************************************************************************
 lint:
-	shellcheck src/centos/scripts/start-marklogic.sh
+	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/centos/scripts/start-marklogic.sh
 	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/dockerfile-marklogic-server-centos; exit 0;
 	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base; exit 0;
 	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base; exit 0;

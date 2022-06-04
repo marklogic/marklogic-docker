@@ -194,6 +194,7 @@ def StructureTests() {
         cd test
         #insert current version
         sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yaml
+        cd ..
         curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
         make structure-test version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
         #fix junit output
@@ -315,11 +316,23 @@ def DockerRunTests() {
 }
 
 def Lint() {
-    sh( returnStdout: true, script: "make lint" )
+    sh '''
+        make lint Jenkins=true
+        cat start-marklogic-lint.txt
+        cat marklogic-server-centos-lint.txt
+        cat marklogic-deps-centos-base-lint.txt
+        cat marklogic-server-centos-base-lint.txt 
+        rm -f start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
+    '''
 }
 
 def Scan() {
-    sh( returnStdout: true, script: "make scan" )
+    sh """
+        make scan version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
+        cat scan-deps-image.txt
+        cat scan-server-image.txt
+        rm -f scan-deps-image scan-server-image
+    """
 }
 
 def PublishToInternalRegistry() {

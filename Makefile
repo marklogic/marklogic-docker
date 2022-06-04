@@ -49,8 +49,8 @@ push-mlregistry:
 # security scan docker images
 #***************************************************************************
 scan:
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${REPONAME}/marklogic-deps-centos:${version} $(if $(Jenkins), > scan-deps-image,)
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${REPONAME}/marklogic-server-centos:${version} $(if $(Jenkins), > scan-server-image,)
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${REPONAME}/marklogic-deps-centos:${version} $(if $(Jenkins), > scan-deps-image.txt,)
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${REPONAME}/marklogic-server-centos:${version} $(if $(Jenkins), > scan-server-image.txt,)
 	
 #***************************************************************************
 # remove junk

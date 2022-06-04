@@ -25,7 +25,7 @@ lint:
 #***************************************************************************
 structure-test:
 	container-structure-test test --config ./test/structure-test.yaml --image ${REPONAME}/marklogic-server-centos:${version} \
-		
+		$(if $(Jenkins), --output junit | tee container-structure-test.xml,)
 
 #***************************************************************************
 # docker image tests ** TBD **

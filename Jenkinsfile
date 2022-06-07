@@ -1,3 +1,4 @@
+/* groovylint-disable LineLength, MethodName */
 // This Jenkinsfile defines internal MarkLogic build pipeline.
 
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
@@ -194,8 +195,9 @@ def StructureTests() {
         cd test
         #insert current version
         sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yaml
+        cd ..
         curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-        ./container-structure-test test --config ./structure-test.yaml --image marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} --output junit | tee container-structure-test.xml
+        make structure-test version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
     """
@@ -314,11 +316,36 @@ def DockerRunTests() {
     echo "-------------- End of Docker Tests --------------"
 }
 
+void Lint() {
+    sh '''
+        make lint Jenkins=true
+        cat start-marklogic-lint.txt
+        cat marklogic-server-centos-lint.txt
+        cat marklogic-deps-centos-base-lint.txt
+        cat marklogic-server-centos-base-lint.txt
+        rm -f start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
+    '''
+}
+
+void Scan() {
+    sh """
+        make scan version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
+        grep \'High\\|Critical\' scan-deps-image.txt
+        grep \'High\\|Critical\' scan-server-image.txt
+    """
+
+    highCriticalVunerabilities = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-deps-image.txt; grep \'High\\|Critical\' scan-server-image.txt')
+    if (highCriticalVunerabilities.size()) {
+        mail mimeType: 'text/plain', to: "${params.emailList}", body: "\nJenkins pipeline for ${env.JOB_NAME} \nBuild Number: ${env.BUILD_NUMBER} \n${env.BUILD_URL}\nhttps://project.marklogic.com/jira/browse/${JIRA_ID}\nVulnerabilities: \n${highCriticalVunerabilities}", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+    }
+
+    sh '''rm -f scan-deps-image.txt scan-server-image.txt'''
+}
+
 def PublishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry}
-            cd src/centos
             make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
         """
     }
@@ -373,7 +400,19 @@ pipeline {
 
         stage('Build-Image') {
             steps {
-                sh "cd src/centos; make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
+                sh "make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                Lint()
+            }
+        }
+
+        stage('Scan') {
+            steps {
+                Scan()
             }
         }
 

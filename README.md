@@ -247,6 +247,7 @@ services:
     bootstrap:
       image: marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0-ea4
       container_name: bootstrap
+      hostname: bootstrap
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -315,9 +316,10 @@ The following is an example of a three-node MarkLogic server cluster created usi
 #Docker compose file sample to setup a three node cluster
 version: '3.6'
 services:
-    bootstrap:
+    bootstrap_3n:
       image: marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0-ea4
       container_name: bootstrap_3n
+      hostname: bootstrap_3n
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -337,12 +339,14 @@ services:
     node2:
       image: marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0-ea4
       container_name: node2
+      hostname: node2
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n
         - TZ=Europe/Prague
       volumes:
         - MarkLogic_3n_vol2:/var/opt/MarkLogic
@@ -353,18 +357,20 @@ services:
         - 7200-7210:8000-8010
         - 7297:7997
       depends_on:
-      - bootstrap
+      - bootstrap_3n
       networks:
       - external_net
     node3:
       image: marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0-ea4
       container_name: node3
+      hostname: node3
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n
         - TZ=Europe/Prague
       volumes:
         - MarkLogic_3n_vol3:/var/opt/MarkLogic
@@ -375,7 +381,7 @@ services:
         - 7300-7310:8000-8010
         - 7397:7997
       depends_on:
-      - bootstrap
+      - bootstrap_3n
       networks:
       - external_net
 secrets:

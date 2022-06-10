@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-ARG REPOSITORY=marklogic-centos/marklogic-deps-centos"
+ARG REPOSITORY="marklogic-centos/marklogic-deps-centos"
 ARG TAG="10-internal"
 FROM ${REPOSITORY}:${TAG} as builder
 

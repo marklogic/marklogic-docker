@@ -4,9 +4,9 @@
 #
 ###############################################################
 
-ARG REPOSITORY="marklogic-centos/marklogic-deps-centos"
-ARG TAG="10-internal"
-FROM ${REPOSITORY}:${TAG} as builder
+ARG BASE_IMAGE=marklogic-centos/marklogic-deps-centos:10-internal
+# hadolint ignore=DL3006
+FROM ${BASE_IMAGE} as builder
 
 ###############################################################
 # set build args
@@ -44,12 +44,11 @@ COPY ${ML_CONVERTERS} converters.rpm
 
 RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-
-
 ###############################################################
 # second stage for flattening layers
 ###############################################################
-FROM ${REPOSITORY}:${TAG}
+# hadolint ignore=DL3006
+FROM ${BASE_IMAGE}
 
 COPY --from=builder / /
 

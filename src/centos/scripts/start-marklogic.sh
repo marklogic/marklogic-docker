@@ -163,7 +163,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     sleep 5s
     curl -s -X POST -H "Content-type: application/x-www-form-urlencoded" \
         --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
-        --data "realm=${REALM}" --data "wallet-password=${ML_WALLET_PASSWORD}\
+        --data "realm=${REALM}" --data "wallet-password=${ML_WALLET_PASSWORD}"\
         "http://${HOSTNAME}:8001/admin/v1/instance-admin"
     sleep 5s
     sudo touch /opt/MarkLogic/DOCKER_INIT

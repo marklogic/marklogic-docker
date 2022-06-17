@@ -130,6 +130,10 @@ else
 fi
 
 ################################################################
+# define curl auth and options
+################################################################
+
+################################################################
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
@@ -146,16 +150,17 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     log "Initialzing MarkLogic on ${HOSTNAME}."
-    curl -s --anyauth -i -X POST \
+    curl --anyauth -m 20 --retry 8 --retry-all-errors -f -i -X POST \
         -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
-        "http://${HOSTNAME}:8001/admin/v1/init"
-    sleep 5s
-    curl -s -X POST -H "Content-type: application/x-www-form-urlencoded" \
+        http://"${HOSTNAME}":8001/admin/v1/init
+
+    curl -m 20 --retry 8 --retry-all-errors -f \
+        -X POST -H "Content-type: application/x-www-form-urlencoded" \
         --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
         --data "realm=public" \
-        "http://${HOSTNAME}:8001/admin/v1/instance-admin"
-    sleep 5s
+        http://"${HOSTNAME}":8001/admin/v1/instance-admin
+
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
     log "MARKLOGIC_INIT is set to false or not defined, not initialzing."
@@ -170,17 +175,26 @@ if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     log "Join conditions met, Joining cluster."
-    sleep 5s
-    joiner="${HOSTNAME}"
-    cluster="${MARKLOGIC_BOOTSTRAP_HOST}"
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -o host.xml -X GET -H "Accept: application/xml" http://"${joiner}":8001/admin/v1/server-config
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -d "group=Default" --data-urlencode "server-config@./host.xml" -H "Content-type: application/x-www-form-urlencoded" -o cluster.zip http://"${cluster}":8001/admin/v1/cluster-config
 
-    sleep 10s
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+        -m 20 --retry 8 --retry-all-errors -f \
+        -o host.xml -X GET -H "Accept: application/xml" \
+        http://"${HOSTNAME}":8001/admin/v1/server-config
 
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -H "Content-type: application/zip" --data-binary @./cluster.zip http://"${joiner}":8001/admin/v1/cluster-config
-    sleep 5s
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+        -m 20 --retry 8 --retry-all-errors -f \
+        -X POST -d "group=Default" \
+        --data-urlencode "server-config@./host.xml" \
+        -H "Content-type: application/x-www-form-urlencoded" \
+        -o cluster.zip \
+        http://"${MARKLOGIC_BOOTSTRAP_HOST}":8001/admin/v1/cluster-config
 
+    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+        -m 20 --retry 8 --retry-all-errors -f \
+        -X POST -H "Content-type: application/zip" \
+        --data-binary @./cluster.zip \
+        http://"${HOSTNAME}":8001/admin/v1/cluster-config
+    
     rm -f host.xml
     rm -f cluster.zip
     sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER

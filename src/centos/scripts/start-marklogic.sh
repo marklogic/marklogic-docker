@@ -95,6 +95,49 @@ if [ -n "${TZ}" ]; then
 fi
 
 ################################################################
+# restart_check(hostname, baseline_timestamp, caller_lineno)
+#
+# Use the timestamp service to detect a server restart, given a
+# a baseline timestamp. Use N_RETRY and RETRY_INTERVAL to tune
+# the test length. Include authentication in the curl command
+# so the function works whether or not security is initialized.
+#   $1 :  The hostname to test against
+#   $2 :  The baseline timestamp
+#   $3 :  Invokers LINENO, for improved error reporting
+# Returns 0 if restart is detected, exits with an error if not.
+################################################################
+N_RETRY=5 # 5 and 10 numbers taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
+RETRY_INTERVAL=10
+
+function restart_check {
+    LAST_START=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -s "http://$1:8001/admin/v1/timestamp")
+    for i in $(seq 1 ${N_RETRY}); do
+        if [ "$2" == "$LAST_START" ] || [ "$LAST_START" == "" ]; then
+            sleep ${RETRY_INTERVAL}
+            LAST_START=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -s "http://$1:8001/admin/v1/timestamp")
+        else
+            return 0
+        fi
+    done
+    echo "ERROR: Line $3: Failed to restart $1"
+    exit 1
+}
+
+################################################################
+# response_code_validation(response_code, expected_response_code)
+#
+# validate that the response code is what we expect it to be
+#   $1 :  Actual response code
+#   $2 :  Expected response code
+################################################################
+function response_code_validation {
+    if [[ "$1" -ne "$2" ]]; then
+        log "Expected response code $2, got $1"
+        exit 1
+    fi
+}
+
+################################################################
 # Start MarkLogic service
 ################################################################
 if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
@@ -130,10 +173,6 @@ else
 fi
 
 ################################################################
-# define curl auth and options
-################################################################
-
-################################################################
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
@@ -150,16 +189,23 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     log "Initialzing MarkLogic on ${HOSTNAME}."
-    curl --anyauth -m 20 --retry 8 --retry-all-errors -f -i -X POST \
-        -H "Content-type:application/json" \
+    TIMESTAMP=$(curl --anyauth -m 20 -s --retry 8 --retry-all-errors -f \
+        -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
-        http://"${HOSTNAME}":8001/admin/v1/init
+        http://"${HOSTNAME}":8001/admin/v1/init \
+        | grep "last-startup" \
+        | sed 's%^.*<last-startup.*>\(.*\)</last-startup>.*$%\1%')
 
-    curl -m 20 --retry 8 --retry-all-errors -f \
+    # Make sure marklogic has shut down and come back up before moving on
+    restart_check "${HOSTNAME}" "${TIMESTAMP}" 
+
+    res_code=$(curl -s -m 20 --retry 8 --retry-all-errors -f \
         -X POST -H "Content-type: application/x-www-form-urlencoded" \
         --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
         --data "realm=public" \
-        http://"${HOSTNAME}":8001/admin/v1/instance-admin
+        http://"${HOSTNAME}":8001/admin/v1/instance-admin)
+
+    response_code_validation "${res_code}" 200
 
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
@@ -176,25 +222,34 @@ if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     log "Join conditions met, Joining cluster."
 
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+    res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+        -w %{http_code} -s \
         -m 20 --retry 8 --retry-all-errors -f \
         -o host.xml -X GET -H "Accept: application/xml" \
-        http://"${HOSTNAME}":8001/admin/v1/server-config
+        http://"${HOSTNAME}":8001/admin/v1/server-config)
+    
+    response_code_validation "${res_code}" 200
 
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+    res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+        -w %{http_code} -s \
         -m 20 --retry 8 --retry-all-errors -f \
         -X POST -d "group=Default" \
         --data-urlencode "server-config@./host.xml" \
         -H "Content-type: application/x-www-form-urlencoded" \
         -o cluster.zip \
-        http://"${MARKLOGIC_BOOTSTRAP_HOST}":8001/admin/v1/cluster-config
+        http://"${MARKLOGIC_BOOTSTRAP_HOST}":8001/admin/v1/cluster-config)
+    
+    response_code_validation "${res_code}" 200
 
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+    res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
+        -o /dev/null -w %{http_code} -s \
         -m 20 --retry 8 --retry-all-errors -f \
         -X POST -H "Content-type: application/zip" \
         --data-binary @./cluster.zip \
-        http://"${HOSTNAME}":8001/admin/v1/cluster-config
+        http://"${HOSTNAME}":8001/admin/v1/cluster-config)
     
+    response_code_validation "${res_code}" 202
+
     rm -f host.xml
     rm -f cluster.zip
     sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER

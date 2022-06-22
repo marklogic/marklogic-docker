@@ -155,7 +155,21 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         LICENSE_PAYLOAD="{\"license-key\" : \"${LICENSE_KEY}\",\"licensee\" : \"${LICENSEE}\"}"
     fi
 
-    log "Initialzing MarkLogic on ${HOSTNAME}."
+    # sets realm conditionally based on user input
+    if [[ -z "${REALM}" ]]; then
+        ML_REALM="public"
+    else
+        log "REALM is defined, setting realm"
+        ML_REALM="${REALM}"
+    fi
+
+    if [[ -z "${ML_WALLET_PASSWORD}" ]]; then
+        ML_WALLET_PASSWORD_PAYLOAD=""
+    else
+        log "ML_WALLET_PASSWORD is defined, setting wallet password."
+        ML_WALLET_PASSWORD_PAYLOAD="wallet-password=${ML_WALLET_PASSWORD}"
+    fi
+
     curl -s --anyauth -i -X POST \
         -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
@@ -163,7 +177,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     sleep 5s
     curl -s -X POST -H "Content-type: application/x-www-form-urlencoded" \
         --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
-        --data "realm=${REALM}" --data "wallet-password=${ML_WALLET_PASSWORD}"\
+        --data "realm=${ML_REALM}" --data "${ML_WALLET_PASSWORD_PAYLOAD}" \
         "http://${HOSTNAME}:8001/admin/v1/instance-admin"
     sleep 5s
     sudo touch /opt/MarkLogic/DOCKER_INIT

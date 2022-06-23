@@ -19,10 +19,12 @@ metadataTest:
     - key: MARKLOGIC_UMASK
       value: 022
   labels:
+    - key: "com.marklogic.maintainer"
+      value: "docker@marklogic.com"
     - key: "com.marklogic"
       value: "MarkLogic"
     - key: "com.marklogic.description"
-      value: "MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, and backup and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster and for doing dynamic content delivery at massive scale. MarkLogic Developer redhat image includes all features but is limited to pre-production applications and use."
+      value: "MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, backup, and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster, and for delivering dynamic content at massive scale. The current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use."
     - key: "com.marklogic.release-type"
       value: "production"
     - key: "com.marklogic.license"

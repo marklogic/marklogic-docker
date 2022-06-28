@@ -167,7 +167,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     if [[ -z "${ML_WALLET_PASSWORD}" ]]; then
         ML_WALLET_PASSWORD_PAYLOAD=""
     else
-        log "ML_WALLET_PASSWORD is defined, setting wallet password."
+        log "ML_WALLET_PASSWORD is defined, setting wallet-password."
         ML_WALLET_PASSWORD_PAYLOAD="wallet-password=${ML_WALLET_PASSWORD}"
     fi
 

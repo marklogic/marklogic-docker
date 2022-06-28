@@ -93,18 +93,18 @@ Initialized MarkLogic container with config overrides
   [Teardown]  Delete container
 
 Single node compose example
-  Start compose from  ./docker-compose/marklogic-centos.yaml
+  Start compose from  ../docker-compose/marklogic-centos.yaml
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
   Verify response for unauthenticated request with  8002  *Unauthorized*
   Verify response for authenticated request with  8000  *Query Console*
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
-  Compose logs should contain  ./docker-compose/marklogic-centos.yaml  *Setting timezone to Europe/Prague*
-  [Teardown]  Delete compose from  ./docker-compose/marklogic-centos.yaml
+  Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *Setting timezone to Europe/Prague*
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
 Three node compose example
-  Start compose from  ./docker-compose/marklogic-cluster-centos.yaml
+  Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7102  *Unauthorized*
@@ -126,7 +126,7 @@ Three node compose example
   Host count on port 7102 should be 3
   Host count on port 7202 should be 3
   Host count on port 7302 should be 3
-  [Teardown]  Delete compose from  ./docker-compose/marklogic-cluster-centos.yaml
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml
 
 Two node compose with credentials in env and verify restart logic
   Start compose from  ./test/compose-test-3.yaml

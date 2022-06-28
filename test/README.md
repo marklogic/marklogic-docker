@@ -17,11 +17,16 @@ Docker image tests are implemented with Robot framework. The framework requires 
 
 For additional installation instruction see https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#installation-instructions
 
-In order to run all tests you can use make with
-`make docker-tests test_image={docker image label}`
-or by running Robot directly with 
-`cd test; robot ./docker-tests.robot`
-Docker image can be specified with variable override (--variable TEST_IMAGE:{docker image label}) or DOCKER_TEST_IMAGE environment variable.
+In order to run Docker tests, you need to have MarkLogic Docker image available in your environment. The image can be passed as a parameter or set with DOCKER_TEST_IMAGE environment variable.
+
+In order to execute a single test case with a published Docker image, use
+`robot --variable TEST_IMAGE:marklogicdb/marklogic-db --test "Initialized MarkLogic container" ./docker-tests.robot`
+
+In order to run all tests you can use make from root folder with
+`make docker-tests test_image=marklogicdb/marklogic-db`
+
+or by running Robot in test directly with 
+`robot ./docker-tests.robot`
 
 QA_LICENSE_KEY environment variable needs to be set to a valid license key for license test to pass.
 

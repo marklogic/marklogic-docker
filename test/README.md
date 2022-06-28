@@ -19,8 +19,9 @@ For additional installation instruction see https://robotframework.org/robotfram
 
 In order to run all tests you can use make with
 `make docker-tests test_image={docker image label}`
-or by running Robot directly
+or by running Robot directly with 
 `cd test; robot ./docker-tests.robot`
+Docker image can be specified with variable override (--variable TEST_IMAGE:{docker image label}) or DOCKER_TEST_IMAGE environment variable.
 
 QA_LICENSE_KEY environment variable needs to be set to a valid license key for license test to pass.
 

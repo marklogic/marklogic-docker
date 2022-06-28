@@ -3,7 +3,6 @@ Library   Process
 Library   String
 Library   OperatingSystem
 Library   RequestsLibrary
-Resource  keywords.resource
 
 *** Variables ***
 @{DOCKER DEFAULTS}  -it  -d  -p  8000:8000  -p  8001:8001  -p  8002:8002  -p7997:7997
@@ -43,7 +42,6 @@ Create second container with
 
 Delete container
   [Documentation]  Delete Docker container that is named the same as the test case.
-  #TODO search for other containers with the same prefix
   ${container name}  Remove spaces from  ${TEST NAME}
   Run Process  docker  rm  -f  -v  ${container name}  timeout=${DOCKER TIMEOUT}
 

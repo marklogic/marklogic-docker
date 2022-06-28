@@ -1,5 +1,5 @@
 *** Settings ***
-Resource  keywords.resource
+Resource       keywords.resource
 Documentation  Test all initialization options using Docker run and Docker Compose.
 ...            Each test case creates and then tears down one or more Docker containers.
 ...            Verification is done using REST calls to MarkLogic server and Docker logs.
@@ -61,18 +61,12 @@ Initialized MarkLogic container without credentials
   [Teardown]  Delete container
 
 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
-  Create container with  -e  MARKLOGIC_INIT=true
+  Create failing container with  -e  MARKLOGIC_INIT=true
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   ...                    -e  MARKLOGIC_JOIN_CLUSTER=invalid
   Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
   Docker log should contain  *ERROR: MARKLOGIC_JOIN_CLUSTER must be true or false.*
-  Verify response for unauthenticated request with  8000  *Unauthorized*
-  Verify response for unauthenticated request with  8001  *Unauthorized*
-  Verify response for unauthenticated request with  8002  *Unauthorized*
-  Verify response for authenticated request with  8000  *Query Console*
-  Verify response for authenticated request with  8001  *No license key has been entered*
-  Verify response for authenticated request with  8002  *Monitoring Dashboard*
   [Teardown]  Delete container
 
 Invalid value for INIT
@@ -150,7 +144,6 @@ Two node compose with credentials in env and verify restart logic
   Verify response for authenticated request with  7202  *Monitoring Dashboard*
   Host count on port 7102 should be 2
   Host count on port 7202 should be 2
-  Restart compose from  ./test/compose-test-3.yaml
   Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*Setting timezone to America/Los_Angeles*
   Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*Using ENV for credentials.*
   Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initialzing.*
@@ -162,7 +155,7 @@ Two node compose with credentials in env and verify restart logic
   Restart compose from  ./test/compose-test-3.yaml
   Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is already initialized.*
   Compose logs should contain  ./test/compose-test-3.yaml  *node2*MARKLOGIC_INIT is already initialized.*
-  # [Teardown]  Delete compose from  ./test/compose-test-3.yaml
+  [Teardown]  Delete compose from  ./test/compose-test-3.yaml
 
 Two node compose with second node uncoupled
   Start compose from  ./test/compose-test-4.yaml

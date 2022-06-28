@@ -1,11 +1,8 @@
 *** Settings ***
-Documentation  These are docker and compose tests.
-...            ...
 Resource  keywords.resource
-
-# TODO:
-# ML config override
-# install converters
+Documentation  Test all initialization options using Docker run and Docker Compose.
+...            Each test case creates and then tears down one or more Docker containers.
+...            Verification is done using REST calls to MarkLogic server and Docker logs.
 
 *** Test Cases ***
 Uninitialized MarkLogic container
@@ -93,6 +90,10 @@ Single node compose example
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   Compose logs should contain  ./docker-compose/marklogic-centos.yaml  *Setting timezone to Europe/Prague*
   [Teardown]  Delete compose from  ./docker-compose/marklogic-centos.yaml
+
+# TODO:
+# ML config override
+# install converters
 
 Three node compose example
   Start compose from  ./docker-compose/marklogic-cluster-centos.yaml

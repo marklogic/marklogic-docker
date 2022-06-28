@@ -326,6 +326,7 @@ pipeline {
             }
             steps {
                 sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
+                junit testResults: '**/docker-tests.xml'
             }
         }
 

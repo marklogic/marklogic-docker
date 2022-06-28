@@ -23,7 +23,7 @@ structure-test:
 # docker image tests
 #***************************************************************************
 docker-tests: 
-	cd test; robot -x docker-tests.xml --variable TEST_IMAGE:${test_image} --test "Uninitialized MarkLogic container" ./docker-tests.robot
+	cd test; robot -x docker-tests.xml --variable TEST_IMAGE:${test_image} ./docker-tests.robot
 
 #***************************************************************************
 # run all tests

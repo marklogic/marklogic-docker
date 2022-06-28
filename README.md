@@ -74,7 +74,7 @@ With this image, you have the option to either create an initialized or an unini
 ## Initialized MarkLogic Server
 For an initialized MarkLogic Server, admin credentials are required to be passed in while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized, and databases and app servers created. A security database will be created to store user data, roles, and other security information. MarkLogic Server credentials, passed in as environment variable parameters while running a container, will be stored as part of the admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with their respective ports.
 
-To create an initialized MarkLogic Server, pass in environment variables MARKLOGIC_ADMIN_USERNAME, MARKLOGIC_ADMIN_PASSWORD and replace `{insert admin username}`/`{insert admin password}` with actual values for admin credentials. Use optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set wallet password and authentication realm of the admin user. If not provided  wallet-password will default to value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command: 
+To create an initialized MarkLogic Server, pass in the environment variables MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD, and replace {insert admin username}/{insert admin password} with actual values for admin credentials. Use the optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set the wallet password and authentication realm of the admin user. If not provided, the wallet-password will default to the value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command: 
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
@@ -238,12 +238,12 @@ You can change the number of HugePages available to each MarkLogic container by 
 
 MarkLogic Server Docker containers ship with a small set of scripts, making it easy to create clusters. See the [MarkLogic documentation](https://docs.marklogic.com/guide/concepts/clustering) for more about clusters. The following three examples show how to create MarkLogic Server clusters with Docker containers. The first two use Docker compose scripts to create one-node and three-node clusters. See the documentation for [Docker compose](https://docs.docker.com/compose/) for more details. The third example demonstrates a container setup on separate VMs.
 
-The credentials for the admin user are configured using Docker secrets, and are stored in `mldb_admin_username.txt`, `mldb_admin_password.txt` and `mldb_wallet_password.txt` files.
+The credentials for the admin user are configured using Docker secrets, and are stored in `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt` files.
 
 ## Single node MarkLogic Server on a single VM
 Single node configurations are used primarily on a development machine with a single user.
 
-Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt` and `mldb_wallet_password.txt`. Run example Docker commands from the same directory where the files created. 
+Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
 
 **marklogic-centos.yaml**
 
@@ -451,7 +451,7 @@ As in the previous single-node example, each node of the cluster can be accessed
 
 ### Using ENV for admin credentials in Docker compose
 
-In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure, but it is commonly used in development environments. This is not recommended for production environments. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yaml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE/MARKLOGIC_WALLET_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD/MARKLOGIC_WALLET_PASSWORD and provide the appropriate values.
+In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure, but it is commonly used in development environments. This is **not** recommended for production environments. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yaml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE/MARKLOGIC_WALLET_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD/MARKLOGIC_WALLET_PASSWORD and provide the appropriate values.
 
 Using Docker secrets, username and password information are secured when transmitting the sensitive data from Docker host to Docker containers. To prevent any attacks, the login information is not available as an environment variable. However, these values are stored in a text file and persisted in an in-memory file system inside the container. We recommend that you delete the Docker secrets information once the cluster is up and running.
 
@@ -583,19 +583,19 @@ Now that the nodes have been initialized, we rotate the secrets files to overwri
 
 5. Create docker secrets v2 using these commands:
 
-- Create mldb_admin_username_v2.txt file and use the following command to add a new docker secret for the admin username:
+- Create mldb_admin_username_v2.txt file and use the following command to add a new Docker secret for the admin username:
 ```
   $docker secret create mldb_admin_username_v2 mldb_admin_username_v2.txt
 ```
-- Create mldb_admin_password_v2.txt and use the following command to add a new docker secret for the admin password:
+- Create mldb_admin_password_v2.txt and use the following command to add a new Docker secret for the admin password:
 ```
   $docker secret create mldb_admin_password_v2 mldb_admin_password_v2.txt
 ```
-- Create mldb_wallet_password_v2.txt and use the following command to add a new docker secret for the wallet password:
+- Create mldb_wallet_password_v2.txt and use the following command to add a new Docker secret for the wallet password:
 ```
   $docker secret create mldb_wallet_password_v2 mldb_wallet_password_v2.txt
 ```
-6. Use the following commands to rotate the docker secrets for all the docker services created above using docker stack:
+6. Use the following commands to rotate the Docker secrets for all the Docker services created above using Docker stack:
 ```
 docker service update \
     --secret-rm mldb_admin_username_v1 \

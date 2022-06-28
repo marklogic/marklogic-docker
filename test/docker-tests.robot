@@ -4,7 +4,6 @@ Documentation  These are docker and compose tests.
 Resource  keywords.resource
 
 # TODO:
-# add documentation
 # ML config override
 # install converters
 
@@ -35,8 +34,8 @@ Initialized MarkLogic container
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   [Teardown]  Delete container
 
-Initialized MarkLogic container with license key installed
-  Create container with  -e  MARKLOGIC_INIT=true
+Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE
+  Create container with  -e  MARKLOGIC_INIT=TRUE
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   ...                    -e  LICENSEE=${LICENSEE}
@@ -64,7 +63,25 @@ Initialized MarkLogic container without credentials
   Verify response for authenticated request with  8002  *Unauthorized*
   [Teardown]  Delete container
 
-#TODO invalid values for booleans
+Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
+  Create container with  -e  MARKLOGIC_INIT=true
+  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+  ...                    -e  MARKLOGIC_JOIN_CLUSTER=invalid
+  Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
+  Docker log should contain  *ERROR: MARKLOGIC_JOIN_CLUSTER must be true or false.*
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*
+  Verify response for authenticated request with  8001  *No license key has been entered*
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*
+  [Teardown]  Delete container
+
+Invalid value for INIT
+  Create failing container with  -e  MARKLOGIC_INIT=invalid
+  Docker log should contain  *ERROR: MARKLOGIC_INIT must be true or false.*
+  [Teardown]  Delete container
 
 Single node compose example
   Start compose from  ./docker-compose/marklogic-centos.yaml
@@ -102,7 +119,7 @@ Three node compose example
   Host count on port 7302 should be 3
   [Teardown]  Delete compose from  ./docker-compose/marklogic-cluster-centos.yaml
 
-Two node compose with credentials in env
+Two node compose with credentials in env and verify restart logic
   Start compose from  ./test/compose-test-3.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*
   Verify response for unauthenticated request with  7101  *Unauthorized*
@@ -118,20 +135,26 @@ Two node compose with credentials in env
   Verify response for authenticated request with  7202  *Monitoring Dashboard*
   Host count on port 7102 should be 2
   Host count on port 7202 should be 2
-  #testbootstrap & testnode
   Restart compose from  ./test/compose-test-3.yaml
-
-  #TODO validate init messages after restart
-  [Teardown]  Delete compose from  ./test/compose-test-3.yaml
-
-Docker compose log tests
-  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap_3n*Not writing to /etc/marklogic.conf*
+  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*Setting timezone to America/Los_Angeles*
+  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*Using ENV for credentials.*
+  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Compose logs should contain  ./test/compose-test-3.yaml  *node2*Setting timezone to America/Los_Angeles*
+  Compose logs should contain  ./test/compose-test-3.yaml  *node2*Using ENV for credentials.*
+  Compose logs should contain  ./test/compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./test/compose-test-3.yaml  *node2*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Restart compose from  ./test/compose-test-3.yaml
+  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is already initialized.*
+  Compose logs should contain  ./test/compose-test-3.yaml  *node2*MARKLOGIC_INIT is already initialized.*
+  # [Teardown]  Delete compose from  ./test/compose-test-3.yaml
 
 Two node compose with second node uncoupled
   Start compose from  ./test/compose-test-4.yaml
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7201  *Unauthorized*
   Host count on port 7102 should be 1
+  Host count on port 7202 should be 1
   [Teardown]  Delete compose from  ./test/compose-test-4.yaml
 
 Two node compose with second node uninitialized

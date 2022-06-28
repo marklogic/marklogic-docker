@@ -14,3 +14,18 @@ If you'd like to change the image being tested change the variables in the makef
 Test cases for Docker image tests are defined in docker-test-cases.json. Test cases validate running containers with either authenticated or unauthenticated user.
 Each test defines a port and a string to match in the response. Pipeline iterates through the test cases and generates a junit report.
 The driver is defined in DockerRunTests().
+
+=========================
+TODO:
+# New test framework
+https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#installation-instructions
+need python 3.6+ and pip3
+
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+robot ./docker-tests.robot
+
+vscode extensions:
+  https://marketplace.visualstudio.com/items?itemName=robocorp.robocorp-code
+  https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp

@@ -26,6 +26,12 @@ Create container with
   File Should Be Empty  stderr-${container name}.txt
   Docker log should contain  *Cluster config complete, marking node as ready*
 
+Create failing container with
+  [Arguments]  @{input parameters}
+  ${container name}=  Remove spaces from  ${TEST NAME}
+  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${DOCKER IMAGE}  stderr=stderr-${container name}.txt  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
+
+
 Create second container with
   [Documentation]  Creates a second container for testing.
   ...              TODO: still need to figure out how to id the second container in tests. 
@@ -78,10 +84,7 @@ Get container log message
   ${container name}  Remove spaces from  ${TEST NAME}
   Run Process  docker  logs  ${container name}  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
   ${docker log}=  Get File  stdout-${container name}.txt
-  ${match}=  Get Lines Matching Pattern  ${docker log}  ${string pattern}
-  IF  "${match}" == "${EMPTY}"
-    Fail  "Did not find ${string pattern} in ${container name} container log"
-  END
+  Should Match  ${docker log}  ${string pattern}  msg=Did not find ${string pattern} in ${container name} container log
 
 Compose logs should contain
   [Arguments]  ${compose path}  ${string pattern}
@@ -93,10 +96,7 @@ Get compose log message
   ${compose name}  Remove spaces from  ${compose path}
   Run Process  docker-compose  -f  ${compose path}  logs  stdout=stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
   ${compose log}=  Get File  stdout-${compose name}.txt
-  ${match}=  Get Lines Matching Pattern  ${compose log}  ${string pattern}
-  IF  "${match}" == "${EMPTY}"
-    Fail  "Did not find ${string pattern} in ${compose name} compose logs"
-  END
+  Should Match  ${compose log}  ${string pattern}  msg=Did not find ${string pattern} in ${compose name} compose logs
 
 Remove spaces from
   [Arguments]  ${input string}
@@ -113,35 +113,28 @@ Generate digest authorization for
 
 Verify response for unauthenticated request with
   [Arguments]  ${port}  ${pattern}
+  Wait Until Keyword Succeeds  80 s  10 s  Check response message without credentials  ${port}  ${pattern}
+
+Check response message without credentials
+  [Arguments]  ${port}  ${pattern}
   ${response}=  GET  url=http://localhost:${port}  expected_status=Anything
-  ${match}=  Get Lines Matching Pattern  ${response.text}  ${pattern}
-  # ${match}=  Get Line  ${match}  0
-  ${match}=  Get Substring    ${match}  start=0  end=10
-  IF  "${match}" == "${EMPTY}"
-    Fail  "Did not find ${pattern} in response on ${port}"
-  END
+  Should Match  ${response.text}  ${pattern}  msg=Response from server did not include ${pattern} on port ${port}
 
 Verify response for authenticated request with
+  [Arguments]  ${port}  ${pattern}
+  Wait Until Keyword Succeeds  80 s  10 s  Check response message with credentials  ${port}  ${pattern}
+
+Check response message with credentials
   [Arguments]  ${port}  ${pattern}
   ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
   ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}
   ${response}=  GET On Session  RestSession  url=http://localhost:${port}  expected_status=Anything
-  ${match}=  Get Lines Matching Pattern  ${response.text}  ${pattern}
-  # ${match}=  Get Line  ${match}  0
-  ${match}=  Get Substring    ${match}  start=0  end=10
-  IF  "${match}" == "${EMPTY}"
-    Fail  "Did not find ${pattern} in response on ${port}"
-  END
-
-Unauthenticated user should be forbidden on
-  [Arguments]  ${port}
-  Verify response for unauthenticated request with    ${port}    *Forbidden*
-
-Unauthenticated user should be unauthorized on
-  [Arguments]  ${port}
-  Verify response for unauthenticated request with    ${port}    *Unauthorized*
+  Should Match  ${response.text}  ${pattern}  msg=Response from server did not include ${pattern} on port ${port}
 
 Host count on port ${port} should be ${count}
+  Wait Until Keyword Succeeds  80 s  10 s  Check host count on port ${port} should be ${count}
+
+Check host count on port ${port} should be ${count}
   ${count}=  Convert To Integer  ${count}
   ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
   ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}

@@ -80,6 +80,24 @@ Invalid value for INIT
   Docker log should contain  *ERROR: MARKLOGIC_INIT must be true or false.*
   [Teardown]  Delete container
 
+Initialized MarkLogic container with config overrides
+  Create container with  -e  MARKLOGIC_INIT=true
+  ...                    -e  OVERWRITE_ML_CONF=true
+  ...                    -e  TZ=America/Los_Angeles
+  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+  Docker log should contain  *Deleting previous /etc/marklogic.conf, if it exists, and overwriting with env variables.*
+  Docker log should contain  *Not Installing Converters*
+  Docker log should contain  *Setting timezone to America/Los_Angeles*
+  Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*
+  Verify response for authenticated request with  8001  *No license key has been entered*
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*
+  [Teardown]  Delete container
+
 Single node compose example
   Start compose from  ./docker-compose/marklogic-centos.yaml
   Verify response for unauthenticated request with  8000  *Unauthorized*
@@ -90,10 +108,6 @@ Single node compose example
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   Compose logs should contain  ./docker-compose/marklogic-centos.yaml  *Setting timezone to Europe/Prague*
   [Teardown]  Delete compose from  ./docker-compose/marklogic-centos.yaml
-
-# TODO:
-# ML config override
-# install converters
 
 Three node compose example
   Start compose from  ./docker-compose/marklogic-cluster-centos.yaml

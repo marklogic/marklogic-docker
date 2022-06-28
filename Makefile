@@ -3,6 +3,7 @@ package?=MarkLogic.rpm
 REPONAME=marklogic-centos
 repoDir="marklogic"
 docker_build_options=--compress
+test_image?=ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
 
 #***************************************************************************
 # build docker images
@@ -19,9 +20,10 @@ structure-test:
 		$(if $(Jenkins), --output junit | tee container-structure-test.xml,)
 
 #***************************************************************************
-# docker image tests ** TBD **
+# docker image tests
 #***************************************************************************
 docker-tests: 
+	cd test; echo ${test_image}; robot -x docker-tests.xml --variable TEST_IMAGE:${test_image} ./docker-tests.robot
 
 #***************************************************************************
 # run all tests

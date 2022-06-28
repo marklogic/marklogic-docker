@@ -1,35 +1,31 @@
 *** Settings ***
-Documentation  These are docker and compose tests.
-...            TODO add more
-Library  Process
-Library  String
-Library  OperatingSystem
-Library  RequestsLibrary
-# Library  Collections
+Library   Process
+Library   String
+Library   OperatingSystem
+Library   RequestsLibrary
 Resource  keywords.resource
 
 *** Variables ***
 @{DOCKER DEFAULTS}  -it  -d  -p  8000:8000  -p  8001:8001  -p  8002:8002  -p7997:7997
-${DEFAULT ADMIN USER}  admin
-${DEFAULT ADMIN PASS}  admin
-# ${DOCKER IMAGE}  ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.1-20220618-centos-1.0.0-ea4
-${DOCKER IMAGE}  ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.1-20220622-centos-1.0.0-ea4
+${DEFAULT ADMIN USER}  test_admin
+${DEFAULT ADMIN PASS}  test_admin_pass
+${TEST_IMAGE}  ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.1-20220622-centos-1.0.0-ea4
 ${DOCKER TIMEOUT}  60s
-${LICENSE KEY}  3981-CE27-75BB-9D3C-B81C-E067-1B39-DDFE-0875-C37E-D3F0-A76C-34E5-2F86-76BB-ADDD-E677-CB3F-D5FE-4773-C3CD-5EE8-87BC-36E5-3F71-0C15
+${LICENSE KEY}  %{QA_LICENSE_KEY=none}
 ${LICENSEE}  MarkLogic - Version 9 QA Test License
 
 *** Keywords ***
 Create container with
   [Arguments]  @{input parameters}
   ${container name}=  Remove spaces from  ${TEST NAME}
-  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${DOCKER IMAGE}  stderr=stderr-${container name}.txt  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
+  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=stderr-${container name}.txt  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
   File Should Be Empty  stderr-${container name}.txt
   Docker log should contain  *Cluster config complete, marking node as ready*
 
 Create failing container with
   [Arguments]  @{input parameters}
   ${container name}=  Remove spaces from  ${TEST NAME}
-  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${DOCKER IMAGE}  stderr=stderr-${container name}.txt  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
+  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=stderr-${container name}.txt  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
 
 
 Create second container with
@@ -37,7 +33,7 @@ Create second container with
   ...              TODO: still need to figure out how to id the second container in tests. 
   [Arguments]  @{input parameters}
   ${container name}=  Remove spaces from  ${TEST NAME}
-  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}-2  ${DOCKER IMAGE}  stderr=stderr-${container name}-2.txt  stdout=stdout-${container name}-2.txt  timeout=${DOCKER TIMEOUT}
+  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}-2  ${TEST_IMAGE}  stderr=stderr-${container name}-2.txt  stdout=stdout-${container name}-2.txt  timeout=${DOCKER TIMEOUT}
   File Should Be Empty  stderr-${container name}-2.txt
   Docker log should contain  *Cluster config complete, marking node as ready*
 
@@ -50,7 +46,7 @@ Start compose from
   [Arguments]  ${compose path}
   ${dir}  ${new path}=  Split Path  ${compose path}
   ${compose file}=  Get File  ${compose path}
-  ${compose file}=  Replace String Using Regexp  ${compose file}  image:.*  image: ${DOCKER IMAGE}
+  ${compose file}=  Replace String Using Regexp  ${compose file}  image:.*  image: ${TEST_IMAGE}
   ${compose file}=  Replace String Using Regexp  ${compose file}  MARKLOGIC_ADMIN_USERNAME=.*  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ${compose file}=  Replace String Using Regexp  ${compose file}  MARKLOGIC_ADMIN_PASSWORD=.*  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   Create File  ${new path}  ${compose file}

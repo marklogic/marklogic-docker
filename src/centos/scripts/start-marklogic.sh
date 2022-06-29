@@ -28,13 +28,23 @@ for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_IN
     declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
 done
 
-#logit utility function
-declare -A LOG_LEVELS=([1]="Error" [2]="Info" [3]="Debug")
-logit () {
-  local LEVEL=${1}
+#log utility
+info() {
+    log "Info" "$@"
+}
+error() {
+    log "Error" "$1"
+    local EXIT_STATUS="$2"
+    if [[ ${EXIT_STATUS} == "exit" ]]
+    then
+    exit 1
+    fi
+}
+log () {
+  local LOG_LEVEL=${1}
   TIMESTAMP=$(date +"%Y-%m-%d %T.%3N")
   shift
-  echo "${TIMESTAMP} ${LOG_LEVELS[$LEVEL]}: $@"
+  echo "${TIMESTAMP} ${LOG_LEVEL}: $@"
 }
 
 ################################################################
@@ -43,7 +53,7 @@ logit () {
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
 if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
-    logit 2 "Deleting previous /etc/marklogic.conf, if it exists, and overwriting with env variables."
+    info "Deleting previous /etc/marklogic.conf, if it exists, and overwriting with env variables."
     rm -f /etc/marklogic.conf
     sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
 
@@ -65,9 +75,9 @@ if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     sudo chmod 400 /etc/marklogic.conf
 
 elif [[ -z ${OVERWRITE_ML_CONF} ]] || [[ "${OVERWRITE_ML_CONF}" == "false" ]]; then
-    logit 2 "Not writing to /etc/marklogic.conf"
+    info "Not writing to /etc/marklogic.conf"
 else
-    logit 1 "OVERWRITE_ML_CONF must be true or false."
+    error "OVERWRITE_ML_CONF must be true or false." exit
 fi
 
 ################################################################
@@ -75,23 +85,23 @@ fi
 ################################################################
 if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
     if [[ -d "/opt/MarkLogic/Converters" ]]; then
-        logit 2 "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation."
+        info "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation."
     else
-        logit 2 "Installing Converters"
+        info "Installing Converters"
         CONVERTERS_PATH="/converters.rpm"
         sudo yum localinstall -y $CONVERTERS_PATH
     fi
 elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" == "false" ]]; then
-    logit 2 "Not Installing Converters"
+    info "Not Installing Converters"
 else
-    logit 1 "INSTALL_CONVERTERS must be true or false."
+    error "INSTALL_CONVERTERS must be true or false." exit
 fi
 
 ################################################################
 # Setup timezone
 ################################################################
 if [ -n "${TZ}" ]; then
-    logit 2 "Setting timezone to ${TZ}"
+    info "Setting timezone to ${TZ}"
     sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
     echo "${TZ}" | sudo tee /etc/timezone
 fi
@@ -100,12 +110,12 @@ fi
 # Start MarkLogic service
 ################################################################
 if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
-    logit 2 "MARKLOGIC_DEV_BUILD is true, starting using ${MARKLOGIC_INSTALL_DIR}/MarkLogic"
+    info "MARKLOGIC_DEV_BUILD is true, starting using ${MARKLOGIC_INSTALL_DIR}/MarkLogic"
     sudo "${MARKLOGIC_INSTALL_DIR}/MarkLogic" -i . -d "${MARKLOGIC_DATA_DIR}" -p "${MARKLOGIC_PID_FILE}" &
 elif [[ -z "${MARKLOGIC_DEV_BUILD}" ]] || [[ "${MARKLOGIC_DEV_BUILD}" == "false" ]]; then
     sudo service MarkLogic start
 else
-    logit 1 "MARKLOGIC_DEV_BUILD must be true or false."
+    error "MARKLOGIC_DEV_BUILD must be true or false." exit
 fi
 sleep 5s
 
@@ -117,26 +127,26 @@ SECRET_PWD_FILE="/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}"
 SECRET_WALLET_PWD_FILE="/run/secrets/${MARKLOGIC_WALLET_PASSWORD_FILE}"
 
 if [[ -f "${SECRET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_PWD_FILE}")" ]]; then
-    logit 2 "Using docker secrets for credentials."
+    info "Using docker secrets for credentials."
     ML_ADMIN_PASSWORD=$(<"$SECRET_PWD_FILE")
 else
-    logit 2 "Using ENV for credentials."
+    info "Using ENV for credentials."
     ML_ADMIN_PASSWORD="${MARKLOGIC_ADMIN_PASSWORD}"
 fi
 
 if [[ -f "$SECRET_USR_FILE" ]] && [[ -n "$(<"$SECRET_USR_FILE")" ]]; then
-    logit 2 "Using docker secrets for credentials."
+    info "Using docker secrets for credentials."
     ML_ADMIN_USERNAME=$(<"$SECRET_USR_FILE")
 else
-    logit 2 "Using ENV for credentials."
+    info "Using ENV for credentials."
     ML_ADMIN_USERNAME="${MARKLOGIC_ADMIN_USERNAME}"
 fi
 
 if [[ -f "$SECRET_WALLET_PWD_FILE" ]] && [[ -n "$(<"$SECRET_WALLET_PWD_FILE")" ]]; then
-    logit 2 "Using docker secret for wallet-password."
+    info "Using docker secret for wallet-password."
     ML_WALLET_PASSWORD=$(<"$SECRET_WALLET_PWD_FILE")
 else
-    logit 2 "Using ENV for wallet-password."
+    info "Using ENV for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
 
@@ -144,15 +154,15 @@ fi
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
-    logit 2 "MARKLOGIC_INIT is already initialized."
+    info "MARKLOGIC_INIT is already initialized."
 elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
-    logit 2 "MARKLOGIC_INIT is true, initialzing."
+    info "MARKLOGIC_INIT is true, initialzing."
 
     # generate JSON payload conditionally with license details.
     if [[ -z "${LICENSE_KEY}" ]] || [[ -z "${LICENSEE}" ]]; then
         LICENSE_PAYLOAD="{}"
     else
-        logit 2 "LICENSE_KEY and LICENSEE are defined, generating license payload."
+        info "LICENSE_KEY and LICENSEE are defined, generating license payload."
         LICENSE_PAYLOAD="{\"license-key\" : \"${LICENSE_KEY}\",\"licensee\" : \"${LICENSEE}\"}"
     fi
 
@@ -160,18 +170,18 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     if [[ -z "${REALM}" ]]; then
         ML_REALM="public"
     else
-        logit 2 "REALM is defined, setting realm"
+        info "REALM is defined, setting realm"
         ML_REALM="${REALM}"
     fi
 
     if [[ -z "${ML_WALLET_PASSWORD}" ]]; then
         ML_WALLET_PASSWORD_PAYLOAD=""
     else
-        logit 2 "ML_WALLET_PASSWORD is defined, setting wallet password."
+        info "ML_WALLET_PASSWORD is defined, setting wallet password."
         ML_WALLET_PASSWORD_PAYLOAD="wallet-password=${ML_WALLET_PASSWORD}"
     fi
 
-    logit 2 "Initialzing MarkLogic on ${HOSTNAME}."
+    info "Initialzing MarkLogic on ${HOSTNAME}."
 
     curl -s --anyauth -i -X POST \
         -H "Content-type:application/json" \
@@ -185,18 +195,18 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     sleep 5s
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
-    logit 2 "MARKLOGIC_INIT is set to false or not defined, not initialzing."
+    info "MARKLOGIC_INIT is set to false or not defined, not initialzing."
 else
-    logit 1 "MARKLOGIC_INIT must be true or false."
+    error "MARKLOGIC_INIT must be true or false." exit
 fi
 
 ################################################################
 # check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set and host is not bootstrap host)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
-    logit 2 "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster."
+    info "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
-    logit 2 "Join conditions met, Joining cluster."
+    info "Join conditions met, Joining cluster."
     sleep 5s
     cluster="${MARKLOGIC_BOOTSTRAP_HOST}"
     curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -o host.xml -X GET -H "Accept: application/xml" http://"${joiner}":8001/admin/v1/server-config
@@ -211,15 +221,15 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
     rm -f cluster.zip
     sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
 elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]] || [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
-    logit 2 "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
+    info "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else
-    logit 1 "MARKLOGIC_JOIN_CLUSTER must be true or false."
+    error "MARKLOGIC_JOIN_CLUSTER must be true or false." exit
 fi
 
 ################################################################
 # mark the node ready
 ################################################################
-logit 2 "Cluster config complete, marking node as ready"
+info "Cluster config complete, marking node as ready"
 sudo touch /var/opt/MarkLogic/ready
 
 ################################################################

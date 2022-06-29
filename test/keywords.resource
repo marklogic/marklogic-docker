@@ -59,9 +59,9 @@ Start compose from
   Create File  ${new path}  ${compose file}
   Create File  mldb_admin_username.txt  ${DEFAULT ADMIN USER}
   Create File  mldb_admin_password.txt  ${DEFAULT ADMIN PASS}
-  Run Process  docker-compose  -f  ${new path}  up  -d  --no-color  stderr=stdout-${new path}.txt  stdout=stdout-${new path}.txt  timeout=${DOCKER TIMEOUT}
+  Run Process  docker  compose  -f  ${new path}  up  -d  --no-color  stderr=stdout-${new path}.txt  stdout=stdout-${new path}.txt  timeout=${DOCKER TIMEOUT}
   #get a list of nodes from compose and check readyness for each
-  ${result}=  Run Process  docker-compose  -f  ${compose file}  ps  --services
+  ${result}=  Run Process  docker  compose  -f  ${compose file}  ps  --services
   @{nodes}=  Split to lines  ${result.stdout}
   FOR    ${node}    IN    @{nodes}
     ${node}=   Get Variable Value  ${node}
@@ -72,13 +72,13 @@ Delete compose from
   [Arguments]  ${compose path}
   [Documentation]  Delete compose stack identified with yaml path.
   ${dir}  ${new path}=  Split Path  ${compose path}
-  Run Process    docker-compose  -f  ${new path}  down  -v
+  Run Process    docker  compose  -f  ${new path}  down  -v
 
 Restart compose from
   [Arguments]  ${compose path}
   [Documentation]  Restarts compose stack identified with yaml path.
   ${dir}  ${new path}=  Split Path  ${compose path}
-  Run Process    docker-compose  -f  ${new path}  restart
+  Run Process    docker  compose  -f  ${new path}  restart
 
 Docker log should contain
   [Arguments]  ${string pattern}
@@ -103,7 +103,7 @@ Get compose log message
   [Documentation]  Get compose logs for a current stack and find a matching string based on input pattern.
   ${temp}  ${compose path}=  Split Path    ${compose path}
   ${compose name}  Remove spaces from  ${compose path}
-  Run Process  docker-compose  -f  ${compose path}  logs  stdout=stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
+  Run Process  docker  compose  -f  ${compose path}  logs  stdout=stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
   ${compose log}=  Get File  stdout-${compose name}.txt
   Should Match  ${compose log}  ${string pattern}  msg=Did not find ${string pattern} in ${compose name} compose logs
 

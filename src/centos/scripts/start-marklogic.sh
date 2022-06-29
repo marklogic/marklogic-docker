@@ -127,7 +127,7 @@ SECRET_PWD_FILE="/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}"
 SECRET_WALLET_PWD_FILE="/run/secrets/${MARKLOGIC_WALLET_PASSWORD_FILE}"
 
 if [[ -f "${SECRET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_PWD_FILE}")" ]]; then
-    info "Using docker secrets for credentials."
+    log "Using Docker secrets for credentials."
     ML_ADMIN_PASSWORD=$(<"$SECRET_PWD_FILE")
 else
     info "Using ENV for credentials."
@@ -135,7 +135,7 @@ else
 fi
 
 if [[ -f "$SECRET_USR_FILE" ]] && [[ -n "$(<"$SECRET_USR_FILE")" ]]; then
-    info "Using docker secrets for credentials."
+    log "Using Docker secrets for credentials."
     ML_ADMIN_USERNAME=$(<"$SECRET_USR_FILE")
 else
     info "Using ENV for credentials."
@@ -143,10 +143,10 @@ else
 fi
 
 if [[ -f "$SECRET_WALLET_PWD_FILE" ]] && [[ -n "$(<"$SECRET_WALLET_PWD_FILE")" ]]; then
-    info "Using docker secret for wallet-password."
+    log "Using Docker secret for wallet-password."
     ML_WALLET_PASSWORD=$(<"$SECRET_WALLET_PWD_FILE")
 else
-    info "Using ENV for wallet-password."
+    log "Using ENV for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
 
@@ -170,18 +170,20 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     if [[ -z "${REALM}" ]]; then
         ML_REALM="public"
     else
-        info "REALM is defined, setting realm"
+        log "REALM is defined, setting realm"
+
         ML_REALM="${REALM}"
     fi
 
     if [[ -z "${ML_WALLET_PASSWORD}" ]]; then
         ML_WALLET_PASSWORD_PAYLOAD=""
     else
-        info "ML_WALLET_PASSWORD is defined, setting wallet password."
+        log "ML_WALLET_PASSWORD is defined, setting wallet-password."
         ML_WALLET_PASSWORD_PAYLOAD="wallet-password=${ML_WALLET_PASSWORD}"
     fi
 
-    info "Initialzing MarkLogic on ${HOSTNAME}."
+    log "Initialzing MarkLogic on ${HOSTNAME}."
+
 
     curl -s --anyauth -i -X POST \
         -H "Content-type:application/json" \

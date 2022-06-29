@@ -63,6 +63,22 @@
             }
         }
     },
+    "docker-5": {
+        "description": "Initialized MarkLogic Server with wallet password and realm",
+        "params": "-e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=test_admin -e MARKLOGIC_ADMIN_PASSWORD=test_admin_pass -e MARKLOGIC_WALLET_PASSWORD=test_wallet_pass -e REALM=public",
+        "expected": {
+            "unauthenticated": {
+                "8000": "401 Unauthorized",
+                "8001": "401 Unauthorized",
+                "8002": "401 Unauthorized"
+            },
+            "authenticated": {
+                "8000": "Query Console",
+                "8001/security-admin.xqy?section=security": "public",
+                "8002": "Monitoring Dashboard"
+            }
+        }
+    },
     "compose-1": {
         "description": "Compose single node",
         "params": "./docker-compose/marklogic-centos.yaml",

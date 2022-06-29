@@ -9,7 +9,7 @@ Library   RequestsLibrary
 ${DEFAULT ADMIN USER}  test_admin
 ${DEFAULT ADMIN PASS}  test_admin_pass
 ${TEST_IMAGE}  %{DOCKER_TEST_IMAGE=marklogic-centos/marklogic-server-centos:10-internal}
-${DOCKER TIMEOUT}  60s
+${DOCKER TIMEOUT}  90s
 ${LICENSE KEY}  %{QA_LICENSE_KEY=none}
 ${LICENSEE}  MarkLogic - Version 9 QA Test License
 
@@ -83,7 +83,7 @@ Restart compose from
 Docker log should contain
   [Arguments]  ${string pattern}
   [Documentation]  Wrapper keyword that reties Get container log message
-  Wait Until Keyword Succeeds  80 s  10 s  Get container log message  ${string pattern}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Get container log message  ${string pattern}
 
 Get container log message
   [Arguments]  ${string pattern}
@@ -96,7 +96,7 @@ Get container log message
 Compose logs should contain
   [Arguments]  ${compose path}  ${string pattern}
   [Documentation]  Wrapper keywork that retries Get compose log message
-  Wait Until Keyword Succeeds  80 s  10 s  Get compose log message  ${compose path}  ${string pattern}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Get compose log message  ${compose path}  ${string pattern}
 
 Get compose log message
   [Arguments]  ${compose path}  ${string pattern}
@@ -125,7 +125,7 @@ Generate digest authorization for
 Verify response for unauthenticated request with
   [Arguments]  ${port}  ${pattern}
   [Documentation]  Wrapper keyword that retries Check response message without credentials
-  Wait Until Keyword Succeeds  80 s  10 s  Check response message without credentials  ${port}  ${pattern}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check response message without credentials  ${port}  ${pattern}
 
 Check response message without credentials
   [Arguments]  ${port}  ${pattern}
@@ -136,7 +136,7 @@ Check response message without credentials
 Verify response for authenticated request with
   [Arguments]  ${port}  ${pattern}
   [Documentation]  Wrapper keyword that retries Check response message with credentials
-  Wait Until Keyword Succeeds  80 s  10 s  Check response message with credentials  ${port}  ${pattern}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check response message with credentials  ${port}  ${pattern}
 
 Check response message with credentials
   [Arguments]  ${port}  ${pattern}
@@ -148,7 +148,7 @@ Check response message with credentials
 
 Host count on port ${port} should be ${count}
   [Documentation]  Wrapper keyword that retries Check host count on port ${port} should be ${count}
-  Wait Until Keyword Succeeds  80 s  10 s  Check host count on port ${port} should be ${count}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check host count on port ${port} should be ${count}
 
 Check host count on port ${port} should be ${count}
   [Documentation]  Uses manange endpoint to get the number of hosts in a cluster and matches it against input number

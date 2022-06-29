@@ -129,7 +129,7 @@ Three node compose example
   [Teardown]  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml
 
 Two node compose with credentials in env and verify restart logic
-  Start compose from  ./test/compose-test-3.yaml
+  Start compose from  ./compose-test-3.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7102  *Unauthorized*
@@ -144,33 +144,33 @@ Two node compose with credentials in env and verify restart logic
   Verify response for authenticated request with  7202  *Monitoring Dashboard*
   Host count on port 7102 should be 2
   Host count on port 7202 should be 2
-  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*Setting timezone to America/Los_Angeles*
-  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*Using ENV for credentials.*
-  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initialzing.*
-  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Compose logs should contain  ./test/compose-test-3.yaml  *node2*Setting timezone to America/Los_Angeles*
-  Compose logs should contain  ./test/compose-test-3.yaml  *node2*Using ENV for credentials.*
-  Compose logs should contain  ./test/compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initialzing.*
-  Compose logs should contain  ./test/compose-test-3.yaml  *node2*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Restart compose from  ./test/compose-test-3.yaml
-  Compose logs should contain  ./test/compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is already initialized.*
-  Compose logs should contain  ./test/compose-test-3.yaml  *node2*MARKLOGIC_INIT is already initialized.*
-  [Teardown]  Delete compose from  ./test/compose-test-3.yaml
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*Setting timezone to America/Los_Angeles*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*Using ENV for credentials.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*Setting timezone to America/Los_Angeles*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*Using ENV for credentials.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Restart compose from  ./compose-test-3.yaml
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is already initialized.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is already initialized.*
+  [Teardown]  Delete compose from  ./compose-test-3.yaml
 
 Two node compose with second node uncoupled
-  Start compose from  ./test/compose-test-4.yaml
+  Start compose from  ./compose-test-4.yaml
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7201  *Unauthorized*
   Host count on port 7102 should be 1
   Host count on port 7202 should be 1
-  [Teardown]  Delete compose from  ./test/compose-test-4.yaml
+  [Teardown]  Delete compose from  ./compose-test-4.yaml
 
 Two node compose with second node uninitialized
-  Start compose from  ./test/compose-test-5.yaml
+  Start compose from  ./compose-test-5.yaml
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7201  *This server must now self-install the initial databases and application servers. Click OK to continue.*
   Host count on port 7102 should be 1
   Verify response for authenticated request with  7200  *Forbidden*
   Verify response for authenticated request with  7201  *This server must now self-install the initial databases and application servers. Click OK to continue.*
   Verify response for authenticated request with  7202  *Forbidden*
-  [Teardown]  Delete compose from  ./test/compose-test-5.yaml
+  [Teardown]  Delete compose from  ./compose-test-5.yaml

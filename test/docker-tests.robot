@@ -174,3 +174,18 @@ Two node compose with second node uninitialized
   Verify response for authenticated request with  7201  *This server must now self-install the initial databases and application servers. Click OK to continue.*
   Verify response for authenticated request with  7202  *Forbidden*
   [Teardown]  Delete compose from  ./compose-test-5.yaml
+
+Initialized MarkLogic Server with wallet password and realm
+  Create container with  -e  MARKLOGIC_INIT=true
+  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+  ...                    -e  MARKLOGIC_WALLET_PASSWORD=test_wallet_pass
+  ...                    -e  REALM=public
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*
+  Verify response for authenticated request with  8001/security-admin.xqy?section=security  *public*
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*
+  [Teardown]  Delete container
+  

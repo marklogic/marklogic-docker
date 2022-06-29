@@ -52,6 +52,8 @@ if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     [[ "${TZ}" ]] && echo "export TZ=$TZ " >>/etc/marklogic.conf
     [[ "${MARKLOGIC_ADMIN_USERNAME}" ]] && echo "export MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_ADMIN_PASSWORD}" ]] && echo "export MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_WALLET_PASSWORD}" ]] && echo "export MARKLOGIC_WALLET_PASSWORD=$MARKLOGIC_WALLET_PASSWORD" >>/etc/marklogic.conf
+    [[ "${REALM}" ]] && echo "export REALM=$REALM" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_LICENSEE}" ]] && echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_LICENSE_KEY}" ]] && echo "export MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY" >>/etc/marklogic.conf
     [[ "${ML_HUGEPAGES_TOTAL}" ]] && echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >>/etc/marklogic.conf
@@ -112,9 +114,10 @@ sleep 5s
 ################################################################
 SECRET_USR_FILE="/run/secrets/${MARKLOGIC_ADMIN_USERNAME_FILE}"
 SECRET_PWD_FILE="/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}"
+SECRET_WALLET_PWD_FILE="/run/secrets/${MARKLOGIC_WALLET_PASSWORD_FILE}"
 
 if [[ -f "${SECRET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_PWD_FILE}")" ]]; then
-    log "Using docker secrets for credentials."
+    log "Using Docker secrets for credentials."
     ML_ADMIN_PASSWORD=$(<"$SECRET_PWD_FILE")
 else
     log "Using ENV for credentials."
@@ -122,11 +125,19 @@ else
 fi
 
 if [[ -f "$SECRET_USR_FILE" ]] && [[ -n "$(<"$SECRET_USR_FILE")" ]]; then
-    log "Using docker secrets for credentials."
+    log "Using Docker secrets for credentials."
     ML_ADMIN_USERNAME=$(<"$SECRET_USR_FILE")
 else
     log "Using ENV for credentials."
     ML_ADMIN_USERNAME="${MARKLOGIC_ADMIN_USERNAME}"
+fi
+
+if [[ -f "$SECRET_WALLET_PWD_FILE" ]] && [[ -n "$(<"$SECRET_WALLET_PWD_FILE")" ]]; then
+    log "Using Docker secret for wallet-password."
+    ML_WALLET_PASSWORD=$(<"$SECRET_WALLET_PWD_FILE")
+else
+    log "Using ENV for wallet-password."
+    ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
 
 ################################################################
@@ -145,7 +156,23 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         LICENSE_PAYLOAD="{\"license-key\" : \"${LICENSE_KEY}\",\"licensee\" : \"${LICENSEE}\"}"
     fi
 
+    # sets realm conditionally based on user input
+    if [[ -z "${REALM}" ]]; then
+        ML_REALM="public"
+    else
+        log "REALM is defined, setting realm"
+        ML_REALM="${REALM}"
+    fi
+
+    if [[ -z "${ML_WALLET_PASSWORD}" ]]; then
+        ML_WALLET_PASSWORD_PAYLOAD=""
+    else
+        log "ML_WALLET_PASSWORD is defined, setting wallet-password."
+        ML_WALLET_PASSWORD_PAYLOAD="wallet-password=${ML_WALLET_PASSWORD}"
+    fi
+
     log "Initialzing MarkLogic on ${HOSTNAME}."
+
     curl -s --anyauth -i -X POST \
         -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
@@ -153,7 +180,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     sleep 5s
     curl -s -X POST -H "Content-type: application/x-www-form-urlencoded" \
         --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
-        --data "realm=public" \
+        --data "realm=${ML_REALM}" --data "${ML_WALLET_PASSWORD_PAYLOAD}" \
         "http://${HOSTNAME}:8001/admin/v1/instance-admin"
     sleep 5s
     sudo touch /opt/MarkLogic/DOCKER_INIT

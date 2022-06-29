@@ -112,11 +112,11 @@ N_RETRY=5 # 5 and 10 numbers taken directy from documentation: https://docs.mark
 RETRY_INTERVAL=10
 
 function restart_check {
-    LAST_START=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -s "http://$1:8001/admin/v1/timestamp")
+    LAST_START=$(curl -s "http://$1:8001/admin/v1/timestamp")
     for i in $(seq 1 ${N_RETRY}); do
         if [ "$2" == "${LAST_START}" ] || [ -z "${LAST_START}" ]; then
             sleep ${RETRY_INTERVAL}
-            LAST_START=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -s "http://$1:8001/admin/v1/timestamp")
+            LAST_START=$(curl -s "http://$1:8001/admin/v1/timestamp")
         else
             return 0
         fi
@@ -173,6 +173,13 @@ else
 fi
 
 ################################################################
+# Make sure username and password variables are not empty
+################################################################
+if [[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]; then
+    err "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set."
+fi
+
+################################################################
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
@@ -189,7 +196,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     log "Initialzing MarkLogic on ${HOSTNAME}."
-    TIMESTAMP=$(curl --anyauth -m 20 -s --retry 8 --retry-all-errors -f \
+    TIMESTAMP=$(curl --anyauth -m 20 -s --retry 5 --retry-all-errors -f \
         -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
         http://"${HOSTNAME}":8001/admin/v1/init |
@@ -198,9 +205,11 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
 
     # Make sure marklogic has shut down and come back up before moving on
     log "Waiting for MarkLogic to restart."
+
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
-    res_code=$(curl -s -m 20 --retry 8 --retry-all-errors -f \
+    res_code=$(curl -m 20 --retry 5 --retry-all-errors -f \
+        -w %{http_code} -s \
         -X POST -H "Content-type: application/x-www-form-urlencoded" \
         --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
         --data "realm=public" \
@@ -225,7 +234,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
 
     res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
         -w %{http_code} -s \
-        -m 20 --retry 8 --retry-all-errors -f \
+        -m 20 --retry 5 --retry-all-errors -f \
         -o host.xml -X GET -H "Accept: application/xml" \
         http://"${HOSTNAME}":8001/admin/v1/server-config)
 
@@ -233,7 +242,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
 
     res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
         -w %{http_code} -s \
-        -m 20 --retry 8 --retry-all-errors -f \
+        -m 20 --retry 5 --retry-all-errors -f \
         -X POST -d "group=Default" \
         --data-urlencode "server-config@./host.xml" \
         -H "Content-type: application/x-www-form-urlencoded" \
@@ -244,7 +253,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
 
     res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
         -o /dev/null -w %{http_code} -s \
-        -m 20 --retry 8 --retry-all-errors -f \
+        -m 20 --retry 5 --retry-all-errors -f \
         -X POST -H "Content-type: application/zip" \
         --data-binary @./cluster.zip \
         http://"${HOSTNAME}":8001/admin/v1/cluster-config)

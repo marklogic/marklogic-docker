@@ -42,7 +42,7 @@ Create second container with
 
 Delete container
   [Documentation]  Delete Docker container that is named the same as the test case.
-  ${container name}  Remove spaces from  ${TEST NAME}
+  ${container name}=  Remove spaces from  ${TEST NAME}
   Run Process  docker  rm  -f  -v  ${container name}  timeout=${DOCKER TIMEOUT}
 
 Start compose from
@@ -88,7 +88,7 @@ Docker log should contain
 Get container log message
   [Arguments]  ${string pattern}
   [Documentation]  Get Docker logs for a current image and find a matching string based on input pattern.
-  ${container name}  Remove spaces from  ${TEST NAME}
+  ${container name}=  Remove spaces from  ${TEST NAME}
   Run Process  docker  logs  ${container name}  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
   ${docker log}=  Get File  stdout-${container name}.txt
   Should Match  ${docker log}  ${string pattern}  msg=Did not find ${string pattern} in ${container name} container log
@@ -102,7 +102,7 @@ Get compose log message
   [Arguments]  ${compose path}  ${string pattern}
   [Documentation]  Get compose logs for a current stack and find a matching string based on input pattern.
   ${temp}  ${compose path}=  Split Path    ${compose path}
-  ${compose name}  Remove spaces from  ${compose path}
+  ${compose name}=  Remove spaces from  ${compose path}
   Run Process  docker  compose  -f  ${compose path}  logs  stdout=stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
   ${compose log}=  Get File  stdout-${compose name}.txt
   Should Match  ${compose log}  ${string pattern}  msg=Did not find ${string pattern} in ${compose name} compose logs

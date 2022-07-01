@@ -5,7 +5,7 @@
 ###############################################################
 
 FROM centos:centos7
-MAINTAINER MarkLogic <docker@marklogic.com>
+LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
 # install networking, base deps and ntp/tzdata for timezone

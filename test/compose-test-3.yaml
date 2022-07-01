@@ -7,7 +7,7 @@ services:
       container_name: bootstrap
       dns_search: ""
       environment:
-        - MARKLOGIC_INIT=true
+        - MARKLOGIC_INIT=True
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
         - TZ=America/Los_Angeles
@@ -27,7 +27,7 @@ services:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
-        - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_JOIN_CLUSTER=True
         - TZ=America/Los_Angeles
       volumes:
         - MarkLogic_3n_vol2:/var/opt/MarkLogic

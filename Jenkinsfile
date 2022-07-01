@@ -211,111 +211,6 @@ def ServerRegressionTests() {
     // input "Server regression tests need to be executed manually. "
 }
 
-def DockerRunTests() {
-    echo "----------------- Docker Tests -----------------"
-    // Define test parameters
-    def testImage="marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
-    def defaultParams='-it -d -p 8000:8000 -p 8001:8001 -p 8002:8002 -p7997:7997'
-    def curlCommand='curl -sL'
-    def curlCommandAuth='curl -sL --anyauth -u test_admin:test_admin_pass'
-    def jUnitReport = "docker-test-results.xml"
-    def testCases = readJSON file: './test/docker-test-cases.json'
-
-    //validate JSON data
-    assert testCases instanceof Map
-
-    //create credential files for compose
-    writeFile(file: "./docker-compose/mldb_admin_username.txt", text: "test_admin")
-    writeFile(file: "./docker-compose/mldb_admin_password.txt", text: "test_admin_pass")
-    
-    def testResults = ''
-    def totalTests = 0
-    def totalErrors = 0
-    def cmdOutput
-    def composeFile
-    def testCont
-
-    // Run test cases
-    testCases.each { key, value ->
-
-        echo "Running "+key+": "+value.description
-        // if .yaml config is provided in params, start compose. otherwise docker run is used
-        if ( value.params.toString().contains(".yaml")) {
-            //update image label in yaml file
-            composeFile = readFile(value.params)
-            composeFile = composeFile.replaceAll(/image: .*/, "image: "+testImage)
-            writeFile( file: value.params, text: composeFile)
-            // start docker compose
-            sh( returnStdout: true, script: "docker compose -f ${value.params} up -d" )
-        } else {
-            //insert valid license data in parameters
-            value.params = value.params.toString().replaceAll("LICENSE_PLACEHOLDER", "LICENSEE='MarkLogic - Version 9 QA Test License' -e LICENSE_KEY=\"${env.QA_LICENSE_KEY}\"")
-            // start docker container
-            testCont = sh( returnStdout: true, script: "docker run ${defaultParams} ${value.params} ${testImage}" )
-        }
-
-        // TODO find a good way to skip the test on error from invalid params
-        // TODO: Find a way to check for server status instead of a wait. (log: Database Modules is online)
-        sleep(80)
-
-        echo "-Unauthenticated requests"
-        value.expected.unauthenticated.each { test, verify ->
-            //TODO if key is 'log' then check for log message
-            try {
-                cmdOutput = sh( returnStdout: true, script: "${curlCommand} http://localhost:${test}" )
-            } catch (e) {
-                cmdOutput = 'Curl retured error: '+e.message
-            }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' without credentials on port '+test+'"'
-            totalTests += 1
-            echo "--Port ${test}: "
-            if ( cmdOutput.contains(verify) ) {
-                echo "PASS"
-                testResults = testResults + '/>'
-            } else {
-                echo "FAIL"
-                testResults = testResults + '><failure type="Text mismatch">'+cmdOutput+'</failure></testcase>'
-                totalErrors += 1
-            }
-            sleep(1)
-        }
-        echo "-Authenticated requests"
-        value.expected.authenticated.each { test, verify ->
-            try {
-            cmdOutput = sh( returnStdout: true, script: "${curlCommandAuth} http://localhost:${test}" )
-            } catch (e) {
-                cmdOutput = 'Curl retured error: '+e.message
-            }
-            testResults = testResults + '<testcase name="'+value.description+' on '+key+' with credentials on port '+test+'"'
-            totalTests += 1
-            echo "--Port ${test}: "
-            if ( cmdOutput.contains(verify) ) {
-                echo "PASS"
-                testResults = testResults + '/>'
-            } else {
-                echo "FAIL"
-                testResults = testResults + '><failure type="Text mismatch">'+cmdOutput+'</failure></testcase>'
-                totalErrors += 1
-            }
-            sleep(1)
-        }
-        echo "-Deleting resources"
-        if ( value.params.toString().contains(".yaml")) {
-            sh( returnStdout: true, script: "docker compose -f ${value.params} down" )
-        } else {
-            sh( returnStdout: true, script: "docker rm -f ${testCont}" )
-        }
-        sh( returnStdout: true, script: "docker volume prune -f")
-    }
-    // Generate JUnit XML file for Jenkins report
-    // TODO: find a better way to generate junit file
-    def jUnitXML = '<testsuite name="Docker Run Tests" tests="'+totalTests+'" failures="'+totalErrors+'">'
-    jUnitXML = jUnitXML + testResults + "</testsuite>"
-    writeFile( file: jUnitReport, text: jUnitXML )
-    junit testResults: jUnitReport
-    echo "-------------- End of Docker Tests --------------"
-}
-
 void Lint() {
     sh '''
         make lint Jenkins=true
@@ -430,7 +325,9 @@ pipeline {
                 expression { return params.DOCKER_TESTS }
             }
             steps {
-                DockerRunTests()
+                sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
+                junit testResults: '**/docker-tests.xml'
+                publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''])
             }
         }
 

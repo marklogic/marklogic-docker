@@ -7,8 +7,6 @@ Documentation  Test all initialization options using Docker run and Docker Compo
 *** Test Cases ***
 Uninitialized MarkLogic container
   Create container with  -e  MARKLOGIC_INIT=false
-  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   Docker log should contain  *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
   Docker log should contain  *MARKLOGIC_INIT is set to false or not defined, not initialzing.*
   Verify response for unauthenticated request with  8000  *Forbidden*
@@ -51,8 +49,15 @@ Initialized MarkLogic container with license key installed and MARKLOGIC_INIT se
 
 Initialized MarkLogic container without credentials
   [Tags]  negative
-  Create failing container with  -e  MARKLOGIC_INIT=true
-  Docker log should contain  *ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set.*
+  Create container with  -e  MARKLOGIC_INIT=true
+  Docker log should contain  *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Join a Cluster*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Unauthorized*
+  Verify response for authenticated request with  8001  *Join a Cluster*
+  Verify response for authenticated request with  8002  *Unauthorized*
   [Teardown]  Delete container
 
 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
@@ -66,17 +71,7 @@ Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
 
 Invalid value for INIT
   Create failing container with  -e  MARKLOGIC_INIT=invalid
-  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   Docker log should contain  *ERROR: MARKLOGIC_INIT must be true or false.*
-  [Teardown]  Delete container
-
-Invalid value for HOSTNAME
-  Create failing container with  -e  HOSTNAME=invalid_hostname
-  ...                    -e  MARKLOGIC_INIT=true
-  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  Docker log should contain  *ERROR: Failed to restart invalid_hostname*
   [Teardown]  Delete container
 
 Initialized MarkLogic container with config overrides
@@ -179,3 +174,18 @@ Two node compose with second node uninitialized
   Verify response for authenticated request with  7201  *This server must now self-install the initial databases and application servers. Click OK to continue.*
   Verify response for authenticated request with  7202  *Forbidden*
   [Teardown]  Delete compose from  ./compose-test-5.yaml
+
+Initialized MarkLogic Server with wallet password and realm
+  Create container with  -e  MARKLOGIC_INIT=true
+  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+  ...                    -e  MARKLOGIC_WALLET_PASSWORD=test_wallet_pass
+  ...                    -e  REALM=public
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*
+  Verify response for authenticated request with  8001/security-admin.xqy?section=security  *public*
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*
+  [Teardown]  Delete container
+  

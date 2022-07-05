@@ -111,3 +111,8 @@ VOLUME /var/opt/MarkLogic
 ###############################################################
 ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
 
+###############################################################
+# remove mlcmd packages
+###############################################################
+RUN sudo rm -rf ./opt/MarkLogic/mlcmd/lib/*
+RUN sudo rm -rf ./opt/MarkLogic/mlcmd/ext/*

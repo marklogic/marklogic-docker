@@ -214,10 +214,7 @@ def ServerRegressionTests() {
 void Lint() {
     sh '''
         make lint Jenkins=true
-        cat start-marklogic-lint.txt
-        cat marklogic-server-centos-lint.txt
-        cat marklogic-deps-centos-base-lint.txt
-        cat marklogic-server-centos-base-lint.txt
+        cat start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
         rm -f start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
     '''
 }

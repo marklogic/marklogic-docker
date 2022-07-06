@@ -101,7 +101,7 @@ Single node compose example
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *Setting timezone to Europe/Prague*
-  [Teardown]  Run Keywords  Delete compose from  ../docker-compose/marklogic-centos.yaml  AND  Remove Files  mldb_admin_username.txt  mldb_admin_password.txt  marklogic-centos.yaml
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
 Three node compose example
   Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
@@ -126,7 +126,7 @@ Three node compose example
   Host count on port 7102 should be 3
   Host count on port 7202 should be 3
   Host count on port 7302 should be 3
-  [Teardown]  Run Keywords  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml  AND  Remove Files  mldb_admin_username.txt  mldb_admin_password.txt  marklogic-cluster-centos.yaml
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml
 
 Two node compose with credentials in env and verify restart logic
   Start compose from  ./compose-test-3.yaml
@@ -155,7 +155,7 @@ Two node compose with credentials in env and verify restart logic
   Restart compose from  ./compose-test-3.yaml
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is already initialized.*
   Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is already initialized.*
-  [Teardown]  Run Keywords  Delete compose from  ./compose-test-3.yaml  AND  Remove Files  mldb_admin_username.txt  mldb_admin_password.txt
+  [Teardown]  Delete compose from  ./compose-test-3.yaml
 
 Two node compose with second node uncoupled
   Start compose from  ./compose-test-4.yaml
@@ -163,7 +163,7 @@ Two node compose with second node uncoupled
   Verify response for unauthenticated request with  7201  *Unauthorized*
   Host count on port 7102 should be 1
   Host count on port 7202 should be 1
-  [Teardown]  Run Keywords  Delete compose from  ./compose-test-4.yaml  AND  Remove Files  mldb_admin_username.txt  mldb_admin_password.txt
+  [Teardown]  Delete compose from  ./compose-test-4.yaml
 
 Two node compose with second node uninitialized
   Start compose from  ./compose-test-5.yaml
@@ -173,7 +173,7 @@ Two node compose with second node uninitialized
   Verify response for authenticated request with  7200  *Forbidden*
   Verify response for authenticated request with  7201  *This server must now self-install the initial databases and application servers. Click OK to continue.*
   Verify response for authenticated request with  7202  *Forbidden*
-  [Teardown]  Run Keywords  Delete compose from  ./compose-test-5.yaml  AND  Remove Files  mldb_admin_username.txt  mldb_admin_password.txt
+  [Teardown]  Delete compose from  ./compose-test-5.yaml
 
 Initialized MarkLogic Server with wallet password and realm
   Create container with  -e  MARKLOGIC_INIT=true

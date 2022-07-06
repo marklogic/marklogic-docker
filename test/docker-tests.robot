@@ -7,8 +7,6 @@ Documentation  Test all initialization options using Docker run and Docker Compo
 *** Test Cases ***
 Uninitialized MarkLogic container
   Create container with  -e  MARKLOGIC_INIT=false
-  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   Docker log should contain  *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
   Docker log should contain  *MARKLOGIC_INIT is set to false or not defined, not initialzing.*
   Verify response for unauthenticated request with  8000  *Forbidden*

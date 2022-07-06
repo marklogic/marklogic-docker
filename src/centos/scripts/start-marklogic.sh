@@ -95,7 +95,7 @@ fi
 if [ -n "${TZ}" ]; then
     log "Setting timezone to ${TZ}"
     sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
-    log "${TZ}" | sudo tee /etc/timezone
+    echo "${TZ}" | sudo tee /etc/timezone
 fi
 
 ################################################################
@@ -175,19 +175,12 @@ else
     ML_ADMIN_USERNAME="${MARKLOGIC_ADMIN_USERNAME}"
 fi
 
-if [[ -f "$SECRET_WALLET_PWD_FILE" ]] && [[ -n "$(<"$SECRET_WALLET_PWD_FILE")" ]]; then
+if [[ -f "${SECRET_WALLET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_WALLET_PWD_FILE}")" ]]; then
     log "Using Docker secret for wallet-password."
-    ML_WALLET_PASSWORD=$(<"$SECRET_WALLET_PWD_FILE")
+    ML_WALLET_PASSWORD=$(<"${SECRET_WALLET_PWD_FILE}")
 else
     log "Using ENV for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
-fi
-
-################################################################
-# Make sure username and password variables are not empty
-################################################################
-if [[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]; then
-    err "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set."
 fi
 
 ################################################################
@@ -197,6 +190,11 @@ if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
     log "MARKLOGIC_INIT is already initialized."
 elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     log "MARKLOGIC_INIT is true, initialzing."
+
+    # Make sure username and password variables are not empty
+    if ([[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]); then
+        err "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set."
+    fi
 
     # generate JSON payload conditionally with license details.
     if [[ -z "${LICENSE_KEY}" ]] || [[ -z "${LICENSEE}" ]]; then

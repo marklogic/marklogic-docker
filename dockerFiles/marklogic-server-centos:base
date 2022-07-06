@@ -23,13 +23,15 @@ ARG ML_CONVERTERS=marklogic.converters
 COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
 
 ###############################################################
-# install MarkLogic server and sudo
+# install MarkLogic server, sudo, and remove mlcmd packages
 ###############################################################
 COPY ${ML_RPM} /tmp/marklogic-server.rpm
 RUN yum localinstall -y /tmp/marklogic-server.rpm \
     && rm /tmp/marklogic-server.rpm \
     && yum -y install sudo \
-    && yum -y clean all
+    && yum -y clean all \
+    && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
+    && rm -rf ./opt/MarkLogic/mlcmd/ext/*
 
 
 
@@ -110,11 +112,3 @@ VOLUME /var/opt/MarkLogic
 # set entrypoint
 ###############################################################
 ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
-
-###############################################################
-# remove mlcmd packages
-###############################################################
-RUN sudo rm -rf ./opt/MarkLogic/mlcmd/lib/*
-RUN sudo rm -rf ./opt/MarkLogic/mlcmd/ext/*
-
-

@@ -20,15 +20,15 @@ Create container with
   ...              Container is named based on test case so that the same name can be used in cleanup.
   ...              Also verifies that the container is up by checking Docker logs.
   ${container name}=  Remove spaces from  ${TEST NAME}
-  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=stderr-${container name}.txt  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
-  File Should Be Empty  stderr-${container name}.txt
+  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=test_results/stderr-${container name}.txt  stdout=test_results/stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
+  File Should Be Empty  test_results/stderr-${container name}.txt
   Docker log should contain  *Cluster config complete, marking node as ready*
 
 Create failing container with
   [Arguments]  @{input parameters}
   [Documentation]  Creates Docker container without verifying its status. Used for negative tests.
   ${container name}=  Remove spaces from  ${TEST NAME}
-  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=stderr-${container name}.txt  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
+  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=test_results/stderr-${container name}.txt  stdout=test_results/stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
 
 
 Create second container with
@@ -36,8 +36,8 @@ Create second container with
   ...              TODO: still need to figure out how to id the second container in tests and cleanup. 
   [Arguments]  @{input parameters}
   ${container name}=  Remove spaces from  ${TEST NAME}
-  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}-2  ${TEST_IMAGE}  stderr=stderr-${container name}-2.txt  stdout=stdout-${container name}-2.txt  timeout=${DOCKER TIMEOUT}
-  File Should Be Empty  stderr-${container name}-2.txt
+  Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}-2  ${TEST_IMAGE}  stderr=test_results/stderr-${container name}-2.txt  stdout=test_results/stdout-${container name}-2.txt  timeout=${DOCKER TIMEOUT}
+  File Should Be Empty  test_results/stderr-${container name}-2.txt
   Docker log should contain  *Cluster config complete, marking node as ready*
 
 Delete container
@@ -52,14 +52,18 @@ Start compose from
   ...              Yaml file is updated with new image label and credentials.
   ...              Container status is verified using Docker logs.
   ${dir}  ${new path}=  Split Path  ${compose path}
+  ${compose name}=  Set Variable  ${new path}
+  ${new path}=  Set Variable  test_results/${new path}
   ${compose file}=  Get File  ${compose path}
   ${compose file}=  Replace String Using Regexp  ${compose file}  image:.*  image: ${TEST_IMAGE}
   ${compose file}=  Replace String Using Regexp  ${compose file}  MARKLOGIC_ADMIN_USERNAME=.*  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ${compose file}=  Replace String Using Regexp  ${compose file}  MARKLOGIC_ADMIN_PASSWORD=.*  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+
   Create File  ${new path}  ${compose file}
-  Create File  mldb_admin_username.txt  ${DEFAULT ADMIN USER}
-  Create File  mldb_admin_password.txt  ${DEFAULT ADMIN PASS}
-  Run Process  docker  compose  -f  ${new path}  up  -d  --no-color  stderr=stdout-${new path}.txt  stdout=stdout-${new path}.txt  timeout=${DOCKER TIMEOUT}
+  Create File  test_results/mldb_admin_username.txt  ${DEFAULT ADMIN USER}
+  Create File  test_results/mldb_admin_password.txt  ${DEFAULT ADMIN PASS}
+  Run Process  docker  compose  -f  ${new path}  up  -d  --no-color  stderr=test_results/stderr-${compose name}.txt  stdout=test_results/stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
+  
   #get a list of nodes from compose and check readyness for each
   ${result}=  Run Process  docker  compose  -f  ${compose file}  ps  --services
   @{nodes}=  Split to lines  ${result.stdout}
@@ -72,12 +76,15 @@ Delete compose from
   [Arguments]  ${compose path}
   [Documentation]  Delete compose stack identified with yaml path.
   ${dir}  ${new path}=  Split Path  ${compose path}
+  ${new path}=  Set Variable  test_results/${new path}
+  Remove Files  mldb_admin_username.txt  mldb_admin_password.txt
   Run Process    docker  compose  -f  ${new path}  down  -v
 
 Restart compose from
   [Arguments]  ${compose path}
   [Documentation]  Restarts compose stack identified with yaml path.
   ${dir}  ${new path}=  Split Path  ${compose path}
+  ${new path}=  Set Variable  test_results/${new path}
   Run Process    docker  compose  -f  ${new path}  restart
 
 Docker log should contain
@@ -89,8 +96,8 @@ Get container log message
   [Arguments]  ${string pattern}
   [Documentation]  Get Docker logs for a current image and find a matching string based on input pattern.
   ${container name}=  Remove spaces from  ${TEST NAME}
-  Run Process  docker  logs  ${container name}  stdout=stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
-  ${docker log}=  Get File  stdout-${container name}.txt
+  Run Process  docker  logs  ${container name}  stdout=test_results/stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
+  ${docker log}=  Get File  test_results/stdout-${container name}.txt
   Should Match  ${docker log}  ${string pattern}  msg=Did not find ${string pattern} in ${container name} container log
 
 Compose logs should contain
@@ -103,8 +110,9 @@ Get compose log message
   [Documentation]  Get compose logs for a current stack and find a matching string based on input pattern.
   ${temp}  ${compose path}=  Split Path    ${compose path}
   ${compose name}=  Remove spaces from  ${compose path}
-  Run Process  docker  compose  -f  ${compose path}  logs  stdout=stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
-  ${compose log}=  Get File  stdout-${compose name}.txt
+  ${compose path}=  Set Variable  test_results/${compose path}
+  Run Process  docker  compose  -f  ${compose path}  logs  stdout=test_results/stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
+  ${compose log}=  Get File  test_results/stdout-${compose name}.txt
   Should Match  ${compose log}  ${string pattern}  msg=Did not find ${string pattern} in ${compose name} compose logs
 
 Remove spaces from

@@ -222,16 +222,15 @@ void Lint() {
 void Scan() {
     sh """
         make scan version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
-        grep \'High\\|Critical\' scan-deps-image.txt
         grep \'High\\|Critical\' scan-server-image.txt
     """
 
-    highCriticalVunerabilities = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-deps-image.txt; grep \'High\\|Critical\' scan-server-image.txt')
+    highCriticalVunerabilities = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
     if (highCriticalVunerabilities.size()) {
         mail mimeType: 'text/plain', to: "${params.emailList}", body: "\nJenkins pipeline for ${env.JOB_NAME} \nBuild Number: ${env.BUILD_NUMBER} \n${env.BUILD_URL}\nhttps://project.marklogic.com/jira/browse/${JIRA_ID}\nVulnerabilities: \n${highCriticalVunerabilities}", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
-    sh '''rm -f scan-deps-image.txt scan-server-image.txt'''
+    sh '''rm -f scan-server-image.txt'''
 }
 
 def PublishToInternalRegistry() {
@@ -323,8 +322,8 @@ pipeline {
             }
             steps {
                 sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
-                junit testResults: '**/docker-tests.xml'
-                publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''])
+                junit testResults: '**/test_results/docker-tests.xml'
+                publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''])
             }
         }
 

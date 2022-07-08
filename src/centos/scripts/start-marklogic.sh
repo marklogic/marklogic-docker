@@ -140,6 +140,33 @@ function response_code_validation {
 }
 
 ################################################################
+# retry_and_timeout(target_url, expected_response_code, additional_options)
+# The third argument is optional and can be used to pass additional options to curl.
+# Retry a curl command until it returns the expected response
+# code or fails N_RETRY times.
+# Use RETRY_INTERVAL to tune the test length.
+# Validate that response code is the same as expected response
+# code or exit with an error.
+#
+#   $1 :  The target url to test against
+#   $2 :  The expected response code
+#   $3 :  Additional options to pass to curl
+################################################################
+function curl_retry_timeout_and_validate {
+    for i in $(seq 1 ${N_RETRY}); do
+        request="curl -m 20 -s -w '%{http_code}' $3 $1"
+        response_code=$(eval "${request}")
+        log "response_code: ${response_code}"
+        if [[ ${response_code} -eq $2 ]]; then
+            return 0
+        fi
+        sleep ${RETRY_INTERVAL}
+    done
+    log "RESPONSE CODE: ${response_code}"
+    response_code_validation "${response_code}" "${2}"
+}
+
+################################################################
 # Start MarkLogic service
 ################################################################
 if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
@@ -192,7 +219,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     log "MARKLOGIC_INIT is true, initialzing."
 
     # Make sure username and password variables are not empty
-    if ([[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]); then
+    if [[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]; then
         err "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set."
     fi
 
@@ -220,7 +247,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     log "Initialzing MarkLogic on ${HOSTNAME}."
-    TIMESTAMP=$(curl --anyauth -m 20 -s --retry 5 --retry-all-errors -f \
+    TIMESTAMP=$(curl --anyauth -m 20 -s --retry 5 \
         -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
         http://"${HOSTNAME}":8001/admin/v1/init |
@@ -231,15 +258,10 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     log "Waiting for MarkLogic to restart."
 
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
-
-    res_code=$(curl -m 20 --retry 5 --retry-all-errors -f \
-        -w %{http_code} -s \
-        -X POST -H "Content-type: application/x-www-form-urlencoded" \
-        --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
-        --data "realm=public" \
-        http://"${HOSTNAME}":8001/admin/v1/instance-admin)
-
-    response_code_validation "${res_code}" 200
+    curl_retry_timeout_and_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
+        -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
+        -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
+        -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
 
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
@@ -256,33 +278,18 @@ if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     log "Join conditions met, Joining cluster."
 
-    res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
-        -w %{http_code} -s \
-        -m 20 --retry 5 --retry-all-errors -f \
-        -o host.xml -X GET -H "Accept: application/xml" \
-        http://"${HOSTNAME}":8001/admin/v1/server-config)
+    curl_retry_timeout_and_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+        -o host.xml -X GET -H \"Accept: application/xml\""
 
-    response_code_validation "${res_code}" 200
+    curl_retry_timeout_and_validate "http://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+        -X POST -d \"group=Default\" \
+        --data-urlencode \"server-config@./host.xml\" \
+        -H \"Content-type: application/x-www-form-urlencoded\" \
+        -o cluster.zip"
 
-    res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
-        -w %{http_code} -s \
-        -m 20 --retry 5 --retry-all-errors -f \
-        -X POST -d "group=Default" \
-        --data-urlencode "server-config@./host.xml" \
-        -H "Content-type: application/x-www-form-urlencoded" \
-        -o cluster.zip \
-        http://"${MARKLOGIC_BOOTSTRAP_HOST}":8001/admin/v1/cluster-config)
-
-    response_code_validation "${res_code}" 200
-
-    res_code=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" \
-        -o /dev/null -w %{http_code} -s \
-        -m 20 --retry 5 --retry-all-errors -f \
-        -X POST -H "Content-type: application/zip" \
-        --data-binary @./cluster.zip \
-        http://"${HOSTNAME}":8001/admin/v1/cluster-config)
-
-    response_code_validation "${res_code}" 202
+    curl_retry_timeout_and_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+         -X POST -H \"Content-type: application/zip\" \
+        --data-binary @./cluster.zip"
 
     rm -f host.xml
     rm -f cluster.zip

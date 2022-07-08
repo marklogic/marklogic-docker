@@ -152,7 +152,7 @@ function response_code_validation {
 #   $2 :  The expected response code
 #   $3 :  Additional options to pass to curl
 ################################################################
-function curl_retry_timeout_and_validate {
+function curl_retry_validate {
     for i in $(seq 1 ${N_RETRY}); do
         request="curl -m 20 -s -w '%{http_code}' $3 $1"
         response_code=$(eval "${request}")

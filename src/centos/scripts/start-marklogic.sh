@@ -153,7 +153,7 @@ function response_code_validation {
 #   $3 :  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
-    for i in $(seq 1 ${N_RETRY}); do
+    for ((i=0; i<N_RETRY; i=i+1)); do
         request="curl -m 20 -s -w '%{http_code}' $3 $1"
         response_code=$(eval "${request}")
         log "response_code: ${response_code}"
@@ -258,7 +258,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     log "Waiting for MarkLogic to restart."
 
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
-    curl_retry_timeout_and_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
+    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
         -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
         -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
         -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
@@ -278,16 +278,16 @@ if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     log "Join conditions met, Joining cluster."
 
-    curl_retry_timeout_and_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
         -o host.xml -X GET -H \"Accept: application/xml\""
 
-    curl_retry_timeout_and_validate "http://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+    curl_retry_validate "http://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
         -X POST -d \"group=Default\" \
         --data-urlencode \"server-config@./host.xml\" \
         -H \"Content-type: application/x-www-form-urlencoded\" \
         -o cluster.zip"
 
-    curl_retry_timeout_and_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
          -X POST -H \"Content-type: application/zip\" \
         --data-binary @./cluster.zip"
 

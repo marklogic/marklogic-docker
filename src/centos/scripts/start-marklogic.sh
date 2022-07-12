@@ -114,11 +114,11 @@ N_RETRY=5 # 5 and 10 numbers taken directy from documentation: https://docs.mark
 RETRY_INTERVAL=10
 
 function restart_check {
-    LAST_START=$(curl -s "http://$1:8001/admin/v1/timestamp")
+    LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
     for i in $(seq 1 ${N_RETRY}); do
         if [ "$2" == "${LAST_START}" ] || [ -z "${LAST_START}" ]; then
             sleep ${RETRY_INTERVAL}
-            LAST_START=$(curl -s "http://$1:8001/admin/v1/timestamp")
+            LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
         else
             log "MarkLogic has restarted."
             return 0
@@ -141,7 +141,7 @@ function restart_check {
 #   $3 :  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
-    for ((i=0; i<N_RETRY; i=i+1)); do
+    for ((i = 0; i < N_RETRY; i = i + 1)); do
         request="curl -m 30 -s -w '%{http_code}' $3 $1"
         response_code=$(eval "${request}")
         if [[ ${response_code} -eq $2 ]]; then
@@ -149,7 +149,7 @@ function curl_retry_validate {
         fi
         sleep ${RETRY_INTERVAL}
     done
-    
+
     err "Expected response code ${2}, got ${response_code} from ${1}."
 }
 

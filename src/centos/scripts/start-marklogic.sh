@@ -120,23 +120,11 @@ function restart_check {
             sleep ${RETRY_INTERVAL}
             LAST_START=$(curl -s "http://$1:8001/admin/v1/timestamp")
         else
+            log "MarkLogic has restarted."
             return 0
         fi
     done
     err "Failed to restart $1"
-}
-
-################################################################
-# response_code_validation(response_code, expected_response_code)
-#
-# validate that the response code is what we expect it to be
-#   $1 :  Actual response code
-#   $2 :  Expected response code
-################################################################
-function response_code_validation {
-    if [[ "$1" -ne "$2" ]]; then
-        err "Expected response code $2, got $1"
-    fi
 }
 
 ################################################################
@@ -154,16 +142,15 @@ function response_code_validation {
 ################################################################
 function curl_retry_validate {
     for ((i=0; i<N_RETRY; i=i+1)); do
-        request="curl -m 20 -s -w '%{http_code}' $3 $1"
+        request="curl -m 30 -s -w '%{http_code}' $3 $1"
         response_code=$(eval "${request}")
-        log "response_code: ${response_code}"
         if [[ ${response_code} -eq $2 ]]; then
             return 0
         fi
         sleep ${RETRY_INTERVAL}
     done
-    log "RESPONSE CODE: ${response_code}"
-    response_code_validation "${response_code}" "${2}"
+    
+    err "Expected response code ${2}, got ${response_code} from ${1}."
 }
 
 ################################################################
@@ -258,6 +245,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     log "Waiting for MarkLogic to restart."
 
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
+
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
         -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
         -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \

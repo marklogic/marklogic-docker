@@ -99,7 +99,7 @@ if [ -n "${TZ}" ]; then
 fi
 
 ################################################################
-# restart_check(hostname, baseline_timestamp, caller_lineno)
+# restart_check(hostname, baseline_timestamp)
 #
 # Use the timestamp service to detect a server restart, given a
 # a baseline timestamp. Use N_RETRY and RETRY_INTERVAL to tune

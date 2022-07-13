@@ -107,7 +107,6 @@ fi
 # so the function works whether or not security is initialized.
 #   $1 :  The hostname to test against
 #   $2 :  The baseline timestamp
-#   $3 :  Invokers LINENO, for improved error reporting
 # Returns 0 if restart is detected, exits with an error if not.
 ################################################################
 N_RETRY=5 # 5 and 10 numbers taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
@@ -234,7 +233,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     log "Initialzing MarkLogic on ${HOSTNAME}."
-    TIMESTAMP=$(curl --anyauth -m 20 -s --retry 5 \
+    TIMESTAMP=$(curl --anyauth -m 30 -s --retry 5 \
         -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
         http://"${HOSTNAME}":8001/admin/v1/init |

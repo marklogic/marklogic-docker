@@ -12,14 +12,6 @@
 ###############################################################
 
 ###############################################################
-# Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set.
-###############################################################
-if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
-    HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
-    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
-fi
-
-###############################################################
 # Prepare script
 ###############################################################
 cd ~ || exit
@@ -28,7 +20,9 @@ for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_IN
     declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
 done
 
-# define log and err functions
+###############################################################
+# Define log and err functions
+###############################################################
 log() {
     echo "$(basename "${0}"): ${*}"
 }
@@ -36,6 +30,14 @@ err() {
     echo "$(basename "${0}") ERROR: ${*}" >&2
     exit 1
 }
+
+###############################################################
+# Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set.
+###############################################################
+if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
+    HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
+fi
 
 ################################################################
 # Read in ENV values for marklogic.conf
@@ -97,6 +99,60 @@ if [ -n "${TZ}" ]; then
 fi
 
 ################################################################
+# restart_check(hostname, baseline_timestamp)
+#
+# Use the timestamp service to detect a server restart, given a
+# a baseline timestamp. Use N_RETRY and RETRY_INTERVAL to tune
+# the test length. Include authentication in the curl command
+# so the function works whether or not security is initialized.
+#   $1 :  The hostname to test against
+#   $2 :  The baseline timestamp
+# Returns 0 if restart is detected, exits with an error if not.
+################################################################
+N_RETRY=5 # 5 and 10 numbers taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
+RETRY_INTERVAL=10
+
+function restart_check {
+    LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
+    for i in $(seq 1 ${N_RETRY}); do
+        if [ "$2" == "${LAST_START}" ] || [ -z "${LAST_START}" ]; then
+            sleep ${RETRY_INTERVAL}
+            LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
+        else
+            log "MarkLogic has restarted."
+            return 0
+        fi
+    done
+    err "Failed to restart $1"
+}
+
+################################################################
+# retry_and_timeout(target_url, expected_response_code, additional_options)
+# The third argument is optional and can be used to pass additional options to curl.
+# Retry a curl command until it returns the expected response
+# code or fails N_RETRY times.
+# Use RETRY_INTERVAL to tune the test length.
+# Validate that response code is the same as expected response
+# code or exit with an error.
+#
+#   $1 :  The target url to test against
+#   $2 :  The expected response code
+#   $3 :  Additional options to pass to curl
+################################################################
+function curl_retry_validate {
+    for ((i = 0; i < N_RETRY; i = i + 1)); do
+        request="curl -m 30 -s -w '%{http_code}' $3 $1"
+        response_code=$(eval "${request}")
+        if [[ ${response_code} -eq $2 ]]; then
+            return 0
+        fi
+        sleep ${RETRY_INTERVAL}
+    done
+
+    err "Expected response code ${2}, got ${response_code} from ${1}."
+}
+
+################################################################
 # Start MarkLogic service
 ################################################################
 if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
@@ -118,23 +174,23 @@ SECRET_WALLET_PWD_FILE="/run/secrets/${MARKLOGIC_WALLET_PASSWORD_FILE}"
 
 if [[ -f "${SECRET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_PWD_FILE}")" ]]; then
     log "Using Docker secrets for credentials."
-    ML_ADMIN_PASSWORD=$(<"$SECRET_PWD_FILE")
+    ML_ADMIN_PASSWORD=$(<"${SECRET_PWD_FILE}")
 else
     log "Using ENV for credentials."
     ML_ADMIN_PASSWORD="${MARKLOGIC_ADMIN_PASSWORD}"
 fi
 
-if [[ -f "$SECRET_USR_FILE" ]] && [[ -n "$(<"$SECRET_USR_FILE")" ]]; then
+if [[ -f "${SECRET_USR_FILE}" ]] && [[ -n "$(<"${SECRET_USR_FILE}")" ]]; then
     log "Using Docker secrets for credentials."
-    ML_ADMIN_USERNAME=$(<"$SECRET_USR_FILE")
+    ML_ADMIN_USERNAME=$(<"${SECRET_USR_FILE}")
 else
     log "Using ENV for credentials."
     ML_ADMIN_USERNAME="${MARKLOGIC_ADMIN_USERNAME}"
 fi
 
-if [[ -f "$SECRET_WALLET_PWD_FILE" ]] && [[ -n "$(<"$SECRET_WALLET_PWD_FILE")" ]]; then
+if [[ -f "${SECRET_WALLET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_WALLET_PWD_FILE}")" ]]; then
     log "Using Docker secret for wallet-password."
-    ML_WALLET_PASSWORD=$(<"$SECRET_WALLET_PWD_FILE")
+    ML_WALLET_PASSWORD=$(<"${SECRET_WALLET_PWD_FILE}")
 else
     log "Using ENV for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
@@ -147,6 +203,11 @@ if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
     log "MARKLOGIC_INIT is already initialized."
 elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     log "MARKLOGIC_INIT is true, initialzing."
+
+    # Make sure username and password variables are not empty
+    if [[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]; then
+        err "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set."
+    fi
 
     # generate JSON payload conditionally with license details.
     if [[ -z "${LICENSE_KEY}" ]] || [[ -z "${LICENSEE}" ]]; then
@@ -172,17 +233,23 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     log "Initialzing MarkLogic on ${HOSTNAME}."
-
-    curl -s --anyauth -i -X POST \
-        -H "Content-type:application/json" \
+    TIMESTAMP=$(curl --anyauth -m 30 -s --retry 5 \
+        -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
-        "http://${HOSTNAME}:8001/admin/v1/init"
-    sleep 5s
-    curl -s -X POST -H "Content-type: application/x-www-form-urlencoded" \
-        --data "admin-username=${ML_ADMIN_USERNAME}" --data "admin-password=${ML_ADMIN_PASSWORD}" \
-        --data "realm=${ML_REALM}" --data "${ML_WALLET_PASSWORD_PAYLOAD}" \
-        "http://${HOSTNAME}:8001/admin/v1/instance-admin"
-    sleep 5s
+        http://"${HOSTNAME}":8001/admin/v1/init |
+        grep "last-startup" |
+        sed 's%^.*<last-startup.*>\(.*\)</last-startup>.*$%\1%')
+
+    # Make sure marklogic has shut down and come back up before moving on
+    log "Waiting for MarkLogic to restart."
+
+    restart_check "${HOSTNAME}" "${TIMESTAMP}"
+
+    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
+        -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
+        -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
+        -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
+
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
     log "MARKLOGIC_INIT is set to false or not defined, not initialzing."
@@ -197,16 +264,19 @@ if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     log "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     log "Join conditions met, Joining cluster."
-    sleep 5s
-    joiner="${HOSTNAME}"
-    cluster="${MARKLOGIC_BOOTSTRAP_HOST}"
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -o host.xml -X GET -H "Accept: application/xml" http://"${joiner}":8001/admin/v1/server-config
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -d "group=Default" --data-urlencode "server-config@./host.xml" -H "Content-type: application/x-www-form-urlencoded" -o cluster.zip http://"${cluster}":8001/admin/v1/cluster-config
 
-    sleep 10s
+    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+        -o host.xml -X GET -H \"Accept: application/xml\""
 
-    curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X POST -H "Content-type: application/zip" --data-binary @./cluster.zip http://"${joiner}":8001/admin/v1/cluster-config
-    sleep 5s
+    curl_retry_validate "http://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+        -X POST -d \"group=Default\" \
+        --data-urlencode \"server-config@./host.xml\" \
+        -H \"Content-type: application/x-www-form-urlencoded\" \
+        -o cluster.zip"
+
+    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
+         -X POST -H \"Content-type: application/zip\" \
+        --data-binary @./cluster.zip"
 
     rm -f host.xml
     rm -f cluster.zip

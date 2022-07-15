@@ -292,7 +292,7 @@ pipeline {
 
         stage('Build-Image') {
             steps {
-                sh "make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} build-branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
+                sh "make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
             }
         }
 
@@ -322,7 +322,7 @@ pipeline {
                 expression { return params.DOCKER_TESTS }
             }
             steps {
-                sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion}"
+                sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
                 junit testResults: '**/test_results/docker-tests.xml'
                 publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''])
             }

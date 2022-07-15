@@ -55,6 +55,7 @@ COPY --from=builder / /
 
 ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
+ARG BUILD_BRANCH=local
 ###############################################################
 # define docker labels
 ###############################################################
@@ -87,7 +88,9 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
     MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user \
-    MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password
+    MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password \
+    BUILD_BRANCH=${BUILD_BRANCH}
+    
 
 ###############################################################
 # expose MarkLogic server ports

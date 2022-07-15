@@ -14,6 +14,7 @@
 ###############################################################
 # Prepare script
 ###############################################################
+echo "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
 cd ~ || exit
 # Convert booleans to lowercase
 for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do

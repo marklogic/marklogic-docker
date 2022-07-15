@@ -4,14 +4,15 @@ REPONAME=marklogic-centos
 repoDir="marklogic"
 docker_build_options=--compress
 test_image?=ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
+build-branch?=local
 
 #***************************************************************************
 # build docker images
 #***************************************************************************
 build:
 	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-deps-centos:${version}" -f ../../dockerFiles/marklogic-deps-centos:base .
-	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-centos:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-centos:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} -f ../../dockerFiles/marklogic-server-centos:base .
- 
+	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-centos:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-centos:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build-branch} -f ../../dockerFiles/marklogic-server-centos:base .
+
 #***************************************************************************
 # strcture test docker images
 #***************************************************************************

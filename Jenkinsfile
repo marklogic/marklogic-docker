@@ -292,7 +292,7 @@ pipeline {
 
         stage('Build-Image') {
             steps {
-                sh "make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} package=${RPM} converters=${CONVERTERS}"
+                sh "make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} build-branch=${BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
             }
         }
 

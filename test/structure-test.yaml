@@ -18,6 +18,8 @@ metadataTest:
       value: /opt/MarkLogic
     - key: MARKLOGIC_UMASK
       value: 022
+    - key: BUILD_BRANCH
+      value: BRANCH_PLACEHOLDER
   labels:
     - key: "com.marklogic.maintainer"
       value: "docker@marklogic.com"
@@ -33,6 +35,15 @@ metadataTest:
       value: "By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
     - key: "com.marklogic.license.url"
       value: "https://developer.marklogic.com/eula"
+    - key: "com.marklogic.name"
+      value: "MarkLogic Server VERSION_PLACEHOLDER"
+    - key: "com.marklogic.version"
+      value: "1.0.0"
+    - key: "com.marklogic.release-version"
+      value: "VERSION_PLACEHOLDER"
+    - key: "com.marklogic.build-branch"
+      value: "BRANCH_PLACEHOLDER"
+    
   exposedPorts: ["7997","8001","8002","8003","8004","8005","8006","8007","8009","8010"]
   volumes: ["/var/opt/MarkLogic"]
   entrypoint: ["/usr/local/bin/start-marklogic.sh"]

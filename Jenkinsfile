@@ -195,7 +195,7 @@ def StructureTests() {
     sh """
         cd test
         #insert current version
-        sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/' ./structure-test.yaml
+        sed -i -e 's/VERSION_PLACEHOLDER/${mlVersion}-${env.platformString}-${env.dockerVersion}/g' -e 's/BRANCH_PLACEHOLDER/${env.BRANCH_NAME}/g' ./structure-test.yaml
         cd ..
         curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
         make structure-test version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
@@ -292,7 +292,7 @@ pipeline {
 
         stage('Build-Image') {
             steps {
-                sh "make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} build-branch=${BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
+                sh "make build version=${mlVersion}-${env.platformString}-${env.dockerVersion} build-branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
             }
         }
 

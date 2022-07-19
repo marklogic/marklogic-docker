@@ -12,16 +12,6 @@
 ###############################################################
 
 ###############################################################
-# Prepare script
-###############################################################
-echo "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
-cd ~ || exit
-# Convert booleans to lowercase
-for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do
-    declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
-done
-
-###############################################################
 # Define log and err functions
 ###############################################################
 log() {
@@ -31,6 +21,16 @@ err() {
     echo "$(basename "${0}") ERROR: ${*}" >&2
     exit 1
 }
+
+###############################################################
+# Prepare script
+###############################################################
+log "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
+cd ~ || exit
+# Convert booleans to lowercase
+for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do
+    declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
+done
 
 ###############################################################
 # Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set.

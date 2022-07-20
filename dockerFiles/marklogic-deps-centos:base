@@ -13,10 +13,7 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && yum -y update \
-    && yum -y install gdb.x86_64 glibc.i686 initscripts redhat-lsb-core.x86_64 tzdata ntp epel-release yum-utils xz-0:5.2.2-2.el7_9.x86_64 \
-    && rpm -Uvh http://www.city-fan.org/ftp/contrib/yum-repo/rhel7/x86_64/city-fan.org-release-2-2.rhel7.noarch.rpm \
-    && yum-config-manager --disable city-fan.org \
-    && yum -y --enablerepo=city-fan.org install libcurl libcurl-devel \
+    && yum -y install gdb.x86_64 glibc.i686 initscripts redhat-lsb-core.x86_64 tzdata ntp xz-0:5.2.2-2.el7_9.x86_64 \
     && yum clean all \
     && ntpdate -s pool.ntp.org \
     && chkconfig ntpdate on \

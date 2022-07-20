@@ -39,10 +39,10 @@ push-mlregistry:
 	docker push ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
 
 #***************************************************************************
-# run lint checker on Dockerfiles 
+# run lint checker on Dockerfiles, print linting issues but do not fail the build
 #***************************************************************************
 lint:
-	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/centos/scripts/start-marklogic.sh $(if $(Jenkins), > start-marklogic-lint.txt,)
+	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/centos/scripts/start-marklogic.sh $(if $(Jenkins), > start-marklogic-lint.txt,); exit 0;
 	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/dockerfile-marklogic-server-centos $(if $(Jenkins), > marklogic-server-centos-lint.txt,);exit 0; 
 	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base $(if $(Jenkins), > marklogic-deps-centos-base-lint.txt,);exit 0;
 	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base $(if $(Jenkins), > marklogic-server-centos-base-lint.txt,);exit 0;
@@ -51,7 +51,6 @@ lint:
 # security scan docker images
 #***************************************************************************
 scan:
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${REPONAME}/marklogic-deps-centos:${version} $(if $(Jenkins), > scan-deps-image.txt,)
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${REPONAME}/marklogic-server-centos:${version} $(if $(Jenkins), > scan-server-image.txt,)
 	
 #***************************************************************************

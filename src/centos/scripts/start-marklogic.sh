@@ -53,7 +53,7 @@ log () {
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
 if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
-    info "Deleting previous /etc/marklogic.conf if it exists, and overwriting with ENV variables"
+    info "OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables."
     rm -f /etc/marklogic.conf
     sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
 
@@ -75,9 +75,9 @@ if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     sudo chmod 400 /etc/marklogic.conf
 
 elif [[ -z ${OVERWRITE_ML_CONF} ]] || [[ "${OVERWRITE_ML_CONF}" == "false" ]]; then
-    info "Not writing to /etc/marklogic.conf"
+    info "OVERWRITE_ML_CONF is false, not writing to /etc/marklogic.conf"
 else
-    error "OVERWRITE_ML_CONF must be true or false" exit
+    error "OVERWRITE_ML_CONF must be true or false." exit
 fi
 
 ################################################################
@@ -85,14 +85,14 @@ fi
 ################################################################
 if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
     if [[ -d "/opt/MarkLogic/Converters" ]]; then
-        info "Converters directory /opt/MarkLogic/Converters already exists, skipping installation"
+        info "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation of converters."
     else
-        info "Installing Converters"
+        info "INSTALL_CONVERTERS is true, installing converters."
         CONVERTERS_PATH="/converters.rpm"
         sudo yum localinstall -y $CONVERTERS_PATH
     fi
 elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" == "false" ]]; then
-    info "Not Installing Converters"
+    info "INSTALL_CONVERTERS is false, not installing converters."
 else
     error "INSTALL_CONVERTERS must be true or false." exit
 fi
@@ -101,7 +101,7 @@ fi
 # Setup timezone
 ################################################################
 if [ -n "${TZ}" ]; then
-    info "Setting timezone to ${TZ}"
+    info "TZ is defined, setting timezone."
     sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
     echo "${TZ}" | sudo tee /etc/timezone
 fi
@@ -115,7 +115,7 @@ if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
 elif [[ -z "${MARKLOGIC_DEV_BUILD}" ]] || [[ "${MARKLOGIC_DEV_BUILD}" == "false" ]]; then
     sudo service MarkLogic start
 else
-    error "MARKLOGIC_DEV_BUILD must be true or false" exit
+    error "MARKLOGIC_DEV_BUILD must be true or false." exit
 fi
 sleep 5s
 
@@ -127,26 +127,26 @@ SECRET_PWD_FILE="/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}"
 SECRET_WALLET_PWD_FILE="/run/secrets/${MARKLOGIC_WALLET_PASSWORD_FILE}"
 
 if [[ -f "${SECRET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_PWD_FILE}")" ]]; then
-    log "Using Docker secrets for credentials"
+    info "MARKLOGIC_ADMIN_PASSWORD_FILE is set, using Docker secrets for admin password."
     ML_ADMIN_PASSWORD=$(<"$SECRET_PWD_FILE")
 else
-    info "Using ENV for credentials"
+    info "MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password."
     ML_ADMIN_PASSWORD="${MARKLOGIC_ADMIN_PASSWORD}"
 fi
 
 if [[ -f "$SECRET_USR_FILE" ]] && [[ -n "$(<"$SECRET_USR_FILE")" ]]; then
-    log "Using Docker secrets for credentials"
+    info "MARKLOGIC_ADMIN_USERNAME_FILE is set, using Docker secrets for admin username."
     ML_ADMIN_USERNAME=$(<"$SECRET_USR_FILE")
 else
-    info "Using ENV for credentials"
+    info "MARKLOGIC_ADMIN_USERNAME is set, using ENV for admin username."
     ML_ADMIN_USERNAME="${MARKLOGIC_ADMIN_USERNAME}"
 fi
 
 if [[ -f "$SECRET_WALLET_PWD_FILE" ]] && [[ -n "$(<"$SECRET_WALLET_PWD_FILE")" ]]; then
-    log "Using Docker secret for wallet-password"
+    info "MARKLOGIC_WALLET_PASSWORD_FILE is set, using Docker secrets for wallet-password."
     ML_WALLET_PASSWORD=$(<"$SECRET_WALLET_PWD_FILE")
 else
-    log "Using ENV for wallet-password"
+    info "MARKLOGIC_WALLET_PASSWORD is set, using EN for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
 
@@ -154,15 +154,15 @@ fi
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
-    info "MARKLOGIC_INIT is already initialized"
+    info "MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization."
 elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
-    info "MARKLOGIC_INIT is true, initializing"
+    info "MARKLOGIC_INIT is true, initializing the MarkLogic server."
 
     # generate JSON payload conditionally with license details.
     if [[ -z "${LICENSE_KEY}" ]] || [[ -z "${LICENSEE}" ]]; then
         LICENSE_PAYLOAD="{}"
     else
-        info "LICENSE_KEY and LICENSEE are defined, generating license payload"
+        info "LICENSE_KEY and LICENSEE are defined, installing MarkLogic license."
         LICENSE_PAYLOAD="{\"license-key\" : \"${LICENSE_KEY}\",\"licensee\" : \"${LICENSEE}\"}"
     fi
 
@@ -170,18 +170,18 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     if [[ -z "${REALM}" ]]; then
         ML_REALM="public"
     else
-        log "REALM is defined, setting realm"
+        info "REALM is defined, setting realm."
         ML_REALM="${REALM}"
     fi
 
     if [[ -z "${ML_WALLET_PASSWORD}" ]]; then
         ML_WALLET_PASSWORD_PAYLOAD=""
     else
-        log "ML_WALLET_PASSWORD is defined, setting wallet-password"
+        info "ML_WALLET_PASSWORD is defined, setting wallet-password"
         ML_WALLET_PASSWORD_PAYLOAD="wallet-password=${ML_WALLET_PASSWORD}"
     fi
 
-    log "Initializing MarkLogic on ${HOSTNAME}"
+    info "Initializing MarkLogic on ${HOSTNAME}"
 
     curl -s --anyauth -i -X POST \
         -H "Content-type:application/json" \
@@ -195,18 +195,18 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     sleep 5s
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
-    info "MARKLOGIC_INIT is set to false or not defined, not initializing"
+    info "MARKLOGIC_INIT is set to false or not defined, not initializing."
 else
-    error "MARKLOGIC_INIT must be true or false" exit
+    error "MARKLOGIC_INIT must be true or false." exit
 fi
 
 ################################################################
 # check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set and host is not bootstrap host)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
-    info "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster"
+    info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
-    info "Join conditions met, joining cluster"
+    info "MARKLOGIC_JOIN_CLUSTER is true and join conditions are met, joining host to the cluster."
     sleep 5s
     cluster="${MARKLOGIC_BOOTSTRAP_HOST}"
     curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -o host.xml -X GET -H "Accept: application/xml" http://"${joiner}":8001/admin/v1/server-config
@@ -221,15 +221,15 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
     rm -f cluster.zip
     sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
 elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]] || [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
-    info "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster"
+    info "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else
-    error "MARKLOGIC_JOIN_CLUSTER must be true or false" exit
+    error "MARKLOGIC_JOIN_CLUSTER must be true or false." exit
 fi
 
 ################################################################
 # mark the node ready
 ################################################################
-info "Cluster config complete, marking node as ready"
+info "Cluster config complete, marking this node as ready."
 sudo touch /var/opt/MarkLogic/ready
 
 ################################################################

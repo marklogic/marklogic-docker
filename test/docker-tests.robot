@@ -192,3 +192,6 @@ Initialized MarkLogic Server with wallet password and realm
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   [Teardown]  Delete container
   
+Validate Image Size
+  ${result}=  Run Process  docker  image  inspect  ${TEST_IMAGE}
+  Should Contain  ${result.stdout}  ${IMAGE SIZE}

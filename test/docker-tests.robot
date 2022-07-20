@@ -196,4 +196,6 @@ Initialized MarkLogic Server with wallet password and realm
   
 Validate Image Size
   ${result}=  Run Process  docker  image  inspect  ${TEST_IMAGE}
+  ${info}=  Run Process  docker  images
+  Log To Console  ${info.stdout}
   Should Contain  ${result.stdout}  ${IMAGE SIZE}

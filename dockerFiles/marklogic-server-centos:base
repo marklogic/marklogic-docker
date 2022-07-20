@@ -33,6 +33,12 @@ RUN yum localinstall -y /tmp/marklogic-server.rpm \
     && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
     && rm -rf ./opt/MarkLogic/mlcmd/ext/*
 
+###############################################################
+# Add TINI to serve as PID 1 process
+###############################################################
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
 
 ###############################################################
 # Copy converters package 
@@ -110,4 +116,4 @@ VOLUME /var/opt/MarkLogic
 ###############################################################
 # set entrypoint
 ###############################################################
-ENTRYPOINT ["/usr/local/bin/start-marklogic.sh"]
+ENTRYPOINT ["/tini", "--", "/usr/local/bin/start-marklogic.sh"]

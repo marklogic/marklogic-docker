@@ -101,7 +101,7 @@ fi
 # Setup timezone
 ################################################################
 if [ -n "${TZ}" ]; then
-    info "TZ is defined, setting timezone."
+    info "TZ is defined, setting timezone to ${TZ}."
     sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
     echo "${TZ}" | sudo tee /etc/timezone
 fi
@@ -214,7 +214,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
 
     # Make sure username and password variables are not empty
     if [[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]; then
-        err "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set."
+        error "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set." exit
     fi
 
     # generate JSON payload conditionally with license details.

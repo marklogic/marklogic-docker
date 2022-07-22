@@ -12,15 +12,8 @@
 ###############################################################
 
 ###############################################################
-# Prepare script
+# Logging utility
 ###############################################################
-cd ~ || exit
-# Convert booleans to lowercase
-for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do
-    declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
-done
-
-#log utility
 info() {
     log "Info" "$@"
 }
@@ -38,6 +31,16 @@ log () {
   shift
   echo "${TIMESTAMP} ${LOG_LEVEL}: $@"
 }
+
+###############################################################
+# Prepare script
+###############################################################
+info "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
+cd ~ || exit
+# Convert booleans to lowercase
+for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do
+    declare $var="$(echo "${!var}" | sed -e 's/[[:blank:]]//g' | awk '{print tolower($0)}')"
+done
 
 ###############################################################
 # Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set.
@@ -127,7 +130,7 @@ function restart_check {
             sleep ${RETRY_INTERVAL}
             LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
         else
-            log "MarkLogic has restarted."
+            info "MarkLogic has restarted."
             return 0
         fi
     done
@@ -249,7 +252,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         sed 's%^.*<last-startup.*>\(.*\)</last-startup>.*$%\1%')
 
     # Make sure marklogic has shut down and come back up before moving on
-    log "Waiting for MarkLogic to restart."
+    info "Waiting for MarkLogic to restart."
 
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 

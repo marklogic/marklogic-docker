@@ -134,7 +134,7 @@ function restart_check {
             return 0
         fi
     done
-    err "Failed to restart $1"
+    error "Failed to restart $1"
 }
 
 ################################################################
@@ -160,7 +160,7 @@ function curl_retry_validate {
         sleep ${RETRY_INTERVAL}
     done
 
-    err "Expected response code ${2}, got ${response_code} from ${1}."
+    error "Expected response code ${2}, got ${response_code} from ${1}."
 }
 
 ################################################################

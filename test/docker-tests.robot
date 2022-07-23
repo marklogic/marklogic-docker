@@ -87,7 +87,7 @@ Initialized MarkLogic container with config overrides
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   Docker log should contain  *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
   Docker log should contain  *INSTALL_CONVERTERS is false, not installing converters.*
-  Docker log should contain  *TZ is defined, setting timezone to America/Los_Angeles*
+  Docker log should contain  *TZ is defined, setting timezone to America/Los_Angeles.*
   Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
@@ -105,7 +105,7 @@ Single node compose example
   Verify response for authenticated request with  8000  *Query Console*
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
-  Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *Setting timezone to Europe/Prague*
+  Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
 Three node compose example
@@ -149,7 +149,7 @@ Two node compose with credentials in env and verify restart logic
   Verify response for authenticated request with  7202  *Monitoring Dashboard*
   Host count on port 7102 should be 2
   Host count on port 7202 should be 2
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*Setting timezone to America/Los_Angeles*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*Using ENV for credentials.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initialzing.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*

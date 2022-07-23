@@ -203,7 +203,7 @@ if [[ -f "${SECRET_WALLET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_WALLET_PWD_FILE}"
     info "MARKLOGIC_WALLET_PASSWORD_FILE is set, using Docker secrets for wallet-password."
     ML_WALLET_PASSWORD=$(<"${SECRET_WALLET_PWD_FILE}")
 else
-    info "MARKLOGIC_WALLET_PASSWORD is set, using EN for wallet-password."
+    info "MARKLOGIC_WALLET_PASSWORD is set, using ENV for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
 

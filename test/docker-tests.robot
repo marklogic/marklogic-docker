@@ -61,14 +61,14 @@ Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   ...                    -e  MARKLOGIC_JOIN_CLUSTER=invalid
   Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
-  Docker log should contain  *ERROR: MARKLOGIC_JOIN_CLUSTER must be true or false.*
+  Docker log should contain  *Error: MARKLOGIC_JOIN_CLUSTER must be true or false.*
   [Teardown]  Delete container
 
 Invalid value for INIT
   Create failing container with  -e  MARKLOGIC_INIT=invalid
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  Docker log should contain  *ERROR: MARKLOGIC_INIT must be true or false.*
+  Docker log should contain  *Error: MARKLOGIC_INIT must be true or false.*
   [Teardown]  Delete container
 
 Invalid value for HOSTNAME
@@ -76,7 +76,7 @@ Invalid value for HOSTNAME
   ...                    -e  MARKLOGIC_INIT=true
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  Docker log should contain  *ERROR: Failed to restart invalid_hostname*
+  Docker log should contain  *Error: Failed to restart invalid_hostname*
   [Teardown]  Delete container
 
 Initialized MarkLogic container with config overrides
@@ -150,16 +150,16 @@ Two node compose with credentials in env and verify restart logic
   Host count on port 7102 should be 2
   Host count on port 7202 should be 2
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*Using ENV for credentials.*
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*Setting timezone to America/Los_Angeles*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*Using ENV for credentials.*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
   Restart compose from  ./compose-test-3.yaml
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is already initialized.*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is already initialized.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization.*
   [Teardown]  Delete compose from  ./compose-test-3.yaml
 
 Two node compose with second node uncoupled

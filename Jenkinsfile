@@ -349,7 +349,7 @@ pipeline {
         stage('Publish-Image') {
             when {
                     anyOf {
-                        branch 'developn'
+                        branch 'develop'
                         expression { return params.PUBLISH_IMAGE }
                     }
             }

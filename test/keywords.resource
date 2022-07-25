@@ -12,7 +12,6 @@ ${TEST_IMAGE}  %{DOCKER_TEST_IMAGE=marklogic-centos/marklogic-server-centos:10-i
 ${DOCKER TIMEOUT}  90s
 ${LICENSE KEY}  %{QA_LICENSE_KEY=none}
 ${LICENSEE}  MarkLogic - Version 9 QA Test License
-${IMAGE SIZE}  28105  # Mb
 ${MARKLOGIC_VERSION}  10-internal
 ${BUILD_BRANCH}  local
 

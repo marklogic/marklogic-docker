@@ -8,7 +8,7 @@ Documentation  Test all initialization options using Docker run and Docker Compo
 Uninitialized MarkLogic container
   Create container with  -e  MARKLOGIC_INIT=false
   Docker log should contain  *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Docker log should contain  *MARKLOGIC_INIT is set to false or not defined, not initialzing.*
+  Docker log should contain  *MARKLOGIC_INIT is set to false or not defined, not initializing.*
   Docker log should contain  *Starting MarkLogic container with ${MARKLOGIC_VERSION} from ${BUILD_BRANCH}*
   Verify response for unauthenticated request with  8000  *Forbidden*
   Verify response for unauthenticated request with  8001  *This server must now self-install the initial databases and application servers. Click OK to continue.*
@@ -23,7 +23,7 @@ Initialized MarkLogic container
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   Docker log should contain  *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
+  Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Docker log should contain  *Starting MarkLogic container with ${MARKLOGIC_VERSION} from ${BUILD_BRANCH}*
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
@@ -40,7 +40,7 @@ Initialized MarkLogic container with license key installed and MARKLOGIC_INIT se
   ...                    -e  LICENSEE=${LICENSEE}
   ...                    -e  LICENSE_KEY=${LICENSE KEY}
   Docker log should contain  *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
+  Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
   Verify response for unauthenticated request with  8002  *Unauthorized*
@@ -60,15 +60,15 @@ Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
   ...                    -e  MARKLOGIC_JOIN_CLUSTER=invalid
-  Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
-  Docker log should contain  *ERROR: MARKLOGIC_JOIN_CLUSTER must be true or false.*
+  Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Docker log should contain  *Error: MARKLOGIC_JOIN_CLUSTER must be true or false.*
   [Teardown]  Delete container
 
 Invalid value for INIT
   Create failing container with  -e  MARKLOGIC_INIT=invalid
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  Docker log should contain  *ERROR: MARKLOGIC_INIT must be true or false.*
+  Docker log should contain  *Error: MARKLOGIC_INIT must be true or false.*
   [Teardown]  Delete container
 
 Invalid value for HOSTNAME
@@ -76,7 +76,7 @@ Invalid value for HOSTNAME
   ...                    -e  MARKLOGIC_INIT=true
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  Docker log should contain  *ERROR: Failed to restart invalid_hostname*
+  Docker log should contain  *Error: Failed to restart invalid_hostname*
   [Teardown]  Delete container
 
 Initialized MarkLogic container with config overrides
@@ -85,10 +85,10 @@ Initialized MarkLogic container with config overrides
   ...                    -e  TZ=America/Los_Angeles
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  Docker log should contain  *Deleting previous /etc/marklogic.conf, if it exists, and overwriting with env variables.*
-  Docker log should contain  *Not Installing Converters*
-  Docker log should contain  *Setting timezone to America/Los_Angeles*
-  Docker log should contain  *MARKLOGIC_INIT is true, initialzing.*
+  Docker log should contain  *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+  Docker log should contain  *INSTALL_CONVERTERS is false, not installing converters.*
+  Docker log should contain  *TZ is defined, setting timezone to America/Los_Angeles.*
+  Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
   Verify response for unauthenticated request with  8002  *Unauthorized*
@@ -105,7 +105,7 @@ Single node compose example
   Verify response for authenticated request with  8000  *Query Console*
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
-  Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *Setting timezone to Europe/Prague*
+  Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
 Three node compose example
@@ -149,17 +149,17 @@ Two node compose with credentials in env and verify restart logic
   Verify response for authenticated request with  7202  *Monitoring Dashboard*
   Host count on port 7102 should be 2
   Host count on port 7202 should be 2
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*Setting timezone to America/Los_Angeles*
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*Using ENV for credentials.*
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*Setting timezone to America/Los_Angeles*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*Using ENV for credentials.*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initialzing.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
   Restart compose from  ./compose-test-3.yaml
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is already initialized.*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is already initialized.*
+  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization.*
+  Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization.*
   [Teardown]  Delete compose from  ./compose-test-3.yaml
 
 Two node compose with second node uncoupled

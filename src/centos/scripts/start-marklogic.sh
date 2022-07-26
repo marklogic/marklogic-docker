@@ -12,20 +12,30 @@
 ###############################################################
 
 ###############################################################
-# Define log and err functions
+# Logging utility
 ###############################################################
-log() {
-    echo "$(basename "${0}"): ${*}"
+info() {
+    log "Info" "$@"
 }
-err() {
-    echo "$(basename "${0}") ERROR: ${*}" >&2
+error() {
+    log "Error" "$1"
+    local EXIT_STATUS="$2"
+    if [[ ${EXIT_STATUS} == "exit" ]]
+    then
     exit 1
+    fi
+}
+log () {
+  local LOG_LEVEL=${1}
+  TIMESTAMP=$(date +"%Y-%m-%d %T.%3N")
+  shift
+  echo "${TIMESTAMP} ${LOG_LEVEL}: $@"
 }
 
 ###############################################################
 # Prepare script
 ###############################################################
-log "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
+info "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
 cd ~ || exit
 # Convert booleans to lowercase
 for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER; do
@@ -46,7 +56,7 @@ fi
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
 if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
-    log "Deleting previous /etc/marklogic.conf, if it exists, and overwriting with env variables."
+    info "OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables."
     rm -f /etc/marklogic.conf
     sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
 
@@ -68,9 +78,9 @@ if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     sudo chmod 400 /etc/marklogic.conf
 
 elif [[ -z ${OVERWRITE_ML_CONF} ]] || [[ "${OVERWRITE_ML_CONF}" == "false" ]]; then
-    log "Not writing to /etc/marklogic.conf"
+    info "OVERWRITE_ML_CONF is false, not writing to /etc/marklogic.conf"
 else
-    err "OVERWRITE_ML_CONF must be true or false."
+    error "OVERWRITE_ML_CONF must be true or false." exit
 fi
 
 ################################################################
@@ -78,23 +88,23 @@ fi
 ################################################################
 if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
     if [[ -d "/opt/MarkLogic/Converters" ]]; then
-        log "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation."
+        info "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation of converters."
     else
-        log "Installing Converters"
+        info "INSTALL_CONVERTERS is true, installing converters."
         CONVERTERS_PATH="/converters.rpm"
         sudo yum localinstall -y $CONVERTERS_PATH
     fi
 elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" == "false" ]]; then
-    log "Not Installing Converters"
+    info "INSTALL_CONVERTERS is false, not installing converters."
 else
-    err "INSTALL_CONVERTERS must be true or false."
+    error "INSTALL_CONVERTERS must be true or false." exit
 fi
 
 ################################################################
 # Setup timezone
 ################################################################
 if [ -n "${TZ}" ]; then
-    log "Setting timezone to ${TZ}"
+    info "TZ is defined, setting timezone to ${TZ}."
     sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
     echo "${TZ}" | sudo tee /etc/timezone
 fi
@@ -120,11 +130,11 @@ function restart_check {
             sleep ${RETRY_INTERVAL}
             LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
         else
-            log "MarkLogic has restarted."
+            info "MarkLogic has restarted."
             return 0
         fi
     done
-    err "Failed to restart $1"
+    error "Failed to restart $1" exit
 }
 
 ################################################################
@@ -150,19 +160,19 @@ function curl_retry_validate {
         sleep ${RETRY_INTERVAL}
     done
 
-    err "Expected response code ${2}, got ${response_code} from ${1}."
+    error "Expected response code ${2}, got ${response_code} from ${1}." exit
 }
 
 ################################################################
 # Start MarkLogic service
 ################################################################
 if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
-    log "MARKLOGIC_DEV_BUILD is true, starting using ${MARKLOGIC_INSTALL_DIR}/MarkLogic"
+    info "MARKLOGIC_DEV_BUILD is true, starting build using ${MARKLOGIC_INSTALL_DIR}/MarkLogic"
     sudo "${MARKLOGIC_INSTALL_DIR}/MarkLogic" -i . -d "${MARKLOGIC_DATA_DIR}" -p "${MARKLOGIC_PID_FILE}" &
 elif [[ -z "${MARKLOGIC_DEV_BUILD}" ]] || [[ "${MARKLOGIC_DEV_BUILD}" == "false" ]]; then
     sudo service MarkLogic start
 else
-    err "MARKLOGIC_DEV_BUILD must be true or false."
+    error "MARKLOGIC_DEV_BUILD must be true or false." exit
 fi
 sleep 5s
 
@@ -174,26 +184,26 @@ SECRET_PWD_FILE="/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}"
 SECRET_WALLET_PWD_FILE="/run/secrets/${MARKLOGIC_WALLET_PASSWORD_FILE}"
 
 if [[ -f "${SECRET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_PWD_FILE}")" ]]; then
-    log "Using Docker secrets for credentials."
+    info "MARKLOGIC_ADMIN_PASSWORD_FILE is set, using Docker secrets for admin password."
     ML_ADMIN_PASSWORD=$(<"${SECRET_PWD_FILE}")
 else
-    log "Using ENV for credentials."
+    info "MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password."
     ML_ADMIN_PASSWORD="${MARKLOGIC_ADMIN_PASSWORD}"
 fi
 
 if [[ -f "${SECRET_USR_FILE}" ]] && [[ -n "$(<"${SECRET_USR_FILE}")" ]]; then
-    log "Using Docker secrets for credentials."
+    info "MARKLOGIC_ADMIN_USERNAME_FILE is set, using Docker secrets for admin username."
     ML_ADMIN_USERNAME=$(<"${SECRET_USR_FILE}")
 else
-    log "Using ENV for credentials."
+    info "MARKLOGIC_ADMIN_USERNAME is set, using ENV for admin username."
     ML_ADMIN_USERNAME="${MARKLOGIC_ADMIN_USERNAME}"
 fi
 
 if [[ -f "${SECRET_WALLET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_WALLET_PWD_FILE}")" ]]; then
-    log "Using Docker secret for wallet-password."
+    info "MARKLOGIC_WALLET_PASSWORD_FILE is set, using Docker secrets for wallet-password."
     ML_WALLET_PASSWORD=$(<"${SECRET_WALLET_PWD_FILE}")
 else
-    log "Using ENV for wallet-password."
+    info "MARKLOGIC_WALLET_PASSWORD is set, using ENV for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
 
@@ -201,20 +211,20 @@ fi
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
-    log "MARKLOGIC_INIT is already initialized."
+    info "MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization."
 elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
-    log "MARKLOGIC_INIT is true, initialzing."
+    info "MARKLOGIC_INIT is true, initializing the MarkLogic server."
 
     # Make sure username and password variables are not empty
     if [[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]; then
-        err "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set."
+        error "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set." exit
     fi
 
     # generate JSON payload conditionally with license details.
     if [[ -z "${LICENSE_KEY}" ]] || [[ -z "${LICENSEE}" ]]; then
         LICENSE_PAYLOAD="{}"
     else
-        log "LICENSE_KEY and LICENSEE are defined, generating license payload."
+        info "LICENSE_KEY and LICENSEE are defined, installing MarkLogic license."
         LICENSE_PAYLOAD="{\"license-key\" : \"${LICENSE_KEY}\",\"licensee\" : \"${LICENSEE}\"}"
     fi
 
@@ -222,18 +232,18 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     if [[ -z "${REALM}" ]]; then
         ML_REALM="public"
     else
-        log "REALM is defined, setting realm"
+        info "REALM is defined, setting realm."
         ML_REALM="${REALM}"
     fi
 
     if [[ -z "${ML_WALLET_PASSWORD}" ]]; then
         ML_WALLET_PASSWORD_PAYLOAD=""
     else
-        log "ML_WALLET_PASSWORD is defined, setting wallet-password."
+        info "ML_WALLET_PASSWORD is defined, setting wallet-password."
         ML_WALLET_PASSWORD_PAYLOAD="wallet-password=${ML_WALLET_PASSWORD}"
     fi
 
-    log "Initialzing MarkLogic on ${HOSTNAME}."
+    info "Initializing MarkLogic on ${HOSTNAME}"
     TIMESTAMP=$(curl --anyauth -m 30 -s --retry 5 \
         -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
@@ -242,7 +252,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         sed 's%^.*<last-startup.*>\(.*\)</last-startup>.*$%\1%')
 
     # Make sure marklogic has shut down and come back up before moving on
-    log "Waiting for MarkLogic to restart."
+    info "Waiting for MarkLogic to restart."
 
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
@@ -253,18 +263,18 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
 
     sudo touch /opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
-    log "MARKLOGIC_INIT is set to false or not defined, not initialzing."
+    info "MARKLOGIC_INIT is set to false or not defined, not initializing."
 else
-    err "MARKLOGIC_INIT must be true or false."
+    error "MARKLOGIC_INIT must be true or false." exit
 fi
 
 ################################################################
 # check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set and host is not bootstrap host)
 ################################################################
 if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
-    log "MARKLOGIC_JOIN_CLUSTER is already joined, not joining cluster."
+    info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
-    log "Join conditions met, Joining cluster."
+    info "MARKLOGIC_JOIN_CLUSTER is true and join conditions are met, joining host to the cluster."
 
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
         -o host.xml -X GET -H \"Accept: application/xml\""
@@ -283,15 +293,15 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
     rm -f cluster.zip
     sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
 elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]] || [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
-    log "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
+    info "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else
-    err "MARKLOGIC_JOIN_CLUSTER must be true or false."
+    error "MARKLOGIC_JOIN_CLUSTER must be true or false." exit
 fi
 
 ################################################################
 # mark the node ready
 ################################################################
-log "Cluster config complete, marking node as ready"
+info "Cluster config complete, marking this node as ready."
 sudo touch /var/opt/MarkLogic/ready
 
 ################################################################

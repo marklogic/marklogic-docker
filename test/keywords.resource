@@ -24,7 +24,7 @@ Create container with
   ${container name}=  Remove spaces from  ${TEST NAME}
   Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=test_results/stderr-${container name}.txt  stdout=test_results/stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
   File Should Be Empty  test_results/stderr-${container name}.txt
-  Docker log should contain  *Cluster config complete, marking node as ready*
+  Docker log should contain  *Cluster config complete, marking this node as ready.*
 
 Create failing container with
   [Arguments]  @{input parameters}
@@ -40,7 +40,7 @@ Create second container with
   ${container name}=  Remove spaces from  ${TEST NAME}
   Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}-2  ${TEST_IMAGE}  stderr=test_results/stderr-${container name}-2.txt  stdout=test_results/stdout-${container name}-2.txt  timeout=${DOCKER TIMEOUT}
   File Should Be Empty  test_results/stderr-${container name}-2.txt
-  Docker log should contain  *Cluster config complete, marking node as ready*
+  Docker log should contain  *Cluster config complete, marking this node as ready.*
 
 Delete container
   [Documentation]  Delete Docker container that is named the same as the test case.
@@ -71,7 +71,7 @@ Start compose from
   @{nodes}=  Split to lines  ${result.stdout}
   FOR    ${node}    IN    @{nodes}
     ${node}=   Get Variable Value  ${node}
-    Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking node as ready*
+    Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this node as ready.*
   END
 
 Delete compose from

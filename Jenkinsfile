@@ -15,7 +15,7 @@ IMAGE_INFO = 0
 // Define local funtions
 void PreBuildCheck() {
     // Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
-    evaluate ''"${ def script = ''; params.each { k, v -> script += "env.${k } = '''${v}'''\n" }; return script}"""
+    evaluate """${ def script = ''; params.each { k, v -> script += "env.${k } = '''${v}'''\n" }; return script}"""
 
     JIRA_ID = ExtractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
@@ -120,12 +120,13 @@ def ResultNotification(message) {
         emailList = params.emailList
     }
 
+    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b>${LINT_OUTPUT} <br><br><b>Vulnerabilities: </b><br>${SCAN_OUTPUT} <br><b>Image Details: </b><br>${IMAGE_INFO}"
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail mimeType: 'text/plain', to: "${emailList}", body: "Jenkins pipeline for ${env.JOB_NAME} \nBuild Number: ${env.BUILD_NUMBER} \n${env.BUILD_URL} \nhttps://project.marklogic.com/jira/browse/${JIRA_ID} \n\nLint Output: \n${LINT_OUTPUT} \n\nVulnerabilities: \n${SCAN_OUTPUT} \nImage Details: \n${IMAGE_INFO}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body} <br><b>${env.BUILD_URL} <br>https://project.marklogic.com/jira/browse/${JIRA_ID}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     } else {
-        mail mimeType: 'text/plain', to: "${emailList}", body: "Jenkins pipeline for ${env.JOB_NAME} \nBuild Number: ${env.BUILD_NUMBER} \n${env.BUILD_URL } \n\nLint Output: \n${LINT_OUTPUT} \n\nVulnerabilities: \n${SCAN_OUTPUT} \nImage Details: \n${IMAGE_INFO}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 }
 
@@ -237,7 +238,7 @@ void Scan() {
 
     SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
     if (SCAN_OUTPUT.size()) {
-        mail mimeType: 'text/plain', to: "${params.emailList}", body: "\nJenkins pipeline for ${env.JOB_NAME} \nBuild Number: ${env.BUILD_NUMBER} \nVulnerabilities: \n${SCAN_OUTPUT}", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <br>${SCAN_OUTPUT}", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
     sh '''rm -f scan-server-image.txt'''

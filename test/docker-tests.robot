@@ -193,4 +193,3 @@ Initialized MarkLogic Server with wallet password and realm
   Verify response for authenticated request with  8001/security-admin.xqy?section=security  *public*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   [Teardown]  Delete container
-  

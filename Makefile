@@ -24,7 +24,7 @@ structure-test:
 # docker image tests
 #***************************************************************************
 docker-tests: 
-	cd test; robot -x docker-tests.xml --outputdir test_results --variable TEST_IMAGE:${test_image} --variable MARKLOGIC_VERSION:${version} --variable BUILD_BRANCH:${build_branch} ./docker-tests.robot
+	cd test; robot -x docker-tests.xml --outputdir test_results --variable TEST_IMAGE:${test_image} --variable MARKLOGIC_VERSION:${version} --variable BUILD_BRANCH:${build_branch} --maxerrorlines 9999 ./docker-tests.robot
 
 #***************************************************************************
 # run all tests

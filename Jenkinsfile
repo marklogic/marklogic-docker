@@ -8,11 +8,14 @@ import groovy.json.JsonSlurperClassic
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 JIRA_ID = ''
 JIRA_ID_PATTERN = /CLD-\d{3,4}/
+LINT_OUTPUT = ''
+SCAN_OUTPUT = ''
+IMAGE_INFO = 0
 
 // Define local funtions
 void PreBuildCheck() {
     // Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
-    evaluate """${def script = ""; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
+    evaluate """${ def script = ''; params.each { k, v -> script += "env.${k } = '''${v}'''\n" }; return script}"""
 
     JIRA_ID = ExtractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
@@ -26,14 +29,14 @@ void PreBuildCheck() {
 
     if (env.CHANGE_ID) {
         if (PRDraftCheck()) { sh 'exit 1' }
-            if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
-                println(reviewState)
-                sh 'exit 1'
-            }
+        if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
+            println(reviewState)
+            sh 'exit 1'
+        }
     }
 
-    // def obj = new abortPrevBuilds()
-    // obj.abortPrevBuilds()
+// def obj = new abortPrevBuilds()
+// obj.abortPrevBuilds()
 }
 
 @NonCPS
@@ -42,7 +45,7 @@ def ExtractJiraID() {
     def match
     if (env.CHANGE_TITLE) {
         match = env.CHANGE_TITLE =~ JIRA_ID_PATTERN
-    } 
+    }
     else if (env.BRANCH_NAME) {
         match = env.BRANCH_NAME =~ JIRA_ID_PATTERN
     }
@@ -117,13 +120,13 @@ def ResultNotification(message) {
         emailList = params.emailList
     }
 
+    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b>${LINT_OUTPUT} <br><br><b>Vulnerabilities: </b><br>${SCAN_OUTPUT} <br><b>Image Details: </b><br>${IMAGE_INFO}"
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}<br>https://project.marklogic.com/jira/browse/${JIRA_ID}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body} <br><b>${env.BUILD_URL} <br>https://project.marklogic.com/jira/browse/${JIRA_ID}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     } else {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "<b>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>${env.BUILD_URL}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 }
 
@@ -213,9 +216,16 @@ def ServerRegressionTests() {
 }
 
 void Lint() {
+    IMAGE_INFO = sh(returnStdout: true, script: 'docker  images | grep \"marklogic-server-centos\"')
+
     sh '''
         make lint Jenkins=true
         cat start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
+    '''
+
+    LINT_OUTPUT = sh(returnStdout: true, script: 'echo start-marklogic.sh; cat start-marklogic-lint.txt; echo dockerfile-marklogic-server-centos; cat marklogic-server-centos-lint.txt; echo marklogic-deps-centos:base; cat marklogic-deps-centos-base-lint.txt; echo marklogic-server-centos:base; cat marklogic-server-centos-base-lint.txt').trim()
+
+    sh '''
         rm -f start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
     '''
 }
@@ -226,9 +236,9 @@ void Scan() {
         grep \'High\\|Critical\' scan-server-image.txt
     """
 
-    highCriticalVunerabilities = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
-    if (highCriticalVunerabilities.size()) {
-        mail mimeType: 'text/plain', to: "${params.emailList}", body: "\nJenkins pipeline for ${env.JOB_NAME} \nBuild Number: ${env.BUILD_NUMBER} \n${env.BUILD_URL}\nhttps://project.marklogic.com/jira/browse/${JIRA_ID}\nVulnerabilities: \n${highCriticalVunerabilities}", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+    SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
+    if (SCAN_OUTPUT.size()) {
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <br>${SCAN_OUTPUT}", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
     sh '''rm -f scan-server-image.txt'''

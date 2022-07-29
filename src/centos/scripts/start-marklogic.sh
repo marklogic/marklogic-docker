@@ -302,7 +302,7 @@ fi
 # mark the node ready
 ################################################################
 info "Cluster config complete, marking this node as ready."
-sudo touch /var/opt/MarkLogic/readyInitializing MarkLogic on
+sudo touch /var/opt/MarkLogic/ready
 
 ################################################################
 # tail /dev/null to keep container active

@@ -745,6 +745,12 @@ The /space mounted on the Docker volume can now be used as backup directory for 
 
 # Debugging
 
+## View MarkLogic Server Startup Status
+To check the MarkLogic Server startup status, run the below command to tail the MarkLogic log file
+```
+$ docker exec -it <container name> tail -f /var/opt/MarkLogic/Logs/ErrorLog.txt
+```
+
 ## Accessing a MarkLogic Container while it's running
 
 The following is a set of steps to run to access a container while it is running, and to do some basic debugging once you access the container.

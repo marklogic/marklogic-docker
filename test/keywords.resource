@@ -170,4 +170,17 @@ Check host count on port ${port} should be ${count}
   Should Be Equal  ${host count}  ${count}
   #cluster hosts:
   #${response.json()['host-status-list']['status-list-items']['status-list-item']}
+
+Host on {port} should be part of group {group}
+  [Documentation]  Wrapper keyword that retries Check host on port ${port} should be in group ${group}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check host on port ${port} should be in group ${group}
+
+Check host on port ${port} should be in group ${group}
+  [Documentation]  Uses manange endpoint to get the group information of host in a cluster and matches it against input group
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}
+  ${response}=  GET On Session  RestSession  url=http://localhost:${port}/manage/v2/hosts/node2.marklogic.com/properties?format=json
+  ${host group}=  Set Variable  ${response.json()['group']} 
+  Should Be Equal  ${host group}  ${group}
+
   

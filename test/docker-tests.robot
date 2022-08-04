@@ -133,6 +133,23 @@ Three node compose example
   Host count on port 7302 should be 3
   [Teardown]  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml
 
+Two node compose example with node joining enode group
+  Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for unauthenticated request with  7200  *Unauthorized*
+  Verify response for unauthenticated request with  7201  *Unauthorized*
+  Verify response for unauthenticated request with  7202  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*
+  Verify response for authenticated request with  7200  *Query Console*
+  Verify response for authenticated request with  7201  *No license key has been entered*
+  Verify response for authenticated request with  7202  *Monitoring Dashboard*
+  Host on 7202 should be part of group enode
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml
+
 Two node compose with credentials in env and verify restart logic
   Start compose from  ./compose-test-3.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*

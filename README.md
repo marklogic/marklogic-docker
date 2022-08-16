@@ -173,6 +173,7 @@ MarkLogic Server Docker containers are configured using a set of environment var
 | MARKLOGIC_WALLET_PASSWORD_FILE | secret_wallet_password         | no                                | n/a       | set MarkLogic Server wallet password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                |           | will join cluster via MARKLOGIC_BOOTSTRAP_HOST          |
 | MARKLOGIC_BOOTSTRAP_HOST           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
+| MARKLOGIC_GROUP           | dnode                     | no                                | n/a       | will join the host to the given MarkLogic group                  |
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
 |INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
@@ -684,7 +685,7 @@ $ docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377
 ```
 This command adds the current node to the swarm initialized earlier. 
 
-Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows.
+Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows. To join this host to a specific MarkLogic Group, use MARKLOGIC_GROUP environment parameter as below.
 
 ```
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
@@ -693,6 +694,7 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_JOIN_CLUSTER=true \
+     -e MARKLOGIC_GROUP=dnode \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0-ea4

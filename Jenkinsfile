@@ -93,23 +93,6 @@ def getReviewState() {
     return reviewState
 }
 
-def getServerPath(branchName) {
-    switch (branchName) {
-        case '11.0':
-            return 'rh7v-10-tst-bld-1.eng.marklogic.com/develop'
-            break
-        //10.1 and 10.0-9 are not being built at the moment
-        // case '10.1':
-        //     return '/b10_0'
-        //     break
-        // case '10.0-9':
-        //     return '/b10_0'
-        //     break
-        default:
-            return 'INVALID BRANCH'
-    }
-}
-
 void ResultNotification(message) {
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
@@ -130,20 +113,52 @@ void ResultNotification(message) {
     }
 }
 
+def getServerPath(branchName) {
+    switch (branchName) {
+        case 'develop':
+            return 'rh7v-10-tst-bld-1.eng.marklogic.com/develop'
+            break
+        case 'develop-10.0':
+            return 'rh7v-10-tst-bld-1.eng.marklogic.com/develop-10.0'
+            break
+        case 'develop-9.0':
+            return 'rh7v-90-tst-bld-1.marklogic.com/develop-9.0'
+            break
+        default:
+            return 'INVALID BRANCH'
+    }
+}
+
+def getServerVersion(branchName) {
+    switch (branchName) {
+        case 'develop':
+            return '11.0'
+            break
+        case 'develop-10.0':
+            return '10.0'
+            break
+        case 'develop-9.0':
+            return '9.0'
+            break
+        default:
+            return 'INVALID BRANCH'
+    }
+}
+
 void CopyRPMs() {
     timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
     sh """
         cd src/centos
         if [ -z ${env.ML_RPM} ]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break
@@ -162,14 +177,14 @@ void CopyRPMs() {
         fi
     if [ -z ${env.ML_CONVERTERS}]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${params.ML_SERVER_BRANCH}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break
@@ -253,8 +268,8 @@ void PublishToInternalRegistry() {
 }
 
 void publishTestResults() {
-    junit testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
-    publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''])
+    junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
+    publishHTML allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''
 }
 
 pipeline {
@@ -274,6 +289,7 @@ pipeline {
         buildServerBasePath = '/space/nightly/builds'
         buildServerPlatform = 'linux64-rh7'
         buildServerPath = getServerPath(params.ML_SERVER_BRANCH)
+        buildServerVersion = getServerVersion(params.ML_SERVER_BRANCH)
         dockerRegistry = 'https://ml-docker-dev.marklogic.com'
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
     }
@@ -282,7 +298,7 @@ pipeline {
         string(name: 'emailList', defaultValue: 'vkorolev@marklogic.com', description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
-        choice(name: 'ML_SERVER_BRANCH', choices: '11.0\n10.1\n10.0-9', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
+        choice(name: 'ML_SERVER_BRANCH', choices: 'develop-10.0\ndevelop\ndevelop-9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')

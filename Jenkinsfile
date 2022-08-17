@@ -110,7 +110,7 @@ def getServerPath(branchName) {
     }
 }
 
-def ResultNotification(message) {
+void ResultNotification(message) {
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
@@ -130,7 +130,7 @@ def ResultNotification(message) {
     }
 }
 
-def CopyRPMs() {
+void CopyRPMs() {
     timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
     sh """
         cd src/centos
@@ -194,7 +194,7 @@ def CopyRPMs() {
     }
 }
 
-def StructureTests() {
+void StructureTests() {
     sh """
         cd test
         #insert current version
@@ -207,7 +207,7 @@ def StructureTests() {
     """
 }
 
-def ServerRegressionTests() {
+void ServerRegressionTests() {
     //TODO: run this conditionally for develop and master branches only
     echo 'Server regression tests would execute here'
     // The following can be uncommented to show an interactive prompt for manual regresstion tests
@@ -243,7 +243,7 @@ void Scan() {
     sh '''rm -f scan-server-image.txt'''
 }
 
-def PublishToInternalRegistry() {
+void PublishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry}

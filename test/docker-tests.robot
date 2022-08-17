@@ -134,7 +134,7 @@ Three node compose example
   [Teardown]  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml
 
 Two node compose example with node joining enode group
-  Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
+  Start compose from  ./compose-test-6.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7102  *Unauthorized*

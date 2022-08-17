@@ -205,7 +205,6 @@ def StructureTests() {
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
     """
-    junit testResults: '**/container-structure-test.xml'
 }
 
 def ServerRegressionTests() {
@@ -251,6 +250,11 @@ def PublishToInternalRegistry() {
             make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
         """
     }
+}
+
+void publishTestResults() {
+    junit testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
+    publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''])
 }
 
 pipeline {
@@ -333,8 +337,6 @@ pipeline {
             }
             steps {
                 sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
-                junit testResults: '**/test_results/docker-tests.xml'
-                publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''])
             }
         }
 
@@ -369,6 +371,7 @@ pipeline {
                 docker volume prune --force
                 docker image prune --force --all
             '''
+            publishTestResults()
         }
         success {
             ResultNotification('BUILD SUCCESS ✅')

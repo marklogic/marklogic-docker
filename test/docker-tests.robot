@@ -148,7 +148,7 @@ Two node compose example with node joining enode group
   Verify response for authenticated request with  7201  *No license key has been entered*
   Verify response for authenticated request with  7202  *Monitoring Dashboard*
   Host on 7202 should be part of group enode
-  [Teardown]  Delete compose from  ../docker-compose/marklogic-cluster-centos.yaml
+  [Teardown]  Delete compose from  ./compose-test-6.yaml
 
 Two node compose with credentials in env and verify restart logic
   Start compose from  ./compose-test-3.yaml

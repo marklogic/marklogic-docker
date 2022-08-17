@@ -171,7 +171,7 @@ Check host count on port ${port} should be ${count}
   #cluster hosts:
   #${response.json()['host-status-list']['status-list-items']['status-list-item']}
 
-Host on {port} should be part of group {group}
+Host on ${port} should be part of group ${group}
   [Documentation]  Wrapper keyword that retries Check host on port ${port} should be in group ${group}
   Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check host on port ${port} should be in group ${group}
 

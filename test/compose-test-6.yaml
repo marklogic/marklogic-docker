@@ -31,7 +31,7 @@ services:
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - MARKLOGIC_JOIN_CLUSTER=true
-        - MARKLOGIC_GROUP=enode
+        - MARKLOGIC_GROUP=Default
         - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_2n
         - TZ=Europe/Prague
       volumes:

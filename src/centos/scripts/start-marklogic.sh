@@ -313,6 +313,6 @@ info "Cluster config complete, marking this node as ready."
 sudo touch /var/opt/MarkLogic/ready
 
 ################################################################
-# tail ErrorLog for docker logs
+# tail /dev/null to keep container active
 ################################################################
-tail -f "${MARKLOGIC_DATA_DIR}/Logs/ErrorLog.txt"
+tail -f /dev/null

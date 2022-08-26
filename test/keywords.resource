@@ -170,4 +170,26 @@ Check host count on port ${port} should be ${count}
   Should Be Equal  ${host count}  ${count}
   #cluster hosts:
   #${response.json()['host-status-list']['status-list-items']['status-list-item']}
+
+Host ${hostname} should be part of group ${group}
+  [Documentation]  Wrapper keyword that retries Check host ${hostname} should be in group ${group}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  20s  Check host ${hostname} should be in group ${group}
+
+Add group ${group} on host on port ${port}
+  [Documentation]  Uses manange endpoint to add a group in a cluster
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${header}=    Create Dictionary    Content-type=application/json 
+  ${body}=    Create Dictionary    group-name=enode   
+  ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}
+  ${response}=  POST On Session  RestSession  url=http://localhost:${port}/manage/v2/groups    json=${body}
+  ${response}=  GET On Session  RestSession  url=http://localhost:${port}/manage/v2/groups?format=json
+  
+Check host ${hostname} should be in group ${group}
+  [Documentation]  Uses manange endpoint to get the group information of host in a cluster and matches it against input group
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${response}=  Create Digest Session  RestSession  url=http://localhost:7102  headers=${headers}  auth=${auth}
+  ${response}=  GET On Session  RestSession  url=http://localhost:7102/manage/v2/hosts/${hostname}/properties?format=json
+  ${host group}=  Set Variable  ${response.json()['group']} 
+  Should Be Equal  ${host group}  ${group}
+
   

@@ -275,12 +275,20 @@ if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true and join conditions are met, joining host to the cluster."
+    
+    if [[ -z "${MARKLOGIC_GROUP}" ]]; then
+        info "MARKLOGIC_GROUP is not specified, adding host to the Default group."
+        MARKLOGIC_GROUP_PAYLOAD=\"group=Default\"
+    else
+        info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
+        MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
+    fi
 
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
         -o host.xml -X GET -H \"Accept: application/xml\""
 
     curl_retry_validate "http://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
-        -X POST -d \"group=Default\" \
+        -X POST -d ${MARKLOGIC_GROUP_PAYLOAD} \
         --data-urlencode \"server-config@./host.xml\" \
         -H \"Content-type: application/x-www-form-urlencoded\" \
         -o cluster.zip"
@@ -305,6 +313,6 @@ info "Cluster config complete, marking this node as ready."
 sudo touch /var/opt/MarkLogic/ready
 
 ################################################################
-# tail ErrorLog for docker logs
+# tail /dev/null to keep container active
 ################################################################
-tail -f "${MARKLOGIC_DATA_DIR}/Logs/ErrorLog.txt"
+tail -f /dev/null

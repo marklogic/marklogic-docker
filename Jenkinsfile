@@ -283,7 +283,7 @@ pipeline {
         buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
         skipStagesAfterUnstable()
     }
-    triggers { cron(env.BRANCH_NAME == 'develop' ? '01 01 * * *' : '') }
+    triggers { cron(env.BRANCH_NAME == 'develop' ? '00 03 * * *' : '') }
     environment {
         buildServer = 'distro.marklogic.com'
         buildServerBasePath = '/space/nightly/builds'

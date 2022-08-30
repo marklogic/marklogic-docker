@@ -144,9 +144,9 @@ Two node compose example with node joining enode group
   Add group enode on host on port 7102
   Start compose from  ./compose-test-7.yaml
   Host node2 should be part of group enode
-  [Teardown]    Run keywords    
-  ...    Delete compose from  ./compose-test-6.yaml
-  ...    AND    Delete compose from  ./compose-test-7.yaml
+  [Teardown]  Run keywords  
+  ...  Delete compose from  ./compose-test-6.yaml
+  ...  AND  Delete compose from  ./compose-test-7.yaml
   
 Two node compose with credentials in env and verify restart logic
   Start compose from  ./compose-test-3.yaml

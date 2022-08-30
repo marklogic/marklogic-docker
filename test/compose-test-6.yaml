@@ -1,4 +1,4 @@
-#Docker compose file sample to setup a three node cluster
+#Docker compose file to setup the bootstrap node on cluster
 version: '3.6'
 services:
   bootstrap_2n:

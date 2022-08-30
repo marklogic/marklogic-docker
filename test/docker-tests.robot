@@ -184,7 +184,7 @@ Initialized MarkLogic Server with wallet password and realm
   Create container with  -e  MARKLOGIC_INIT=true
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  ...                    -e  MARKLOGIC_WALLET_PASSWORD=test_wallet_pass
+  ...                    -e  MARKLOGIC_WALLET_PASSWORD=${DEFAULT WALLET PASS}
   ...                    -e  REALM=public
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
@@ -192,4 +192,5 @@ Initialized MarkLogic Server with wallet password and realm
   Verify response for authenticated request with  8000  *Query Console*
   Verify response for authenticated request with  8001/security-admin.xqy?section=security  *public*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
+  Run xquery on port 8000 to verify wallet password
   [Teardown]  Delete container

@@ -8,6 +8,7 @@ Library   RequestsLibrary
 @{DOCKER DEFAULTS}  -it  -d  -p  8000:8000  -p  8001:8001  -p  8002:8002  -p7997:7997
 ${DEFAULT ADMIN USER}  test_admin
 ${DEFAULT ADMIN PASS}  test_admin_pass
+${DEFAULT WALLET PASS}  test_wallet_pass
 ${TEST_IMAGE}  %{DOCKER_TEST_IMAGE=marklogic-centos/marklogic-server-centos:10-internal}
 ${DOCKER TIMEOUT}  90s
 ${LICENSE KEY}  %{QA_LICENSE_KEY=none}
@@ -170,4 +171,12 @@ Check host count on port ${port} should be ${count}
   Should Be Equal  ${host count}  ${count}
   #cluster hosts:
   #${response.json()['host-status-list']['status-list-items']['status-list-item']}
+
+Run xquery on port ${port} to verify wallet password
+  [Documentation]  Uses admin v1 endpoint to execute xquery to verify wallet-password
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${header}=    Create Dictionary    Content-type=application/x-www-form-urlencoded  Accept=multipart/mixed  boundary=BOUNDARY
+  ${body}=   get file  ./verify-password.xqy     
+  ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}
+  ${response}=  POST On Session  RestSession  url=http://localhost:${port}/v1/eval    data=${body}  headers=${header}
   

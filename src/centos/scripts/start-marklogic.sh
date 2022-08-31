@@ -87,8 +87,8 @@ fi
 # Install Converters if required
 ################################################################
 if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
-    if [[ -d "/opt/MarkLogic/Converters" ]]; then
-        info "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation of converters."
+    if [[ -d "var//opt/MarkLogic/Converters" ]]; then
+        info "Converters directory: var/opt/MarkLogic/Converters already exists, skipping installation of converters."
     else
         info "INSTALL_CONVERTERS is true, installing converters."
         CONVERTERS_PATH="/converters.rpm"

@@ -8,12 +8,18 @@ FROM centos:centos7
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
+# Update systemd to address CVE-2022-2526
+###############################################################
+ADD http://mirror.centos.org/centos/7/updates/x86_64/Packages/systemd-libs-219-78.el7_9.7.x86_64.rpm .
+
+###############################################################
 # install networking, base deps and ntp/tzdata for timezone
 ###############################################################
 
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && yum -y update \
     && yum -y install gdb.x86_64 glibc.i686 initscripts redhat-lsb-core.x86_64 tzdata ntp xz-0:5.2.2-2.el7_9.x86_64 \
+    && yum -y update systemd-libs-219-78.el7_9.7.x86_64.rpm \
     && yum clean all \
     && ntpdate -s pool.ntp.org \
     && chkconfig ntpdate on \

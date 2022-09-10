@@ -280,8 +280,14 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
         info "MARKLOGIC_GROUP is not specified, adding host to the Default group."
         MARKLOGIC_GROUP_PAYLOAD=\"group=Default\"
     else
-        info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
-        MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
+        ML_GROUPS=$(curl --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" -m 20 -s -X GET -H "Content-type:application/json" http://${MARKLOGIC_BOOTSTRAP_HOST}:8002/manage/v2/groups?format=json |
+                     jq '."group-default-list"."list-items"."list-item"')
+        if [[ $(jq <<< "$ML_GROUPS" --arg MARKLOGIC_GROUP "$MARKLOGIC_GROUP" 'any(.nameref==$MARKLOGIC_GROUP)') == "true" ]]; then
+            info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
+            MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
+        else
+            error "MARKLOGIC_GROUP ${MARKLOGIC_GROUP} does not exist on the cluster" exit
+        fi
     fi
 
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \

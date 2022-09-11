@@ -29,7 +29,7 @@ log () {
   local LOG_LEVEL=${1}
   TIMESTAMP=$(date +"%Y-%m-%d %T.%3N")
   shift
-  echo "${TIMESTAMP} ${LOG_LEVEL}: $@"
+  echo "${TIMESTAMP} ${LOG_LEVEL}: $*"
 }
 
 ###############################################################
@@ -288,7 +288,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
         -o host.xml -X GET -H \"Accept: application/xml\""
 
     curl_retry_validate "http://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
-        -X POST -d "${MARKLOGIC_GROUP_PAYLOAD}" \
+        -X POST -d \"${MARKLOGIC_GROUP_PAYLOAD}\" \
         --data-urlencode \"server-config@./host.xml\" \
         -H \"Content-type: application/x-www-form-urlencoded\" \
         -o cluster.zip"

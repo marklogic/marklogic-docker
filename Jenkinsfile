@@ -263,8 +263,8 @@ void PublishToInternalRegistry() {
         sh """
             docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry}
             make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
-            currentBuild.description="Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}" 
         """
+        currentBuild.description = "Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}" 
     }
 }
 

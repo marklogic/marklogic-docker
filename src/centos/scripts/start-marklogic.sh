@@ -210,7 +210,7 @@ fi
 ################################################################
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
-if [[ -f /opt/MarkLogic/DOCKER_INIT ]]; then
+if [[ -f /var/opt/MarkLogic/DOCKER_INIT ]]; then
     info "MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization."
 elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     info "MARKLOGIC_INIT is true, initializing the MarkLogic server."
@@ -261,7 +261,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
         -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
 
-    sudo touch /opt/MarkLogic/DOCKER_INIT
+    sudo touch /var/opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
     info "MARKLOGIC_INIT is set to false or not defined, not initializing."
 else
@@ -271,7 +271,7 @@ fi
 ################################################################
 # check join cluster (eg. MARKLOGIC_JOIN_CLUSTER is set and host is not bootstrap host)
 ################################################################
-if [[ -f /opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
+if [[ -f /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true and join conditions are met, joining host to the cluster."
@@ -305,7 +305,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
 
     rm -f host.xml
     rm -f cluster.zip
-    sudo touch /opt/MarkLogic/DOCKER_JOIN_CLUSTER
+    sudo touch /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER
 elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]] || [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else

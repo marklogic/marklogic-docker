@@ -103,11 +103,11 @@ void ResultNotification(message) {
         emailList = params.emailList
     }
 
-    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b>${LINT_OUTPUT} <br><br><b>Vulnerabilities: </b><br>${SCAN_OUTPUT} <br><b>Image Details: </b><br>${IMAGE_INFO}"
+    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b>${LINT_OUTPUT} <br><br><b>Vulnerabilities: </b><br><br>${SCAN_OUTPUT} <br><br><b>Image Details: </b>${IMAGE_INFO} <br><br><b>Build URL: </b><br>${env.BUILD_URL}"
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body} <br><b>${env.BUILD_URL} <br>https://project.marklogic.com/jira/browse/${JIRA_ID}</b>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body} <b><br><br>Lint Output: <br></b>https://project.marklogic.com/jira/browse/${JIRA_ID}<br>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     } else {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
@@ -230,6 +230,7 @@ void ServerRegressionTests() {
 }
 
 void Lint() {
+    // TODO: Outputs more than one line frequently
     IMAGE_INFO = sh(returnStdout: true, script: 'docker  images | grep \"marklogic-server-centos\"')
 
     sh '''

@@ -43,10 +43,10 @@ push-mlregistry:
 # run lint checker on Dockerfiles, print linting issues but do not fail the build
 #***************************************************************************
 lint:
-	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/centos/scripts/start-marklogic.sh $(if $(Jenkins), > start-marklogic-lint.txt,); exit 0;
-	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/dockerfile-marklogic-server-centos $(if $(Jenkins), > marklogic-server-centos-lint.txt,);exit 0; 
-	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base $(if $(Jenkins), > marklogic-deps-centos-base-lint.txt,);exit 0;
-	docker run --rm -i ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base $(if $(Jenkins), > marklogic-server-centos-base-lint.txt,);exit 0;
+	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/centos/scripts/start-marklogic.sh $(if $(Jenkins), > start-marklogic-lint.txt,)
+	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/dockerfile-marklogic-server-centos $(if $(Jenkins), > marklogic-server-centos-lint.txt,)
+	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base $(if $(Jenkins), > marklogic-deps-centos-base-lint.txt,)
+	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base $(if $(Jenkins), > marklogic-server-centos-base-lint.txt,)
 
 #***************************************************************************
 # security scan docker images

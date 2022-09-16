@@ -230,7 +230,6 @@ void ServerRegressionTests() {
 }
 
 void Lint() {
-    // TODO: Outputs more than one line frequently
     IMAGE_INFO = sh(returnStdout: true, script: 'docker  images | grep \"marklogic-server-centos\"')
 
     sh '''

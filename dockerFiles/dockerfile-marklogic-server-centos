@@ -8,6 +8,5 @@ FROM ml-docker-dev.marklogic.com/marklogic/marklogic-server-centos:10.0-7.3_1.0.
 ###############################################################
 # Place-holders for other system configurations
 ###############################################################
-RUN sudo yum -y update
-
-RUN sudo yum clean all
+RUN yum -y update \
+  && yum clean all

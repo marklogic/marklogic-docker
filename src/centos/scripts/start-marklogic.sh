@@ -281,9 +281,8 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
         info "MARKLOGIC_GROUP is not specified, adding host to the Default group."
         MARKLOGIC_GROUP_PAYLOAD=\"group=Default\"
     else
-        ML_GROUPS=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 20 -s -X GET -H "Content-type:application/json" http://${MARKLOGIC_BOOTSTRAP_HOST}:8002/manage/v2/groups?format=json |
-                     jq '."group-default-list"."list-items"."list-item"')
-        if [[ $(jq <<< "$ML_GROUPS" --arg MARKLOGIC_GROUP "$MARKLOGIC_GROUP" 'any(.nameref==$MARKLOGIC_GROUP)') == "true" ]]; then
+        GROUP_RESP_CODE=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 30 -s -o /dev/null -w "%{http_code}" -X GET http://${MARKLOGIC_BOOTSTRAP_HOST}:8002/manage/v2/groups/${MARKLOGIC_GROUP})
+        if [[ ${GROUP_RESP_CODE} -eq 200 ]]; then
             info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
             MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
         else

@@ -69,6 +69,7 @@ if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     [[ "${REALM}" ]] && echo "export REALM=$REALM" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_LICENSEE}" ]] && echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_LICENSE_KEY}" ]] && echo "export MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_GROUP}" ]] && echo "export MARKLOGIC_GROUP=$MARKLOGIC_GROUP" >>/etc/marklogic.conf
     [[ "${ML_HUGEPAGES_TOTAL}" ]] && echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_DISABLE_JVM}" ]] && echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_USER}" ]] && echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >>/etc/marklogic.conf
@@ -280,8 +281,13 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
         info "MARKLOGIC_GROUP is not specified, adding host to the Default group."
         MARKLOGIC_GROUP_PAYLOAD=\"group=Default\"
     else
-        info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
-        MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
+        GROUP_RESP_CODE=$(curl --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 30 -s -o /dev/null -w "%{http_code}" -X GET http://"${MARKLOGIC_BOOTSTRAP_HOST}":8002/manage/v2/groups/"${MARKLOGIC_GROUP}")
+        if [[ ${GROUP_RESP_CODE} -eq 200 ]]; then
+            info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
+            MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
+        else
+            error "MARKLOGIC_GROUP ${MARKLOGIC_GROUP} does not exist on the cluster" exit
+        fi
     fi
 
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \

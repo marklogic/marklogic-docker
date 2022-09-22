@@ -103,7 +103,7 @@ void ResultNotification(message) {
         emailList = params.emailList
     }
 
-    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b>${LINT_OUTPUT} <br><br><b>Vulnerabilities: </b><br><br>${SCAN_OUTPUT} <br><br><b>Image Details: </b>${IMAGE_INFO} <br><br><b>Build URL: </b><br>${env.BUILD_URL}"
+    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b>${LINT_OUTPUT} <br><br><b>Vulnerabilities: </b><br><br>${SCAN_OUTPUT} <br><br><b>Image Details: </b>${IMAGE_INFO} <br><br><b>Build URL: </b><br><a href="${env.BUILD_URL}">${env.BUILD_URL}</a>"
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
@@ -112,7 +112,6 @@ void ResultNotification(message) {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 }
-
 def getServerPath(branchName) {
     switch (branchName) {
         case 'develop':
@@ -225,8 +224,8 @@ void StructureTests() {
 void ServerRegressionTests() {
     //TODO: run this conditionally for develop and master branches only
     echo 'Server regression tests would execute here'
-    // The following can be uncommented to show an interactive prompt for manual regresstion tests
-    // input "Server regression tests need to be executed manually. "
+// The following can be uncommented to show an interactive prompt for manual regresstion tests
+// input "Server regression tests need to be executed manually. "
 }
 
 void Lint() {
@@ -261,7 +260,7 @@ void Scan() {
 void PublishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
-            docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry}
+            docker login -u ${docker_user} --password-stdin ${docker_password} ${dockerRegistry}
             make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
         """
         currentBuild.description = "Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}" 

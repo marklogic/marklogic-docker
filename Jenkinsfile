@@ -5,6 +5,7 @@
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
 
+emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com'
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 JIRA_ID = ''
 JIRA_ID_PATTERN = /CLD-\d{3,4}/
@@ -295,7 +296,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'emailList', defaultValue: 'vkorolev@marklogic.com', description: 'List of email for build notification', trim: true)
+        string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
         choice(name: 'ML_SERVER_BRANCH', choices: 'develop-10.0\ndevelop\ndevelop-9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')

@@ -258,7 +258,7 @@ void scan() {
 void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
-            docker login -u ${docker_user} --password-stdin ${docker_password} ${dockerRegistry}
+            echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
         """
         currentBuild.description = "Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}" 

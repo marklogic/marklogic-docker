@@ -116,19 +116,6 @@ void resultNotification(message) {
     }
 }
 
-String getServerPath(branchName) {
-    switch (branchName) {
-        case 'develop':
-            return 'rh7v-10-tst-bld-1.eng.marklogic.com/develop'
-        case 'develop-10.0':
-            return 'rh7v-10-tst-bld-1.eng.marklogic.com/develop-10.0'
-        case 'develop-9.0':
-            return 'rh7v-90-tst-bld-1.marklogic.com/develop-9.0'
-        default:
-            return 'INVALID BRANCH'
-    }
-}
-
 String getServerVersion(branchName) {
     switch (branchName) {
         case 'develop':
@@ -289,7 +276,7 @@ pipeline {
         buildServer = 'distro.marklogic.com'
         buildServerBasePath = '/space/nightly/builds'
         buildServerPlatform = 'linux64-rh7'
-        buildServerPath = getServerPath(params.ML_SERVER_BRANCH)
+        buildServerPath = "*/${params.ML_SERVER_BRANCH}"
         buildServerVersion = getServerVersion(params.ML_SERVER_BRANCH)
         dockerRegistry = 'https://ml-docker-dev.marklogic.com'
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

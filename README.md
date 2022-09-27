@@ -1,10 +1,3 @@
-<!-- Space: ENGINEERING -->
-<!-- Parent: MarkLogic Docker Documentation for DockerHub and GitHub -->
-<!-- Title: EA4 Review -->
-
-<!-- Include: wiki-disclaimer.md -->
-<!-- Include: ac:toc -->
-<!-- Include: dockerhub-tos.md -->
 # Table of contents
  * [Introduction](#Introduction)
  * [Prerequisites](#Prerequisites)
@@ -910,3 +903,7 @@ If the process is successful, a message saying the node has left the swarm will 
 - 10.0-8.1-centos-1.0.0-ea2 - MarkLogic Developer Docker image includes all features and is limited to developer use
 - 10.0-8.3-centos-1.0.0-ea3 - MarkLogic Developer Docker image includes all features and is limited to developer use
 - 10.0-9-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-9.1-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-9.2-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-9.4-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-9.5-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use

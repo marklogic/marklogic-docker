@@ -880,6 +880,7 @@ If the process is successful, a message saying the node has left the swarm will 
 6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
    1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
    2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
+7. CentOS 7 have known security vulnerabilities with respect to glib2 [CVE-2016-3191](https://nvd.nist.gov/vuln/detail/CVE-2016-3191), [CVE-2015-8385](https://nvd.nist.gov/vuln/detail/CVE-2015-8385) and SQLite [CVE-2019-5827](https://nvd.nist.gov/vuln/detail/CVE-2019-5827). MarkLogic Server doesn't have any impact as they are not being used in Server code base.
 
 # Older Supported Tags
 - 9.0-12-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use

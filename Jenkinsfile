@@ -1,4 +1,4 @@
-/* groovylint-disable LineLength, MethodName */
+/* groovylint-disable CompileStatic, LineLength, VariableTypeRequired */
 // This Jenkinsfile defines internal MarkLogic build pipeline.
 
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
@@ -13,14 +13,14 @@ LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_INFO = 0
 // Define local funtions
-void PreBuildCheck() {
-    // Initialize parameters as environment variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
-    evaluate """${ def script = ''; params.each { k, v -> script += "env.${k } = '''${v}'''\n" }; return script}"""
+void preBuildCheck() {
+    // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
+    evaluate """${ def script = ''; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
-    JIRA_ID = ExtractJiraID()
+    JIRA_ID = extractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
-    if ( env.GIT_URL ) {
+    if (env.GIT_URL) {
         githubAPIUrl = GIT_URL.replace('.git', '').replace('github.com', 'api.github.com/repos')
         echo 'githubAPIUrl: ' + githubAPIUrl
     } else {
@@ -28,7 +28,7 @@ void PreBuildCheck() {
     }
 
     if (env.CHANGE_ID) {
-        if (PRDraftCheck()) { sh 'exit 1' }
+        if (prDraftCheck()) { sh 'exit 1' }
         if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
             println(reviewState)
             sh 'exit 1'
@@ -40,7 +40,7 @@ void PreBuildCheck() {
 }
 
 @NonCPS
-def ExtractJiraID() {
+def extractJiraID() {
     // Extract Jira ID from one of the environment variables
     def match
     if (env.CHANGE_TITLE) {
@@ -64,7 +64,7 @@ def ExtractJiraID() {
     }
 }
 
-def PRDraftCheck() {
+def prDraftCheck() {
     withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
         PrObj = sh(returnStdout: true, script:'''
                     curl -s -u $Credentials  -X GET  ''' + githubAPIUrl + '''/pulls/$CHANGE_ID
@@ -86,14 +86,14 @@ def getReviewState() {
                         ''')
     }
     def jsonObj = new JsonSlurperClassic().parseText(commitHash.toString().trim())
-    def commit_id = jsonObj.head.sha
+    def commitId = jsonObj.head.sha
     println(commit_id)
-    def reviewState = getReviewStateOfPR reviewResponse, 2, commit_id
+    def reviewState = getReviewStateOfPR reviewResponse, 2, commitId
     echo reviewState
     return reviewState
 }
 
-void ResultNotification(message) {
+void resultNotification(message) {
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
@@ -102,49 +102,33 @@ void ResultNotification(message) {
     } else {
         emailList = params.emailList
     }
+    jira_link = "https://project.marklogic.com/jira/browse/${JIRA_ID}"
+    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b><pre><code>${LINT_OUTPUT}</code></pre><br><b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre> <br><b>Image Details: <br></b>${IMAGE_INFO} <br><br><b>Build URL: </b><br>${env.BUILD_URL}"
+    jira_email_body = "${email_body} <br><br><b>Jira URL: </b><br>${jira_link}"
 
-    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b>${LINT_OUTPUT} <br><br><b>Vulnerabilities: </b><br><br>${SCAN_OUTPUT} <br><br><b>Image Details: </b>${IMAGE_INFO} <br><br><b>Build URL: </b><br>${env.BUILD_URL}"
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body} <b><br><br>Lint Output: <br></b>https://project.marklogic.com/jira/browse/${JIRA_ID}<br>", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     } else {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 }
 
-def getServerPath(branchName) {
-    switch (branchName) {
-        case 'develop':
-            return 'rh7v-10-tst-bld-1.eng.marklogic.com/develop'
-        case 'develop-10.0':
-            return 'rh7v-10-tst-bld-1.eng.marklogic.com/develop-10.0'
-            break
-        case 'develop-9.0':
-            return 'rh7v-90-tst-bld-1.marklogic.com/develop-9.0'
-            break
-        default:
-            return 'INVALID BRANCH'
-    }
-}
-
-def getServerVersion(branchName) {
+String getServerVersion(branchName) {
     switch (branchName) {
         case 'develop':
             return '11.0'
-            break
         case 'develop-10.0':
             return '10.0'
-            break
         case 'develop-9.0':
             return '9.0'
-            break
         default:
             return 'INVALID BRANCH'
     }
 }
 
-void CopyRPMs() {
+void copyRPMs() {
     timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
     sh """
         cd src/centos
@@ -208,7 +192,7 @@ void CopyRPMs() {
     }
 }
 
-void StructureTests() {
+void structureTests() {
     sh """
         cd test
         #insert current version
@@ -221,29 +205,29 @@ void StructureTests() {
     """
 }
 
-void ServerRegressionTests() {
+void serverRegressionTests() {
     //TODO: run this conditionally for develop and master branches only
     echo 'Server regression tests would execute here'
-    // The following can be uncommented to show an interactive prompt for manual regresstion tests
-    // input "Server regression tests need to be executed manually. "
+// The following can be uncommented to show an interactive prompt for manual regresstion tests
+// input "Server regression tests need to be executed manually. "
 }
 
-void Lint() {
+void lint() {
     IMAGE_INFO = sh(returnStdout: true, script: 'docker  images | grep \"marklogic-server-centos\"')
 
     sh '''
         make lint Jenkins=true
-        cat start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
+        cat start-marklogic-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
     '''
 
-    LINT_OUTPUT = sh(returnStdout: true, script: 'echo start-marklogic.sh; cat start-marklogic-lint.txt; echo dockerfile-marklogic-server-centos; cat marklogic-server-centos-lint.txt; echo marklogic-deps-centos:base; cat marklogic-deps-centos-base-lint.txt; echo marklogic-server-centos:base; cat marklogic-server-centos-base-lint.txt').trim()
+    LINT_OUTPUT = sh(returnStdout: true, script: 'echo start-marklogic.sh: ;echo; cat start-marklogic-lint.txt; echo dockerfile-marklogic-server-centos: ; echo marklogic-deps-centos:base: ;echo; cat marklogic-deps-centos-base-lint.txt; echo marklogic-server-centos:base: ;echo; cat marklogic-server-centos-base-lint.txt').trim()
 
     sh '''
-        rm -f start-marklogic-lint.txt marklogic-server-centos-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
+        rm -f start-marklogic-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
     '''
 }
 
-void Scan() {
+void scan() {
     sh """
         make scan version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
         grep \'High\\|Critical\' scan-server-image.txt
@@ -251,16 +235,16 @@ void Scan() {
 
     SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
     if (SCAN_OUTPUT.size()) {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <br>${SCAN_OUTPUT}", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
     sh '''rm -f scan-server-image.txt'''
 }
 
-void PublishToInternalRegistry() {
+void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
-            docker login -u ${docker_user} -p ${docker_password} ${dockerRegistry}
+            echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
         """
         currentBuild.description = "Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}" 
@@ -291,7 +275,7 @@ pipeline {
         buildServer = 'distro.marklogic.com'
         buildServerBasePath = '/space/nightly/builds'
         buildServerPlatform = 'linux64-rh7'
-        buildServerPath = getServerPath(params.ML_SERVER_BRANCH)
+        buildServerPath = "*/${params.ML_SERVER_BRANCH}"
         buildServerVersion = getServerVersion(params.ML_SERVER_BRANCH)
         dockerRegistry = 'https://ml-docker-dev.marklogic.com'
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -299,27 +283,27 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '1.0.0-ea4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '1.0.0', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
         choice(name: 'ML_SERVER_BRANCH', choices: 'develop-10.0\ndevelop\ndevelop-9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
-        booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run server regression tests')
+        booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
         booleanParam(name: 'SERVER_REGRESSION', defaultValue: true, description: 'Run server regression tests')
     }
 
     stages {
         stage('Pre-Build-Check') {
             steps {
-                PreBuildCheck()
+                preBuildCheck()
             }
         }
 
         stage('Copy-RPMs') {
             steps {
-                CopyRPMs()
+                copyRPMs()
             }
         }
 
@@ -331,13 +315,13 @@ pipeline {
 
         stage('Lint') {
             steps {
-                Lint()
+                lint()
             }
         }
 
         stage('Scan') {
             steps {
-                Scan()
+                scan()
             }
         }
 
@@ -346,7 +330,7 @@ pipeline {
                 expression { return params.TEST_STRUCTURE }
             }
             steps {
-                StructureTests()
+                structureTests()
             }
         }
 
@@ -364,7 +348,7 @@ pipeline {
                 expression { return params.SERVER_REGRESSION }
             }
             steps {
-                ServerRegressionTests()
+                serverRegressionTests()
             }
         }
 
@@ -376,7 +360,7 @@ pipeline {
                     }
             }
             steps {
-                PublishToInternalRegistry()
+                publishToInternalRegistry()
             }
         }
     }
@@ -393,13 +377,13 @@ pipeline {
             publishTestResults()
         }
         success {
-            ResultNotification('BUILD SUCCESS ✅')
+            resultNotification('BUILD SUCCESS ✅')
         }
         failure {
-            ResultNotification('BUILD ERROR ❌')
+            resultNotification('BUILD ERROR ❌')
         }
         unstable {
-            ResultNotification('BUILD UNSTABLE ❌')
+            resultNotification('BUILD UNSTABLE ❌')
         }
     }
 }

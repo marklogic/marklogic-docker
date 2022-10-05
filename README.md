@@ -34,7 +34,7 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 # Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
+Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
 
 - 10.0-9.5-centos-1.0.0 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)

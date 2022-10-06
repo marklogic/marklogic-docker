@@ -18,11 +18,15 @@ metadataTest:
       value: /opt/MarkLogic
     - key: MARKLOGIC_UMASK
       value: 022
+    - key: BUILD_BRANCH
+      value: BRANCH_PLACEHOLDER
   labels:
+    - key: "com.marklogic.maintainer"
+      value: "docker@marklogic.com"
     - key: "com.marklogic"
       value: "MarkLogic"
     - key: "com.marklogic.description"
-      value: "MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, and backup and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster and for doing dynamic content delivery at massive scale. MarkLogic Developer redhat image includes all features but is limited to pre-production applications and use."
+      value: "MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, backup, and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster, and for delivering dynamic content at massive scale. The current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use."
     - key: "com.marklogic.release-type"
       value: "production"
     - key: "com.marklogic.license"
@@ -31,9 +35,18 @@ metadataTest:
       value: "By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
     - key: "com.marklogic.license.url"
       value: "https://developer.marklogic.com/eula"
+    - key: "com.marklogic.name"
+      value: "MarkLogic Server VERSION_PLACEHOLDER"
+    - key: "com.marklogic.version"
+      value: "1.0.0"
+    - key: "com.marklogic.release-version"
+      value: "VERSION_PLACEHOLDER"
+    - key: "com.marklogic.build-branch"
+      value: "BRANCH_PLACEHOLDER"
+    
   exposedPorts: ["7997","8001","8002","8003","8004","8005","8006","8007","8009","8010"]
   volumes: ["/var/opt/MarkLogic"]
-  entrypoint: ["/usr/local/bin/start-marklogic.sh"]
+  entrypoint: ["/tini", "--", "/usr/local/bin/start-marklogic.sh"]
   workdir: ""
  
 fileExistenceTests:
@@ -43,9 +56,5 @@ fileExistenceTests:
   shouldExist: true
 - name: 'MarkLogic binary'
   path: '/opt/MarkLogic/bin/MarkLogic'
-  isExecutableBy: 'any'
-  shouldExist: true
-- name: 'joiner script'
-  path: '/usr/local/bin/join-cluster.sh'
   isExecutableBy: 'any'
   shouldExist: true

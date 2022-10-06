@@ -1,19 +1,14 @@
-<!-- Space: ENGINEERING -->
-<!-- Parent: MarkLogic Docker Documentation for DockerHub and GitHub -->
-<!-- Title: EA4 Review -->
-
-<!-- Include: wiki-disclaimer.md -->
-<!-- Include: ac:toc -->
-<!-- Include: dockerhub-tos.md -->
 # Table of contents
  * [Introduction](#Introduction)
  * [Prerequisites](#Prerequisites)
  * [Supported tags](#Supported-tags)
- * [Quick reference](#Quick-reference)
+ * [Architecture reference](#Architecture-reference)
  * [MarkLogic](#MarkLogic)
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)
  * [Clustering](#Clustering)
+ * [Upgrading to the latest MarkLogic Docker Release](#Upgrading-to-the-latest-MarkLogic-Docker-Release)
+ * [Backing Up and Restoring a Database](#Backing-Up-and-Restoring-a-Database)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
@@ -25,6 +20,8 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 - How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
 - How to enable security using Docker secrets
 - How to mount volumes for Docker containers 
+- How to upgrade to the latest MarkLogic Docker release  
+- How to back up and restore a database
 - How to clean up MarkLogic Docker containers and resources
 
 # Prerequisites
@@ -37,9 +34,9 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 # Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
+Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
 
-- 10.0-9.4-centos-1.0.0-ea4 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
+- 10.0-9.5-centos-1.0.0 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
 
 # Architecture reference
@@ -50,7 +47,7 @@ Supported Docker architectures: x86_64
 
 Base OS: CentOS
 
-Latest supported MarkLogic Server version: 10.0-9.4
+Latest supported MarkLogic Server version: 10.0-9.5
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/marklogicdb/marklogic-db
 
@@ -70,16 +67,18 @@ With this image, you have the option to either create an initialized or an unini
 ## Initialized MarkLogic Server
 For an initialized MarkLogic Server, admin credentials are required to be passed in while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized, and databases and app servers created. A security database will be created to store user data, roles, and other security information. MarkLogic Server credentials, passed in as environment variable parameters while running a container, will be stored as part of the admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with their respective ports.
 
-To create an initialized MarkLogic Server, pass in environment variables and replace `{insert admin username}`/`{insert admin password}` with actual values for admin credentials. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command: 
+To create an initialized MarkLogic Server, pass in the environment variables MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD, and replace {insert admin username}/{insert admin password} with actual values for admin credentials. Use the optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set the wallet password and authentication realm of the admin user. If not provided, the wallet-password will default to the value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command: 
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
+     -e MARKLOGIC_WALLET_PASSWORD={insert wallet password} \
+     -e REALM={insert authentication realm} \
      -e LICENSE_KEY="{insert license}" \
      -e LICENSEE="{insert licensee}" \
-     marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+     marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
 ```
 Example run:
 ```
@@ -87,7 +86,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME=admin \
      -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
-     marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+     marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
 ```
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
@@ -98,7 +97,7 @@ To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docke
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+     marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
 ```
 The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
@@ -132,7 +131,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-     marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+     marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
 ```
 
 Above command will start a Docker container `MarkLogic_cont_1` running MarkLogic Server and associate the named Docker volume `MarkLogic_vol_1` with it.
@@ -159,58 +158,123 @@ MarkLogic Server Docker containers are configured using a set of environment var
 | ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
 | MARKLOGIC_INIT                | true                            | no                                |           | when set to true, will initialize MarkLogic           |
 | MARKLOGIC_ADMIN_USERNAME      | jane_doe                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin user                           |
-| MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password                       |
+| MARKLOGIC_ADMIN_PASSWORD      | pass                            | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password  
+| MARKLOGIC_WALLET_PASSWORD      | pass                           | no                                | admin-password       | set MarkLogic Server wallet password         
+| REALM                          | public                         | no                                | public    | sets authentication realm of the admin user             |
 | MARKLOGIC_ADMIN_USERNAME_FILE | secret_username                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin username via Docker secrets    |
 | MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password via Docker secrets    |
+| MARKLOGIC_WALLET_PASSWORD_FILE | secret_wallet_password         | no                                | n/a       | set MarkLogic Server wallet password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                |           | will join cluster via MARKLOGIC_BOOTSTRAP_HOST          |
 | MARKLOGIC_BOOTSTRAP_HOST           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
+| MARKLOGIC_GROUP           | dnode                     | no                                | n/a       | will join the host to the given MarkLogic group                  |
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
 |INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
+|OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
+
+
+MarkLogic Server also can be configured through a configuration file on the image at `/etc/marklogic.conf`. To change the configuration file, pass in the parameter `OVERWRITE_ML_CONF` set to `true` The following env variables can also be written to the `/etc/marklogic.conf` file if the parameter is set. 
+
+
+ | env var                       | value                           | required                          | default   | description                                        |
+| ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
+| TZ      | /etc/localtime                        | no | n/a       | Timezone information setting for marklogic                           |                      |
+| MARKLOGIC_ADMIN_USERNAME                | jane_doe                            | required if MARKLOGIC_INIT is set                                |   n/a        | set MarkLogic Server admin user           |
+| MARKLOGIC_ADMIN_PASSWORD      | pass                        | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password
+| MARKLOGIC_WALLET_PASSWORD      | pass                        | no | admin-password       | set MarkLogic Server wallet password
+| REALM      | public                        | no | public       | set authentication realm                           |
+| MARKLOGIC_LICENSEE      | licensee information                         | no | n/a       | set MarkLogic licensee information                           |
+| MARKLOGIC_LICENSE_KEY                | license key                             | no                                |   n/a        | set MarkLogic license key             |
+| ML_HUGEPAGES_TOTAL      | 1000                        | no | n/a       | set the number of huge pages marklogic can utilize                          |
+
+
+
+
+
+#### Advanced Configuration 
+The following environment variables are only useful when building and extending the current docker image. For instance, setting `MARKLOGIC_USER` only will work if a user is set up and configured in the image. 
+
+| env var                       | value                           | required                          | default   | description                                        |
+| ------------------------------- | --------------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------- |
+| MARKLOGIC_USER                | daniel                            | no                                |     n/a      | The username running MarkLogic within the docker container           |
+| MARKLOGIC_DISABLE_JVM      | 0                        | no | n/a       | disable the JVM for MarkLogic
+| JAVA_HOME                | /var/opt/java                            | no                                |  n/a         | set the java home location for MarkLogic           |
+| CLASSPATH      | /var/opt/class/path                        | no| n/a       | set the java env class path                          |
+| MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
+| MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to MarkLogic through umask                          |
 
 **IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is new in the marklogicdb/marklogic-db:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.
+
+## Configuring swap space
+
+MarkLogic recommends that swap space be configured for production deployments to reduce the possibility of ‘out of memory’ errors. For more details, see [MarkLogic recommendations for swap space](https://help.marklogic.com/knowledgebase/article/View/21/19/swap-space-requirements) and [configuring "swappiness"](https://help.marklogic.com/Knowledgebase/Article/View/linux-swappiness).
+
+In Docker, the amount of memory and swap space that are available to MarkLogic Server can be controlled using the "--memory" and "--memory-swap" settings. See the Docker documentation [--memory-swap-details](https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details) for more details. For example, if you want to run a MarkLogic container with 64GB of memory and 32GB of swap, you would specify the following with your docker run command:
+```
+--memory="64g" --memory-swap="96g"
+```
+If you want to limit memory to 64GB but allow MarkLogic Server to use swap space (up to the amount available on host system), specify the following with your docker run command:
+```
+--memory="64g" --memory-swap="-1"
+```
+To allow MarkLogic Server to use unlimited memory and swap space (up to the amount available on the host system), do not specify either "--memory" or "--memory-swap".
+
+## Configuring HugePages
+
+By default, if HugePages are configured on the host, the MarkLogic instance running in a container will attempt to allocate up to 3/8 of the container memory limit as HugePages. For example, consider a host with 128GB of RAM, 48GB HugePages, and running two MarkLogic containers, each with 64GB memory limit. The MarkLogic instance in each container will only allocate up to 24GB in HugePages (3/8 * 64GB).
+
+You can change the number of HugePages available to each MarkLogic container by setting the `ML_HUGEPAGES_TOTAL` environment variable. Set the variable for each MarkLogic container to the desired number of HugePages. For example, to disable the HugePages for specific container, specify the following with your Docker run command:
+```
+-e ML_HUGEPAGES_TOTAL=0
+```
 
 # Clustering
 
 MarkLogic Server Docker containers ship with a small set of scripts, making it easy to create clusters. See the [MarkLogic documentation](https://docs.marklogic.com/guide/concepts/clustering) for more about clusters. The following three examples show how to create MarkLogic Server clusters with Docker containers. The first two use Docker compose scripts to create one-node and three-node clusters. See the documentation for [Docker compose](https://docs.docker.com/compose/) for more details. The third example demonstrates a container setup on separate VMs.
 
-The credentials for the admin user are configured using Docker secrets, and are stored in `mldb_admin_username.txt` and `mldb_admin_password.txt` files.
+The credentials for the admin user are configured using Docker secrets, and are stored in `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt` files.
 
 ## Single node MarkLogic Server on a single VM
 Single node configurations are used primarily on a development machine with a single user.
 
-Create these files on your host machine: `marklogic-centos.yml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created. 
+Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
 
-**marklogic-centos.yml**
+**marklogic-centos.yaml**
 
 ```
 #Docker compose file sample to setup single node cluster
 version: '3.6'
 services:
     bootstrap:
-      image: marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+      image: marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
       container_name: bootstrap
+      hostname: bootstrap
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password
+        - REALM=public
         - TZ=Europe/Prague
       volumes:
         - MarkLogic_1n_vol1:/var/opt/MarkLogic
       secrets:
-          - mldb_admin_password
           - mldb_admin_username
+          - mldb_admin_password
+          - mldb_wallet_password
       ports:
         - 8000-8010:8000-8010
         - 7997:7997
       networks:
       - external_net
 secrets:
-  mldb_admin_password:
-    file: ./mldb_admin_password.txt
   mldb_admin_username:
     file: ./mldb_admin_username.txt
+  mldb_admin_password:
+    file: ./mldb_admin_password.txt
+  mldb_wallet_password:
+    file: ./mldb_wallet_password.txt
 networks:
   external_net: {}
 volumes:
@@ -233,10 +297,18 @@ volumes:
 {insert admin password}
 ```
 
+**mldb_wallet_password.txt**
+
+```
+#This file will contain the MARKLOGIC_WAALET_PASSWORD value
+
+{insert wallet password}
+```
+
 Once the files are ready, run this command to start the MarkLogic Server container.
 
 ```
-$ docker-compose -f marklogic-centos.yml up -d
+$ docker-compose -f marklogic-centos.yaml up -d
 ```
 The previous command starts a container running MarkLogic Server named "bootstrap".
 
@@ -250,17 +322,18 @@ After the container is initialized, you can access the MarkLogic Query Console o
 
 ## Three node cluster on a single VM
 
-The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
+The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
 
-**marklogic-cluster-centos.yml**
+**marklogic-cluster-centos.yaml**
 
 ```
 #Docker compose file sample to setup a three node cluster
 version: '3.6'
 services:
-    bootstrap:
-      image: marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+    bootstrap_3n:
+      image: marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
       container_name: bootstrap_3n
+      hostname: bootstrap_3n
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
@@ -278,14 +351,16 @@ services:
       networks:
       - external_net
     node2:
-      image: marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+      image: marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
       container_name: node2
+      hostname: node2
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n
         - TZ=Europe/Prague
       volumes:
         - MarkLogic_3n_vol2:/var/opt/MarkLogic
@@ -296,18 +371,20 @@ services:
         - 7200-7210:8000-8010
         - 7297:7997
       depends_on:
-      - bootstrap
+      - bootstrap_3n
       networks:
       - external_net
     node3:
-      image: marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+      image: marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
       container_name: node3
+      hostname: node3
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
         - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n
         - TZ=Europe/Prague
       volumes:
         - MarkLogic_3n_vol3:/var/opt/MarkLogic
@@ -318,7 +395,7 @@ services:
         - 7300-7310:8000-8010
         - 7397:7997
       depends_on:
-      - bootstrap
+      - bootstrap_3n
       networks:
       - external_net
 secrets:
@@ -351,7 +428,7 @@ volumes:
 Once the files have been created, run the following command to start the MarkLogic Server container:
 
 ```
-$ docker-compose -f marklogic-cluster-centos.yml up -d
+$ docker-compose -f marklogic-cluster-centos.yaml up -d
 ```
 
 This command will start three Docker containers running MarkLogic Server, named "bootstrap_3n", "node2" and, "node3".
@@ -362,15 +439,189 @@ $ docker ps
 ```
 This command lists all the Docker containers running on the host.
 
-After the containers are initialized, you can access the MarkLogic Query Console on http://localhost:8000 and the MarkLogic Admin UI at http://localhost:8001. These ports can also be accessed externally via your hostname or IP address.
-
 As in the previous single-node example, each node of the cluster can be accessed with localhost or host machine IP address. The MarkLogic Query Console and MarkLogic Admin UI ports for each container will be different. The ports are defined in the compose file created previously: http://localhost:7101, http://localhost:7201, http://localhost:7301, etc.
 
 ### Using ENV for admin credentials in Docker compose
 
-In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure, but it is commonly used in development environments. This is not recommended for production environments. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD and provide the appropriate values.
+In the previous examples, Docker secrets files were used to specify admin credentials for the MarkLogic Server. If your environment prevents the use of Docker secrets, you can use environmental variables. This approach is less secure, but it is commonly used in development environments. This is **not** recommended for production environments. In order to use these environment variables in the Docker compose files, remove the secrets section at the end of the Docker compose yaml file, and remove the secrets section in each node. Then replace the MARKLOGIC_ADMIN_USERNAME_FILE/MARKLOGIC_ADMIN_PASSWORD_FILE/MARKLOGIC_WALLET_PASSWORD_FILE variables with MARKLOGIC_ADMIN_USERNAME/MARKLOGIC_ADMIN_PASSWORD/MARKLOGIC_WALLET_PASSWORD and provide the appropriate values.
 
 Using Docker secrets, username and password information are secured when transmitting the sensitive data from Docker host to Docker containers. To prevent any attacks, the login information is not available as an environment variable. However, these values are stored in a text file and persisted in an in-memory file system inside the container. We recommend that you delete the Docker secrets information once the cluster is up and running.
+
+### How to use Docker Secrets with Docker Stack
+
+1. Run this command to initialize the swarm setup:
+
+```
+  $docker swarm init
+```
+2. Create docker secrets using the following commands:
+ - Create mldb_admin_username_v1.txt file to add the mldb_admin_username_v1 secret for the admin username using the following command:
+```
+  $docker secret create mldb_admin_username_v1 mldb_admin_username_v1.txt
+```
+  - Create mldb_admin_password_v1.txt file to add the mldb_admin_password_v1 secret for the admin password using the following command:
+```
+  $docker secret create mldb_admin_password_v1 mldb_admin_password_v1.txt
+```
+  - Create mldb_wallet_password_v1.txt file to add the mldb_wallet_password_v1 secret for the wallet password using the following command:
+```
+  $docker secret create mldb_wallet_password_v1 mldb_wallet_password_v1.txt
+```
+3. Create marklogic-multi-centos.yaml using below:
+```
+version: '3.6'
+services:
+    bootstrap:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: bootstrap
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password
+        - REALM=public
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+          - source: mldb_wallet_password_v1
+            target: mldb_wallet_password
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+    node2:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: node2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password
+        - REALM=public
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+          - source: mldb_wallet_password_v1
+            target: mldb_wallet_password
+      ports:
+        - 7200-7210:8000-8010
+        - 7297:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
+    node3:
+      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      hostname: node3
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password
+        - REALM=public
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol3:/var/opt/MarkLogic
+      secrets:
+          - source: mldb_admin_username_v1
+            target: mldb_admin_username
+          - source: mldb_admin_password_v1
+            target: mldb_admin_password
+          - source: mldb_wallet_password_v1
+            target: mldb_wallet_password
+      ports:
+        - 7300-7310:8000-8010
+        - 7397:7997
+      depends_on:
+      - bootstrap
+      networks:
+      - external_net
+secrets:
+  mldb_admin_username_v1:
+    external: true
+  mldb_admin_password_v1:
+    external: true
+  mldb_wallet_password_v1:
+    external: true
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_3n_vol1:
+  MarkLogic_3n_vol2:
+  MarkLogic_3n_vol3:
+```
+4. Use the Docker stack command to deploy the cluster:
+```
+  $docker stack deploy -c marklogic-multi-centos.yaml mlstack
+```
+All the cluster nodes will now be up and running.
+Now that the nodes have been initialized, we rotate the secrets files to overwrite the initial secrets files.
+
+5. Create docker secrets v2 using these commands:
+
+- Create mldb_admin_username_v2.txt file and use the following command to add a new Docker secret for the admin username:
+```
+  $docker secret create mldb_admin_username_v2 mldb_admin_username_v2.txt
+```
+- Create mldb_admin_password_v2.txt and use the following command to add a new Docker secret for the admin password:
+```
+  $docker secret create mldb_admin_password_v2 mldb_admin_password_v2.txt
+```
+- Create mldb_wallet_password_v2.txt and use the following command to add a new Docker secret for the wallet password:
+```
+  $docker secret create mldb_wallet_password_v2 mldb_wallet_password_v2.txt
+```
+6. Use the following commands to rotate the Docker secrets for all the Docker services created above using Docker stack:
+```
+docker service update \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_wallet_password_v1 \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_wallet_password_v2,target=mldb_wallet_password \
+    mlstack_bootstrap
+```
+```
+docker service update \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_wallet_password_v1 \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_wallet_password_v2,target=mldb_wallet_password \
+    mlstack_node2
+```
+```
+docker service update \
+    --secret-rm mldb_admin_username_v1 \
+    --secret-rm mldb_admin_password_v1 \
+    --secret-rm mldb_wallet_password_v1 \
+    --secret-add source=mldb_admin_username_v2,target=mldb_admin_username \
+    --secret-add source=mldb_admin_password_v2,target=mldb_admin_password \
+    --secret-add source=mldb_wallet_password_v2,target=mldb_wallet_password \
+    mlstack_node3
+```
+Above commands will remove secrets v1 and update services with new v2 secrets.
+
+Wait for all the services to be updated. Secrets inside the containers under the /run/secrets directory will be updated with new v2 secrets.
+Note: The MarkLogic cluster will still use the admin credentials set in the initial stack deployment with the v1 secrets.
 
 ## Three node cluster setup on multiple VMs
 This next example shows how to create containers on separate VMs and connect them with each other using Docker Swarm. For more details on Docker Swarm, see https://docs.docker.com/engine/swarm/. All of the nodes inside the cluster must be part of the same network in order to communicate with each other. We use the overlay network that allows for container communication on separate hosts. For more information on overlay networks, please refer https://docs.docker.com/network/overlay/.
@@ -410,7 +661,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      --dns-search "marklogic.com" \
-     marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+     marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
 ```
 If successful, the command will output the ID for the new container. Give the container a couple of minutes to get initialized. Continue with the next section to create additional nodes for the cluster.
 
@@ -425,7 +676,7 @@ $ docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377
 ```
 This command adds the current node to the swarm initialized earlier. 
 
-Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows.
+Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join the container to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows. To join this host to a specific MarkLogic Group, use the MARKLOGIC_GROUP environment parameter as below.
 
 ```
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
@@ -434,14 +685,64 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_JOIN_CLUSTER=true \
+     -e MARKLOGIC_GROUP=dnode \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
-     marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4
+     marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
 ```
 
-When you complete these steps, you will have multiple containers; one on each VM and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
+When you complete these steps, you will have multiple containers; one on each VM, and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
+
+# Upgrading to the latest MarkLogic Docker Release
+
+MarkLogic has extensive documentation about upgrades, see [https://docs.marklogic.com/guide/relnotes/chap2](https://docs.marklogic.com/guide/relnotes/chap2). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.marklogic.com/guide/admin/rolling-upgrades](https://docs.marklogic.com/guide/admin/rolling-upgrades) if you need to upgrade with zero downtime.
+
+To upgrade MarkLogic Docker from release 10.x to the latest release, perform following steps:
+Note: In the below example, we are upgrading the container to marklogic-server:10.0-9.1-centos-1.0.0.
+
+1. Stop the MarkLogic Docker container.
+Use following command to stop the container:
+
+```
+$ docker stop container_id
+```
+2. Now, run a MarkLogic Docker container using the latest release of the Docker image. Use the same volume, mounted to the container that was running the older release.
+```
+$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
+     --name MarkLogic_cont_2 \
+     --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
+     -e MARKLOGIC_INIT=true \
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
+    marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0
+```
+3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
+4. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
+5. Once the upgrade is complete, the Admin interface will reload with the new MarkLogic release. 
+
+# Backing Up and Restoring a Database
+
+When creating a backup for a database on a MarkLogic Docker container, verify that the directory used for the backup is mounted to a directory on the Docker host machine or Docker volume. This is so that the database backup persists even after the container is stopped.
+
+This command is an example of mounting the directory /space used for backup on a Docker volume, while running the MarkLogic Docker container.
+```
+$ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
+     --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
+     --mount src=MarkLogic_vol_1,dst=/space \
+     -e MARKLOGIC_INIT=true \
+     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
+     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
+     marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0
+```
+The /space mounted on the Docker volume can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
 
 # Debugging
+
+## View MarkLogic Server Startup Status
+To check the MarkLogic Server startup status, run the below command to tail the MarkLogic log file
+```
+$ docker exec -it <container name> tail -f /var/opt/MarkLogic/Logs/ErrorLog.txt
+```
 
 ## Accessing a MarkLogic Container while it's running
 
@@ -451,9 +752,9 @@ The following is a set of steps to run to access a container while it is running
 2. Get the container ID for the MarkLogic container running on the machine. To do this, run the following command:
 
 ```
-$ docker container ps --filter ancestor=marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4 -q
+$ docker container ps --filter ancestor=marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0 -q
 ```
-In this example command `marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4` is an image ID. Your container ID may be different for your machine.
+In this example command `marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0` is an image ID. Your container ID may be different for your machine.
 
 Example output:
 
@@ -471,7 +772,7 @@ Here's an example of unfiltered output from that command:
 
 ```
 CONTAINER ID   IMAGE                                                        COMMAND                  CREATED          STATUS          PORTS                                  NAMES
-f484a784d998   marklogicdb/marklogic-db:10.0-9.4-centos-1.0.0-ea4   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002 8000-8002/tcp   vibrant_burnell
+f484a784d998   marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002 8000-8002/tcp   vibrant_burnell
 ```
 
 3. Run a command to access a remote shell on the container.
@@ -532,7 +833,7 @@ This section describes the teardown process for clusters set up on a single VM u
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
 ```
-$ docker-compose -f marklogic-centos.yml down
+$ docker-compose -f marklogic-centos.yaml down
 ```
 
 ### Remove volumes
@@ -562,7 +863,7 @@ If the process is successful, a message saying the node has left the swarm will 
 
 # Known Issues and Limitations
 
-10.0-9.4-centos-1.0.0-ea4
+10.0-9.5-centos-1.0.0
 
 1. Enabling huge pages for clusters containing single-host, multi-container configurations may lead to failure, due to incorrect memory allocation. MarkLogic recommends that you disable huge pages in such architectures.
 2. Database replication will only work for configurations having a single container per host, with matching hostname.
@@ -572,6 +873,7 @@ If the process is successful, a message saying the node has left the swarm will 
 6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
    1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
    2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
+7. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 [CVE-2016-3191](https://nvd.nist.gov/vuln/detail/CVE-2016-3191), [CVE-2015-8385](https://nvd.nist.gov/vuln/detail/CVE-2015-8385) and SQLite [CVE-2019-5827](https://nvd.nist.gov/vuln/detail/CVE-2019-5827). These libraries are included in the CentOS base image and to-date no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server iteself, hence there is no impact or mitigation required.
 
 # Older Supported Tags
 - 9.0-12-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
@@ -603,3 +905,6 @@ If the process is successful, a message saying the node has left the swarm will 
 - 10.0-8.3-centos-1.0.0-ea3 - MarkLogic Developer Docker image includes all features and is limited to developer use
 - 10.0-9-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
 - 10.0-9.1-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-9.2-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-9.4-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
+- 10.0-9.5-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use

@@ -1,11 +1,11 @@
 ###############################################################
 #
-#   Copyright (c) 2021 MarkLogic Corporation
+#   Copyright (c) 2022 MarkLogic Corporation
 #
 ###############################################################
 
 FROM centos:centos7
-MAINTAINER MarkLogic <docker@marklogic.com>
+LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
 # install networking, base deps and ntp/tzdata for timezone
@@ -13,7 +13,7 @@ MAINTAINER MarkLogic <docker@marklogic.com>
 
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && yum -y update \
-    && yum -y install gdb.x86_64 glibc.i686 initscripts redhat-lsb-core.x86_64 tzdata ntp \
+    && yum -y install gdb.x86_64 glibc.i686 initscripts redhat-lsb-core.x86_64 tzdata ntp xz-0:5.2.2-2.el7_9.x86_64 \
     && yum clean all \
     && ntpdate -s pool.ntp.org \
     && chkconfig ntpdate on \

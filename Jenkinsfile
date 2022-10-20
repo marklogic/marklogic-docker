@@ -134,18 +134,24 @@ String getServerVersion(branchName) {
 
 void copyRPMs() {
     timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
+    if (buildServerVersion == "11.0") {
+        RPMsuffix = ".${timeStamp}-1"
+    }
+    else {
+        RPMsuffix = "-${timeStamp}"
+    }
     sh """
         cd src/centos
         if [ -z ${env.ML_RPM} ]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}.${timeStamp}-1.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break
@@ -164,14 +170,14 @@ void copyRPMs() {
         fi
     if [ -z ${env.ML_CONVERTERS}]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}.${timeStamp}-1.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break

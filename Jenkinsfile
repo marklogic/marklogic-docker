@@ -171,7 +171,7 @@ void copyRPMs() {
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}.${timeStamp}-1.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break

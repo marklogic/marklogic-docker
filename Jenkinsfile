@@ -138,7 +138,7 @@ void copyRPMs() {
         cd src/centos
         if [ -z ${env.ML_RPM} ]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}.${timeStamp}-1.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do

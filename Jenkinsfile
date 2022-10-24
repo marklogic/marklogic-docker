@@ -5,7 +5,10 @@
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
 
-emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com'
+// email list for scheduled builds (includes security vulnerability)
+emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com, Barkha.Choithani@marklogic.com, Fayez.Saliba@marklogic.com'
+// email list for security vulnerabilities only
+emailSecList = 'Rangan.Doreswamy@marklogic.com, "Mahalakshmi Srinivasan" <Mahalakshmi.Srinivasan@marklogic.com>'
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 JIRA_ID = ''
 JIRA_ID_PATTERN = /CLD-\d{3,4}/
@@ -110,7 +113,7 @@ void resultNotification(message) {
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${JIRA_ID}"
     } else {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
@@ -131,18 +134,24 @@ String getServerVersion(branchName) {
 
 void copyRPMs() {
     timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
+    if (buildServerVersion == "11.0") {
+        RPMsuffix = ".${timeStamp}-1"
+    }
+    else {
+        RPMsuffix = "-${timeStamp}"
+    }
     sh """
         cd src/centos
         if [ -z ${env.ML_RPM} ]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break
@@ -161,14 +170,14 @@ void copyRPMs() {
         fi
     if [ -z ${env.ML_CONVERTERS}]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break
@@ -236,7 +245,7 @@ void scan() {
 
     SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
     if (SCAN_OUTPUT.size()) {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
     sh '''rm -f scan-server-image.txt'''

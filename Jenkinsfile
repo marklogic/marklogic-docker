@@ -135,7 +135,7 @@ String getServerVersion(branchName) {
 void copyRPMs() {
     timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
     if (buildServerVersion == "11.0") {
-        RPMsuffix = ".${timeStamp}-1"
+        RPMsuffix = ".${timeStamp}-rhel"
     }
     else {
         RPMsuffix = "-${timeStamp}"

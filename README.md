@@ -873,6 +873,7 @@ If the process is successful, a message saying the node has left the swarm will 
    1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
    2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
 7. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 [CVE-2016-3191](https://nvd.nist.gov/vuln/detail/CVE-2016-3191), [CVE-2015-8385](https://nvd.nist.gov/vuln/detail/CVE-2015-8385) and SQLite [CVE-2019-5827](https://nvd.nist.gov/vuln/detail/CVE-2019-5827). These libraries are included in the CentOS base image and to-date no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server iteself, hence there is no impact or mitigation required.
+8. The image must be run in privilaged mode. At the moment if the image isn't run as privilaged many calls that use `sudo` during the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 
 # Older Supported Tags
 - 9.0-12-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use

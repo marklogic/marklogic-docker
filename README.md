@@ -29,7 +29,6 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 Note: In order to use the MarkLogic Image you need to request the Developer License. Refer to details on https://developer.marklogic.com/free-developer/ for requesting it.
 
 - Examples in this document use Docker Engine and Docker CLI to create and manage containers. Follow the documentation for instructions on how to install Docker: see Docker Engine (https://docs.docker.com/engine/)
-- In order to get the MarkLogic image from Dockerhub, you need a Dockerhub account. Follow the instruction on [Docker Hub](https://hub.docker.com/signup) to create a Dockerhub account.
 - To access the MarkLogic Admin interface and App Servers in our examples, you need a desktop browser. See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/) for a list of supported browsers.
 
 # Supported tags

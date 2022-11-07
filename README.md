@@ -34,7 +34,7 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 # Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}-ea`
+Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
 
 - 10.0-9.5-centos-1.0.0 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
 - [Older Supported Tags](#older-supported-tags)
@@ -53,7 +53,7 @@ Published image artifact details: https://github.com/marklogic/marklogic-docker,
 
 # MarkLogic
 
-[MarkLogic](http://www.marklogic.com/) is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, backup, and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster, and for delivering dynamic content at massive scale.
+[MarkLogic Server](http://www.marklogic.com/) is a multi-model database that has both NoSQL and trusted enterprise data management capabilities. It is the most secure multi-model database, and it’s deployable in any environment.
 
 MarkLogic documentation is available at [http://docs.marklogic.com](https://docs.marklogic.com/).
 

@@ -15,7 +15,6 @@ JIRA_ID_PATTERN = /CLD-\d{3,4}/
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_INFO = 0
-
 // Define local funtions
 void preBuildCheck() {
     // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929

@@ -870,9 +870,7 @@ If the process is successful, a message saying the node has left the swarm will 
 3. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 4. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 5. MarkLogic Server will default to the UTC timezone.
-6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
-   1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
-   2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
+6. The container startup script currently runs as a user that must have sudo access in order to start MarkLogic. This requires the containers to be run in privileged mode.
 7. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 [CVE-2016-3191](https://nvd.nist.gov/vuln/detail/CVE-2016-3191), [CVE-2015-8385](https://nvd.nist.gov/vuln/detail/CVE-2015-8385) and SQLite [CVE-2019-5827](https://nvd.nist.gov/vuln/detail/CVE-2019-5827). These libraries are included in the CentOS base image and to-date no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server iteself, hence there is no impact or mitigation required.
 
 # Older Supported Tags

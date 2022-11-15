@@ -29,7 +29,6 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 Note: In order to use the MarkLogic Image you need to request the Developer License. Refer to details on https://developer.marklogic.com/free-developer/ for requesting it.
 
 - Examples in this document use Docker Engine and Docker CLI to create and manage containers. Follow the documentation for instructions on how to install Docker: see Docker Engine (https://docs.docker.com/engine/)
-- In order to get the MarkLogic image from Dockerhub, you need a Dockerhub account. Follow the instruction on [Docker Hub](https://hub.docker.com/signup) to create a Dockerhub account.
 - To access the MarkLogic Admin interface and App Servers in our examples, you need a desktop browser. See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/) for a list of supported browsers.
 
 # Supported tags
@@ -870,10 +869,9 @@ If the process is successful, a message saying the node has left the swarm will 
 3. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 4. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 5. MarkLogic Server will default to the UTC timezone.
-6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
-   1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
-   2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
+6. The container startup script currently runs as a user that must have sudo access in order to start MarkLogic. This requires the containers to be run in privileged mode.
 7. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 [CVE-2016-3191](https://nvd.nist.gov/vuln/detail/CVE-2016-3191), [CVE-2015-8385](https://nvd.nist.gov/vuln/detail/CVE-2015-8385) and SQLite [CVE-2019-5827](https://nvd.nist.gov/vuln/detail/CVE-2019-5827). These libraries are included in the CentOS base image and to-date no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server iteself, hence there is no impact or mitigation required.
+8. The image must be run in privilaged mode. At the moment if the image isn't run as privilaged many calls that use `sudo` during the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 
 # Older Supported Tags
 - 9.0-12-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use

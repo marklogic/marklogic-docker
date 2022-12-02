@@ -257,10 +257,13 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
 
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
-    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
-        -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
-        -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
-        -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
+    # Only call /v1/instance-admin if host is bootstrap/standalone host
+    if [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
+        curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
+            -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
+            -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
+            -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
+    fi
 
     sudo touch /var/opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then

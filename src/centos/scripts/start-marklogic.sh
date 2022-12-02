@@ -258,7 +258,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     # Only call /v1/instance-admin if host is bootstrap/standalone host
-    if [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
+    if [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
             -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
             -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \

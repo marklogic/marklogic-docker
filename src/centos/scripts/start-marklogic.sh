@@ -110,6 +110,10 @@ if [ -n "${TZ}" ]; then
     echo "${TZ}" | sudo tee /etc/timezone
 fi
 
+# Values taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
+N_RETRY=5 
+RETRY_INTERVAL=10
+
 ################################################################
 # restart_check(hostname, baseline_timestamp)
 #
@@ -121,10 +125,8 @@ fi
 #   $2 :  The baseline timestamp
 # Returns 0 if restart is detected, exits with an error if not.
 ################################################################
-N_RETRY=5 # 5 and 10 numbers taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
-RETRY_INTERVAL=10
-
 function restart_check {
+    info "Waiting for MarkLogic to restart."
     LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
     for i in $(seq 1 ${N_RETRY}); do
         if [ "$2" == "${LAST_START}" ] || [ -z "${LAST_START}" ]; then
@@ -251,16 +253,22 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         http://"${HOSTNAME}":8001/admin/v1/init |
         grep "last-startup" |
         sed 's%^.*<last-startup.*>\(.*\)</last-startup>.*$%\1%')
-
-    # Make sure marklogic has shut down and come back up before moving on
-    info "Waiting for MarkLogic to restart."
-
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
-    curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
-        -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
-        -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
-        -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
+    # Only call /v1/instance-admin if host is bootstrap/standalone host
+    if [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
+        info "Installing admin username and password, and initialize the security database and objects."
+
+        # Get last restart timestamp directly before instance-admin call to verify restart after
+        TIMESTAMP=$(curl -s --anyauth "http://${HOSTNAME}:8001/admin/v1/timestamp")
+
+        curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
+            -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
+            -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
+            -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
+
+        restart_check "${HOSTNAME}" "${TIMESTAMP}"
+    fi
 
     sudo touch /var/opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then

@@ -259,7 +259,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     if [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         info "Installing admin username and password, and initialize the security database and objects."
 
-        # Get timestamp directly before instance-admin call to verify restart after
+        # Get last restart timestamp directly before instance-admin call to verify restart after
         TIMESTAMP=$(curl -s --anyauth "http://${HOSTNAME}:8001/admin/v1/timestamp")
 
         curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \

@@ -6,7 +6,7 @@
 import groovy.json.JsonSlurperClassic
 
 // email list for scheduled builds (includes security vulnerability)
-emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com, Barkha.Choithani@marklogic.com, Fayez.Saliba@marklogic.com'
+emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com, Barkha.Choithani@marklogic.com, Fayez.Saliba@marklogic.com, Sumanth.Ravipati@marklogic.com, Peng.Zhou@marklogic.com'
 // email list for security vulnerabilities only
 emailSecList = 'Rangan.Doreswamy@marklogic.com, Mahalakshmi.Srinivasan@marklogic.com'
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
@@ -197,7 +197,7 @@ void copyRPMs() {
     script {
         RPM = sh(returnStdout: true, script: 'cd src/centos;file MarkLogic-*.rpm | cut -d: -f1').trim()
         CONVERTERS = sh(returnStdout: true, script: 'cd src/centos;file MarkLogicConverters-*.rpm | cut -d: -f1').trim()
-        mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
+        mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' | awk -F \"-rhel\"  '{print \$1;}' ").trim()
     }
 }
 

@@ -472,7 +472,7 @@ Using Docker secrets, username and password information are secured when transmi
 version: '3.6'
 services:
     bootstrap:
-      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      image: marklogic-centos/marklogic-server-centos:11.0.0-centos-1.0.0
       hostname: bootstrap
       dns_search: ""
       environment:
@@ -497,7 +497,7 @@ services:
       networks:
       - external_net
     node2:
-      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      image: marklogic-centos/marklogic-server-centos:11.0.0-centos-1.0.0
       hostname: node2
       dns_search: ""
       environment:
@@ -525,7 +525,7 @@ services:
       networks:
       - external_net
     node3:
-      image: marklogic-centos/marklogic-server-centos:10.0-9.1-n
+      image: marklogic-centos/marklogic-server-centos:11.0.0-centos-1.0.0
       hostname: node3
       dns_search: ""
       environment:
@@ -698,7 +698,7 @@ When you complete these steps, you will have multiple containers; one on each VM
 MarkLogic has extensive documentation about upgrades, see [https://docs.marklogic.com/guide/relnotes/chap2](https://docs.marklogic.com/guide/relnotes/chap2). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.marklogic.com/guide/admin/rolling-upgrades](https://docs.marklogic.com/guide/admin/rolling-upgrades) if you need to upgrade with zero downtime.
 
 To upgrade MarkLogic Docker from release 10.x to the latest release, perform following steps:
-Note: In the below example, we are upgrading the container to marklogic-server:10.0-9.1-centos-1.0.0.
+Note: In the below example, we are upgrading the container to marklogic-server:11.0.0-centos-1.0.0.
 
 1. Stop the MarkLogic Docker container.
 Use following command to stop the container:
@@ -714,7 +714,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-    marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0
+    marklogicdb/marklogic-db:11.0.0-centos-1.0.0
 ```
 3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
 4. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
@@ -732,7 +732,7 @@ $ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-     marklogicdb/marklogic-db:10.0-9.1-centos-1.0.0
+     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
 ```
 The /space mounted on the Docker volume can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
 

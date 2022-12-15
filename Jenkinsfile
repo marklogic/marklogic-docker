@@ -280,7 +280,7 @@ pipeline {
     }
     triggers {
         parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % ML_SERVER_BRANCH=develop-10.0
-                                                        00 04 * * * % ML_SERVER_BRANCH=develop''' : '')
+                                                             00 04 * * * % ML_SERVER_BRANCH=develop-11''' : '')
     }
     environment {
         buildServer = 'distro.marklogic.com'

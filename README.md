@@ -28,7 +28,7 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 
 Note: In order to use the MarkLogic Image you need to request the Developer License. Refer to details on https://developer.marklogic.com/free-developer/ for requesting it.
 
-- All the examples in this readme uses the latest MarkLogic Docker image.
+- All the examples in this readme use the latest MarkLogic Server Docker image.
 - Examples in this document use Docker Engine and Docker CLI to create and manage containers. Follow the documentation for instructions on how to install Docker: see Docker Engine (https://docs.docker.com/engine/)
 - To access the MarkLogic Admin interface and App Servers in our examples, you need a desktop browser. See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/) for a list of supported browsers.
 
@@ -36,8 +36,7 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
 
-- 11.0.0-centos-1.0.1 - This current release of the MarkLogic Server Docker image includes all the features.
-- [Older Supported Tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
+All Supported Tags: [https://hub.docker.com/r/marklogicdb/marklogic-db/tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
 
 # Architecture reference
 
@@ -46,8 +45,6 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 Supported Docker architectures: x86_64
 
 Base OS: CentOS
-
-Latest supported MarkLogic Server version: 11.0.0
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/marklogicdb/marklogic-db
 

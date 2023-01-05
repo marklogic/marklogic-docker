@@ -43,9 +43,9 @@ Initialized MarkLogic container with admin password containing special character
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
   Verify response for unauthenticated request with  8002  *Unauthorized*
-  Verify response for authenticated request with special characters password  8000  *Query Console*
-  Verify response for authenticated request with special characters password  8001  *No license key has been entered*
-  Verify response for authenticated request with special characters password  8002  *Monitoring Dashboard*
+  Verify response for authenticated request with  8000  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8001  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
   [Teardown]  Delete container
 
 Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE

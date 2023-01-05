@@ -145,14 +145,14 @@ Check response message without credentials
   Should Match  ${response.text}  ${pattern}  msg=Response from server did not include ${pattern} on port ${port}
 
 Verify response for authenticated request with
-  [Arguments]  ${port}  ${pattern}
+  [Arguments]  ${port}  ${pattern}  ${password}=${DEFAULT ADMIN PASS}
   [Documentation]  Wrapper keyword that retries Check response message with credentials
-  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check response message with credentials  ${port}  ${pattern}
+  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check response message with credentials  ${port}  ${pattern}  ${password}
 
 Check response message with credentials
-  [Arguments]  ${port}  ${pattern}
+  [Arguments]  ${port}  ${pattern}  ${password}
   [Documentation]  Sends GET request with credentials and looks for a matching pattern in response
-  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${password}
   ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}
   ${response}=  GET On Session  RestSession  url=http://localhost:${port}  expected_status=Anything
   Should Match  ${response.text}  ${pattern}  msg=Response from server did not include ${pattern} on port ${port}

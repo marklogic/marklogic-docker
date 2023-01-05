@@ -81,9 +81,9 @@ Example run:
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \ 
      -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME=admin \
-     -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
-     marklogicdb/marklogic-db
+     -e MARKLOGIC_ADMIN_USERNAME='admin' \
+     -e MARKLOGIC_ADMIN_PASSWORD='Areally!PowerfulPassword1337' \
+     marklogicdb/marklogic-db:10.0-9.5-centos-1.0.0
 ```
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 

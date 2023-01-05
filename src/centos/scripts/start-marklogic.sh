@@ -220,7 +220,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
 
     # Make sure username and password variables are not empty
     if [[ -z "${ML_ADMIN_USERNAME}" ]] || [[ -z "${ML_ADMIN_PASSWORD}" ]]; then
-        error "ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set." exit
+        error "MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD must be set." exit
     fi
 
     # generate JSON payload conditionally with license details.
@@ -263,8 +263,8 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         TIMESTAMP=$(curl -s --anyauth "http://${HOSTNAME}:8001/admin/v1/timestamp")
 
         curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null \
-            -X POST -H \"Content-type:application/x-www-form-urlencoded\" \
-            -d \"admin-username=${ML_ADMIN_USERNAME}\" -d \"admin-password=${ML_ADMIN_PASSWORD}\" \
+            -X POST -H \"Content-type:application/x-www-form-urlencoded; charset=utf-8\" \
+            -d \"admin-username=${ML_ADMIN_USERNAME}\" --data-urlencode \"admin-password=${ML_ADMIN_PASSWORD}\" \
             -d \"realm=${ML_REALM}\" -d \"${ML_WALLET_PASSWORD_PAYLOAD}\""
 
         restart_check "${HOSTNAME}" "${TIMESTAMP}"

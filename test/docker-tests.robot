@@ -52,7 +52,7 @@ Initialized MarkLogic container with license key installed and MARKLOGIC_INIT se
 Initialized MarkLogic container without credentials
   [Tags]  negative
   Create failing container with  -e  MARKLOGIC_INIT=true
-  Docker log should contain  *ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set.*
+  Docker log should contain  *MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD must be set.*
   [Teardown]  Delete container
 
 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER

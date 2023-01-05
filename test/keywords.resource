@@ -157,19 +157,6 @@ Check response message with credentials
   ${response}=  GET On Session  RestSession  url=http://localhost:${port}  expected_status=Anything
   Should Match  ${response.text}  ${pattern}  msg=Response from server did not include ${pattern} on port ${port}
 
-Verify response for authenticated request with special characters password
-  [Arguments]  ${port}  ${pattern}
-  [Documentation]  Wrapper keyword that retries Check response message with credentials
-  Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check response message with password containing special characters  ${port}  ${pattern}
-
-Check response message with password containing special characters
-  [Arguments]  ${port}  ${pattern}
-  [Documentation]  Sends GET request with credentials and looks for a matching pattern in response
-  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${SPEC CHARS ADMIN PASS}
-  ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}
-  ${response}=  GET On Session  RestSession  url=http://localhost:${port}  expected_status=Anything
-  Should Match  ${response.text}  ${pattern}  msg=Response from server did not include ${pattern} on port ${port}
-
 Host count on port ${port} should be ${count}
   [Documentation]  Wrapper keyword that retries Check host count on port ${port} should be ${count}
   Wait Until Keyword Succeeds  ${DOCKER TIMEOUT}  10s  Check host count on port ${port} should be ${count}

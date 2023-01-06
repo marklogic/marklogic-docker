@@ -1,7 +1,7 @@
 #! /bin/bash
 ###############################################################
 #
-#   Copyright 2022 MarkLogic Corporation.  All Rights Reserved.
+#   Copyright 2023 MarkLogic Corporation.  All Rights Reserved.
 #
 ###############################################################
 #   Initialise and start MarkLogic server

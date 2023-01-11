@@ -28,16 +28,15 @@ This README serves as a technical guide for using MarkLogic Docker and MarkLogic
 
 Note: In order to use the MarkLogic Image you need to request the Developer License. Refer to details on https://developer.marklogic.com/free-developer/ for requesting it.
 
+- All the examples in this readme use the latest MarkLogic Server Docker image.
 - Examples in this document use Docker Engine and Docker CLI to create and manage containers. Follow the documentation for instructions on how to install Docker: see Docker Engine (https://docs.docker.com/engine/)
-- In order to get the MarkLogic image from Dockerhub, you need a Dockerhub account. Follow the instruction on [Docker Hub](https://hub.docker.com/signup) to create a Dockerhub account.
 - To access the MarkLogic Admin interface and App Servers in our examples, you need a desktop browser. See "Supported Browsers" in the [support matrix](https://developer.marklogic.com/products/support-matrix/) for a list of supported browsers.
 
 # Supported tags
 
 Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
 
-- 11.0.0-centos-1.0.0 - This current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use
-- [Older Supported Tags](#older-supported-tags)
+All Supported Tags: [https://hub.docker.com/r/marklogicdb/marklogic-db/tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
 
 # Architecture reference
 
@@ -47,13 +46,11 @@ Supported Docker architectures: x86_64
 
 Base OS: CentOS
 
-Latest supported MarkLogic Server version: 11.0.0
-
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/marklogicdb/marklogic-db
 
 # MarkLogic
 
-[MarkLogic](http://www.marklogic.com/) is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, backup, and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster, and for delivering dynamic content at massive scale.
+[MarkLogic Server](http://www.marklogic.com/) is a multi-model database that has both NoSQL and trusted enterprise data management capabilities. It is the most secure multi-model database, and it’s deployable in any environment.
 
 MarkLogic documentation is available at [http://docs.marklogic.com](https://docs.marklogic.com/).
 
@@ -78,15 +75,15 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e REALM={insert authentication realm} \
      -e LICENSE_KEY="{insert license}" \
      -e LICENSEE="{insert licensee}" \
-     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+     marklogicdb/marklogic-db
 ```
 Example run:
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \ 
      -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME=admin \
-     -e MARKLOGIC_ADMIN_PASSWORD=Areally!PowerfulPassword1337 \
-     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+     -e MARKLOGIC_ADMIN_USERNAME='admin' \
+     -e MARKLOGIC_ADMIN_PASSWORD='Areally!PowerfulPassword1337' \
+     marklogicdb/marklogic-db
 ```
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
@@ -97,7 +94,7 @@ To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docke
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+     marklogicdb/marklogic-db
 ```
 The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
@@ -131,7 +128,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+     marklogicdb/marklogic-db
 ```
 
 Above command will start a Docker container `MarkLogic_cont_1` running MarkLogic Server and associate the named Docker volume `MarkLogic_vol_1` with it.
@@ -203,7 +200,7 @@ The following environment variables are only useful when building and extending 
 | MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
 | MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to MarkLogic through umask                          |
 
-**IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is new in the marklogicdb/marklogic-db:10.0-7.3-centos-1.0.0-ea image and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.
+**IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is supported in the MarkLogic Docker image marklogicdb/marklogic-db:10.0-7.3-centos-1.0.0-ea onwards and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.
 
 ## Configuring swap space
 
@@ -246,7 +243,7 @@ Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_us
 version: '3.6'
 services:
     bootstrap:
-      image: marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       container_name: bootstrap
       hostname: bootstrap
       dns_search: ""
@@ -331,7 +328,7 @@ The following is an example of a three-node MarkLogic server cluster created usi
 version: '3.6'
 services:
     bootstrap_3n:
-      image: marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       container_name: bootstrap_3n
       hostname: bootstrap_3n
       dns_search: ""
@@ -351,7 +348,7 @@ services:
       networks:
       - external_net
     node2:
-      image: marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       container_name: node2
       hostname: node2
       dns_search: ""
@@ -375,7 +372,7 @@ services:
       networks:
       - external_net
     node3:
-      image: marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       container_name: node3
       hostname: node3
       dns_search: ""
@@ -472,7 +469,7 @@ Using Docker secrets, username and password information are secured when transmi
 version: '3.6'
 services:
     bootstrap:
-      image: marklogic-centos/marklogic-server-centos:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       hostname: bootstrap
       dns_search: ""
       environment:
@@ -497,7 +494,7 @@ services:
       networks:
       - external_net
     node2:
-      image: marklogic-centos/marklogic-server-centos:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       hostname: node2
       dns_search: ""
       environment:
@@ -525,7 +522,7 @@ services:
       networks:
       - external_net
     node3:
-      image: marklogic-centos/marklogic-server-centos:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       hostname: node3
       dns_search: ""
       environment:
@@ -661,7 +658,7 @@ $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
      --dns-search "marklogic.com" \
-     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+     marklogicdb/marklogic-db
 ```
 If successful, the command will output the ID for the new container. Give the container a couple of minutes to get initialized. Continue with the next section to create additional nodes for the cluster.
 
@@ -688,7 +685,7 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
      -e MARKLOGIC_GROUP=dnode \
      --mount src=MarkLogicVol,dst=/var/opt/MarkLogic \
      --network ml-cluster-network \
-     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+     marklogicdb/marklogic-db
 ```
 
 When you complete these steps, you will have multiple containers; one on each VM, and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
@@ -698,7 +695,7 @@ When you complete these steps, you will have multiple containers; one on each VM
 MarkLogic has extensive documentation about upgrades, see [https://docs.marklogic.com/guide/relnotes/chap2](https://docs.marklogic.com/guide/relnotes/chap2). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.marklogic.com/guide/admin/rolling-upgrades](https://docs.marklogic.com/guide/admin/rolling-upgrades) if you need to upgrade with zero downtime.
 
 To upgrade MarkLogic Docker from release 10.x to the latest release, perform following steps:
-Note: In the below example, we are upgrading the container to marklogic-server:11.0.0-centos-1.0.0.
+Note: In the below example, we are upgrading the container to the latest MarkLogic version supported for Docker.
 
 1. Stop the MarkLogic Docker container.
 Use following command to stop the container:
@@ -714,7 +711,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-    marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+    marklogicdb/marklogic-db
 ```
 3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
 4. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
@@ -732,7 +729,7 @@ $ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
-     marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+     marklogicdb/marklogic-db
 ```
 The /space mounted on the Docker volume can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
 
@@ -752,9 +749,9 @@ The following is a set of steps to run to access a container while it is running
 2. Get the container ID for the MarkLogic container running on the machine. To do this, run the following command:
 
 ```
-$ docker container ps --filter ancestor=marklogicdb/marklogic-db:11.0.0-centos-1.0.0 -q
+$ docker container ps --filter ancestor=marklogicdb/marklogic-db -q
 ```
-In this example command `marklogicdb/marklogic-db:11.0.0-centos-1.0.0` is an image ID. Your container ID may be different for your machine.
+In this example command `marklogicdb/marklogic-db` is an image ID. Your container ID may be different for your machine.
 
 Example output:
 
@@ -772,7 +769,7 @@ Here's an example of unfiltered output from that command:
 
 ```
 CONTAINER ID   IMAGE                                                        COMMAND                  CREATED          STATUS          PORTS                                  NAMES
-f484a784d998   marklogicdb/marklogic-db:11.0.0-centos-1.0.0   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002 8000-8002/tcp   vibrant_burnell
+f484a784d998   marklogicdb/marklogic-db   "/usr/local/bin/star…"   16 minutes ago   Up 16 minutes   25/tcp, 7997-7999/tcp, 8003-8010/tcp, 0.0.0.0:8000-8002 8000-8002/tcp   vibrant_burnell
 ```
 
 3. Run a command to access a remote shell on the container.
@@ -863,49 +860,10 @@ If the process is successful, a message saying the node has left the swarm will 
 
 # Known Issues and Limitations
 
-11.0.0-centos-1.0.0
+11.0.0-centos-1.0.1
 
-1. Enabling huge pages for clusters containing single-host, multi-container configurations may lead to failure, due to incorrect memory allocation. MarkLogic recommends that you disable huge pages in such architectures.
-2. Database replication will only work for configurations having a single container per host, with matching hostname.
-3. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
-4. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
-5. MarkLogic Server will default to the UTC timezone.
-6. By default, MarkLogic Server runs as the root user. To run MarkLogic Server as a non-root user, see the following references:
-   1. [https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/start-and-stop-marklogic-server-as-non-root-user)
-   2. [https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user](https://help.marklogic.com/Knowledgebase/Article/View/306/0/pitfalls-running-marklogic-process-as-non-root-user)
-7. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 [CVE-2016-3191](https://nvd.nist.gov/vuln/detail/CVE-2016-3191), [CVE-2015-8385](https://nvd.nist.gov/vuln/detail/CVE-2015-8385) and SQLite [CVE-2019-5827](https://nvd.nist.gov/vuln/detail/CVE-2019-5827). These libraries are included in the CentOS base image and to-date no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server iteself, hence there is no impact or mitigation required.
-
-# Older Supported Tags
-- 9.0-12-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 9.0-12.2-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 9.0-13-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 9.0-13.1-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 9.0-13.2-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-1-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-2-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-3-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-4-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-4.2-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-4.4-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-5-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-5.1-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-5.2-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-6-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-6.1-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-6.2-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-6.4-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-7-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-7.1-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-7.3-dev-centos - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-1-dev-ubi - MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-2-dev-ubi - MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-3-dev-ubi - MarkLogic Developer Docker image, running on Redhat UBI, including all features and is limited to developer use
-- 10.0-7.3-centos-1.0.0-ea - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-8.1-centos-1.0.0-ea2 - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-8.3-centos-1.0.0-ea3 - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-9-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-9.1-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-9.2-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-9.4-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-9.5-centos-1.0.0-ea4 - MarkLogic Developer Docker image includes all features and is limited to developer use
-- 10.0-9.5-centos-1.0.0 - MarkLogic Developer Docker image includes all features and is limited to developer use
+1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
+2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
+3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
+4. MarkLogic Server will default to the UTC timezone.
+5. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 [CVE-2016-3191](https://nvd.nist.gov/vuln/detail/CVE-2016-3191), [CVE-2015-8385](https://nvd.nist.gov/vuln/detail/CVE-2015-8385) and SQLite [CVE-2019-5827](https://nvd.nist.gov/vuln/detail/CVE-2019-5827). These libraries are included in the CentOS base image and to-date no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.

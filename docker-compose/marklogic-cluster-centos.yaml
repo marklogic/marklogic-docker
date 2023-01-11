@@ -2,7 +2,7 @@
 version: '3.6'
 services:
     bootstrap_3n:
-      image: marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       container_name: bootstrap_3n
       hostname: bootstrap_3n
       dns_search: ""
@@ -22,7 +22,7 @@ services:
       networks:
       - external_net
     node2:
-      image: marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       container_name: node2
       hostname: node2
       dns_search: ""
@@ -46,7 +46,7 @@ services:
       networks:
       - external_net
     node3:
-      image: marklogicdb/marklogic-db:11.0.0-centos-1.0.0
+      image: marklogicdb/marklogic-db
       container_name: node3
       hostname: node3
       dns_search: ""

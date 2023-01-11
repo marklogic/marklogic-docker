@@ -5,14 +5,16 @@
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
 
-emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com'
+// email list for scheduled builds (includes security vulnerability)
+emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com, Barkha.Choithani@marklogic.com, Fayez.Saliba@marklogic.com, Sumanth.Ravipati@marklogic.com, Peng.Zhou@marklogic.com'
+// email list for security vulnerabilities only
+emailSecList = 'Rangan.Doreswamy@marklogic.com, Mahalakshmi.Srinivasan@marklogic.com'
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 JIRA_ID = ''
 JIRA_ID_PATTERN = /CLD-\d{3,4}/
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_INFO = 0
-
 // Define local funtions
 void preBuildCheck() {
     // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
@@ -110,7 +112,7 @@ void resultNotification(message) {
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
         jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${JIRA_ID}"
     } else {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
@@ -119,6 +121,8 @@ void resultNotification(message) {
 String getServerVersion(branchName) {
     switch (branchName) {
         case 'develop':
+            return '12.0'
+        case 'develop-11':
             return '11.0'
         case 'develop-10.0':
             return '10.0'
@@ -131,18 +135,24 @@ String getServerVersion(branchName) {
 
 void copyRPMs() {
     timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
+    if (buildServerVersion == "11.0" || buildServerVersion == "12.0") {
+        RPMsuffix = ".${timeStamp}-rhel"
+    }
+    else {
+        RPMsuffix = "-${timeStamp}"
+    }
     sh """
         cd src/centos
         if [ -z ${env.ML_RPM} ]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break
@@ -161,14 +171,14 @@ void copyRPMs() {
         fi
     if [ -z ${env.ML_CONVERTERS}]; then
             unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
             if [ ! -z \$RETCODE ]; then
                 count_iter=75
                 while [ \$count_iter -gt 0 ] ; do
                     unset RETCODE
                     echo "WARN : unable to copy package!! retrying after 5 mins"
                     sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}-${timeStamp}.x86_64.rpm . || RETCODE=\$?
+                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
                     if [ -z \$RETCODE ] ; then
                         echo "INFO" "Successfully copied package"
                         break
@@ -189,7 +199,7 @@ void copyRPMs() {
     script {
         RPM = sh(returnStdout: true, script: 'cd src/centos;file MarkLogic-*.rpm | cut -d: -f1').trim()
         CONVERTERS = sh(returnStdout: true, script: 'cd src/centos;file MarkLogicConverters-*.rpm | cut -d: -f1').trim()
-        mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' ").trim()
+        mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' | awk -F \"-rhel\"  '{print \$1;}' ").trim()
     }
 }
 
@@ -199,7 +209,7 @@ void structureTests() {
         #insert current version
         sed -i -e 's^VERSION_PLACEHOLDER^${mlVersion}-${env.platformString}-${env.dockerVersion}^g' -e 's^BRANCH_PLACEHOLDER^${env.BRANCH_NAME}^g' ./structure-test.yaml
         cd ..
-        curl -s -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.11.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
         make structure-test version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
@@ -236,7 +246,7 @@ void scan() {
 
     SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
     if (SCAN_OUTPUT.size()) {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${params.emailList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
     sh '''rm -f scan-server-image.txt'''
@@ -270,7 +280,8 @@ pipeline {
     }
     triggers {
         parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % ML_SERVER_BRANCH=develop-10.0
-                                                        00 04 * * * % ML_SERVER_BRANCH=develop''' : '')
+                                                             00 04 * * * % ML_SERVER_BRANCH=develop-11
+                                                             00 05 * * * % ML_SERVER_BRANCH=develop''' : '')
     }
     environment {
         buildServer = 'distro.marklogic.com'
@@ -284,9 +295,9 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '1.0.0', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '1.0.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
-        choice(name: 'ML_SERVER_BRANCH', choices: 'develop-10.0\ndevelop\ndevelop-9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
+        choice(name: 'ML_SERVER_BRANCH', choices: 'develop-11\ndevelop\ndevelop-10.0\ndevelop-9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')

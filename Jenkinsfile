@@ -253,13 +253,31 @@ void scan() {
 }
 
 void publishToInternalRegistry() {
+    publishTag="${mlVersion}-${env.platformString}-${env.dockerVersion}"
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
-            make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
+            make push-mlregistry version=${publishTag}
         """
-        currentBuild.description = "Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}" 
+        
     }
+    // Publish to private ECR repository that is used by the performance team. (only ML11)
+    if ( params.ML_SERVER_BRANCH == "develop-11" ) {
+        withCredentials( [[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: "aws-engineering-ct-ecr",
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+            ]]) {
+                sh """
+                    aws ecr get-login --no-include-email --region us-west-2 | bash
+                    docker tag marklogic-centos/marklogic-server-centos:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+                """
+            }
+    }
+
+    currentBuild.description = "Publish ${publishTag}" 
 }
 
 void publishTestResults() {

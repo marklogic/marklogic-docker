@@ -1,7 +1,7 @@
 version?=10-internal
 package?=MarkLogic.rpm
 REPONAME=marklogic-centos
-repoDir="marklogic"
+repoDir=marklogic
 docker_build_options=--compress
 test_image?=ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
 build_branch?=local

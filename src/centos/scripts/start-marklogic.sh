@@ -45,6 +45,7 @@ done
 ###############################################################
 # Set Hostname to the value of hostname command to /etc/marklogic.conf when MARKLOGIC_FQDN_SUFFIX is set.
 ###############################################################
+HOST_FQDN="${HOSTNAME}"
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
     echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
@@ -256,7 +257,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     # Only call /v1/instance-admin if host is bootstrap/standalone host
-    if [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
+    if [[ "${HOST_FQDN}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         info "Installing admin username and password, and initialize the security database and objects."
 
         # Get last restart timestamp directly before instance-admin call to verify restart after
@@ -282,7 +283,7 @@ fi
 ################################################################
 if [[ -f /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
-elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
+elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOST_FQDN}" != "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true and join conditions are met, joining host to the cluster."
     
     if [[ -z "${MARKLOGIC_GROUP}" ]]; then
@@ -314,7 +315,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOSTNAME}" != "${MARKL
     rm -f host.xml
     rm -f cluster.zip
     sudo touch /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER
-elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]] || [[ "${HOSTNAME}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
+elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]] || [[ "${HOST_FQDN}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else
     error "MARKLOGIC_JOIN_CLUSTER must be true or false." exit

@@ -34,7 +34,15 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 # Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
+MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
+
+We also maintain the following tags for the latest releases:
+- "latest" refers to the latest supported version of MarkLogic
+- "latest-11" refers to the latest version of MarkLogic 11 (e.g. 11.1.2)
+- "latest-11.0" refers to the latest version of MarkLogic 11.0 (e.g. 11.0.2)
+- "latest-10" refers to the latest version of MarkLogic 10 (e.g. 10.1-9.7)
+- "latest-10.0" refers to the latest version of MarkLogic 10.0 (e.g. 10.0-9)
+- "latest-10.0-9" refers to the latest version of MarkLogic 10.0-9 (e.g. 10.0-9.2)
 
 All Supported Tags: [https://hub.docker.com/r/marklogicdb/marklogic-db/tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
 
@@ -859,8 +867,6 @@ docker swarm leave --force
 If the process is successful, a message saying the node has left the swarm will be displayed.
 
 # Known Issues and Limitations
-
-11.0.0-centos-1.0.1
 
 1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).

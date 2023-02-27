@@ -37,12 +37,12 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
 
 We also maintain the following tags for the latest releases:
-- "latest" refers to the latest supported version of MarkLogic
-- "latest-11" refers to the latest version of MarkLogic 11 (e.g. 11.1.2)
-- "latest-11.0" refers to the latest version of MarkLogic 11.0 (e.g. 11.0.2)
-- "latest-10" refers to the latest version of MarkLogic 10 (e.g. 10.1-9.7)
-- "latest-10.0" refers to the latest version of MarkLogic 10.0 (e.g. 10.0-9)
-- "latest-10.0-9" refers to the latest version of MarkLogic 10.0-9 (e.g. 10.0-9.2)
+"latest" refers to the latest release of MarkLogic
+"latest-11" refers to the latest release of MarkLogic 11 (e.g. 11.1.2)
+"latest-11.0" refers to the latest patch release of MarkLogic 11.0 (e.g. 11.0.2)
+"latest-10" refers to the latest release of MarkLogic 10 (e.g. 10.1-9.7)
+"latest-10.0" refers to the latest maintenance release of MarkLogic 10.0 (e.g. 10.0-9)
+"latest-10.0-9" refers to the latest patch release of MarkLogic 10.0-9 (e.g. 10.0-9.2)
 
 All Supported Tags: [https://hub.docker.com/r/marklogicdb/marklogic-db/tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
 

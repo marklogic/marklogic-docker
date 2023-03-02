@@ -860,8 +860,6 @@ If the process is successful, a message saying the node has left the swarm will 
 
 # Known Issues and Limitations
 
-11.0.0-centos-1.0.1
-
 1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.

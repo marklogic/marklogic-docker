@@ -253,13 +253,31 @@ void scan() {
 }
 
 void publishToInternalRegistry() {
+    publishTag="${mlVersion}-${env.platformString}-${env.dockerVersion}"
     withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
-            make push-mlregistry version=${mlVersion}-${env.platformString}-${env.dockerVersion}
+            make push-mlregistry version=${publishTag}
         """
-        currentBuild.description = "Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}" 
+        
     }
+    // Publish to private ECR repository that is used by the performance team. (only ML11)
+    if ( params.ML_SERVER_BRANCH == "develop-11" ) {
+        withCredentials( [[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: "aws-engineering-ct-ecr",
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+            ]]) {
+                sh """
+                    aws ecr get-login --no-include-email --region us-west-2 | bash
+                    docker tag marklogic-centos/marklogic-server-centos:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+                """
+            }
+    }
+
+    currentBuild.description = "Publish ${publishTag}" 
 }
 
 void publishTestResults() {
@@ -295,7 +313,7 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '1.0.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '1.0.2', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
         choice(name: 'ML_SERVER_BRANCH', choices: 'develop-11\ndevelop\ndevelop-10.0\ndevelop-9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)

@@ -6,7 +6,7 @@
 import groovy.json.JsonSlurperClassic
 
 // email list for scheduled builds (includes security vulnerability)
-emailList = 'vkorolev@marklogic.com, irosenba@marklogic.com, Barkha.Choithani@marklogic.com, Fayez.Saliba@marklogic.com, Sumanth.Ravipati@marklogic.com, Peng.Zhou@marklogic.com'
+emailList = 'vkorolev@marklogic.com, Barkha.Choithani@marklogic.com, Fayez.Saliba@marklogic.com, Sumanth.Ravipati@marklogic.com, Peng.Zhou@marklogic.com'
 // email list for security vulnerabilities only
 emailSecList = 'Rangan.Doreswamy@marklogic.com, Mahalakshmi.Srinivasan@marklogic.com'
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
@@ -90,7 +90,6 @@ def getReviewState() {
     }
     def jsonObj = new JsonSlurperClassic().parseText(commitHash.toString().trim())
     def commitId = jsonObj.head.sha
-    println(commit_id)
     def reviewState = getReviewStateOfPR reviewResponse, 2, commitId
     echo reviewState
     return reviewState
@@ -216,13 +215,6 @@ void structureTests() {
     """
 }
 
-void serverRegressionTests() {
-    //TODO: run this conditionally for develop and master branches only
-    echo 'Server regression tests would execute here'
-// The following can be uncommented to show an interactive prompt for manual regresstion tests
-// input "Server regression tests need to be executed manually. "
-}
-
 void lint() {
     IMAGE_INFO = sh(returnStdout: true, script: 'docker  images | grep \"marklogic-server-centos\"')
 
@@ -321,7 +313,6 @@ pipeline {
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
-        booleanParam(name: 'SERVER_REGRESSION', defaultValue: true, description: 'Run server regression tests')
     }
 
     stages {
@@ -370,15 +361,6 @@ pipeline {
             }
             steps {
                 sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
-            }
-        }
-
-        stage('Run-Server-Regression-Tests') {
-            when {
-                expression { return params.SERVER_REGRESSION }
-            }
-            steps {
-                serverRegressionTests()
             }
         }
 

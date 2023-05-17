@@ -123,6 +123,17 @@ Single node compose example
   Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
+Single node compose example to verify manage appserver is ready for API calls
+  Start compose from  ./compose-test-2.yaml
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*
+  Host count on port 7102 should be 1
+  [Teardown]  Delete compose from  ./compose-test-2.yaml
+
 Three node compose example
   Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*

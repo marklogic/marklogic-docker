@@ -322,10 +322,14 @@ else
 fi
 
 ################################################################
-# mark the node ready
+# check if manage appserver is available and mark the node ready
 ################################################################
-info "Cluster config complete, marking this node as ready."
-sudo touch /var/opt/MarkLogic/ready
+curl_retry_validate "http://${HOSTNAME}:8002/manage/v2" 200 "-o /dev/null -X GET --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\"" true
+HOST_RESP_CODE=$?
+if [[ "${HOST_RESP_CODE}" -eq 200 ]]; then
+    sudo touch /var/opt/MarkLogic/ready
+    info "Cluster config complete, marking this node as ready."
+fi
 
 ################################################################
 # tail /dev/null to keep container active

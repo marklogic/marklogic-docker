@@ -188,7 +188,7 @@ SECRET_PWD_FILE="/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}"
 SECRET_WALLET_PWD_FILE="/run/secrets/${MARKLOGIC_WALLET_PASSWORD_FILE}"
 
 if [[ -f "${SECRET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_PWD_FILE}")" ]]; then
-    info "MARKLOGIC_ADMIN_PASSWORD_FILE is set, using Docker secrets for admin password."
+    info "MARKLOGIC_ADMIN_PASSWORD_FILE is set, using file as secret for admin password."
     ML_ADMIN_PASSWORD=$(<"${SECRET_PWD_FILE}")
 else
     info "MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password."
@@ -196,7 +196,7 @@ else
 fi
 
 if [[ -f "${SECRET_USR_FILE}" ]] && [[ -n "$(<"${SECRET_USR_FILE}")" ]]; then
-    info "MARKLOGIC_ADMIN_USERNAME_FILE is set, using Docker secrets for admin username."
+    info "MARKLOGIC_ADMIN_USERNAME_FILE is set, using file as secret for admin username."
     ML_ADMIN_USERNAME=$(<"${SECRET_USR_FILE}")
 else
     info "MARKLOGIC_ADMIN_USERNAME is set, using ENV for admin username."
@@ -204,7 +204,7 @@ else
 fi
 
 if [[ -f "${SECRET_WALLET_PWD_FILE}" ]] && [[ -n "$(<"${SECRET_WALLET_PWD_FILE}")" ]]; then
-    info "MARKLOGIC_WALLET_PASSWORD_FILE is set, using Docker secrets for wallet-password."
+    info "MARKLOGIC_WALLET_PASSWORD_FILE is set, using file as secret for wallet-password."
     ML_WALLET_PASSWORD=$(<"${SECRET_WALLET_PWD_FILE}")
 else
     info "MARKLOGIC_WALLET_PASSWORD is set, using ENV for wallet-password."

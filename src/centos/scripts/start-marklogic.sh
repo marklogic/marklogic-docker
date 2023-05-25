@@ -33,6 +33,11 @@ log () {
 }
 
 ###############################################################
+# removing MarkLogic ready file and create it when 8001 is accessible on node
+###############################################################
+rm -f /var/opt/MarkLogic/ready
+
+###############################################################
 # Prepare script
 ###############################################################
 info "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
@@ -324,18 +329,12 @@ fi
 ################################################################
 # check if manage appserver is available and mark the node ready
 ################################################################
-if [[ "${MARKLOGIC_INIT}" == "true" ]]; then
-    curl_retry_validate "http://${HOSTNAME}:8002/manage/v2" 200 "-o /dev/null -X GET --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\"" true
-    HOST_RESP_CODE=$?
-    if [[ "${HOST_RESP_CODE}" -eq 200 ]]; then
-        sudo touch /var/opt/MarkLogic/ready
-        info "Cluster config complete, marking this node as ready."
-    fi
-else
+curl_retry_validate "http://localhost:8001" 200 "-o /dev/null -X GET --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\"" true
+HOST_RESP_CODE=$? 
+if [[ "${HOST_RESP_CODE}" -eq 200 ]]; then
     sudo touch /var/opt/MarkLogic/ready
     info "Cluster config complete, marking this node as ready."
 fi
-
 ################################################################
 # tail /dev/null to keep container active
 ################################################################

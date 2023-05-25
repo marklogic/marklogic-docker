@@ -262,6 +262,8 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     # Only call /v1/instance-admin if host is bootstrap/standalone host
+    # First condition is to make sure request from k8s initializes bootstrap host as MARKLOGIC_JOIN_CLUSTER is true for all nodes and,
+    # second condition is for docker request where MARKLOGIC_JOIN_CLUSTER not true means it's a bootstrap host and it should be initialized.
     if [[ "${HOST_FQDN}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         info "Installing admin username and password, and initialize the security database and objects."
 
@@ -313,9 +315,14 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOST_FQDN}" != "${MARK
         -H \"Content-type: application/x-www-form-urlencoded\" \
         -o cluster.zip"
 
+    # Get last restart timestamp directly before cluster-config call to verify restart after
+    TIMESTAMP=$(curl -s --anyauth "http://${HOSTNAME}:8001/admin/v1/timestamp")
+
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
          -X POST -H \"Content-type: application/zip\" \
         --data-binary @./cluster.zip"
+    
+    restart_check ${HOSTNAME} ${TIMESTAMP}
 
     rm -f host.xml
     rm -f cluster.zip
@@ -329,12 +336,9 @@ fi
 ################################################################
 # check if manage appserver is available and mark the node ready
 ################################################################
-curl_retry_validate "http://localhost:8001" 200 "-o /dev/null -X GET --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\"" true
-HOST_RESP_CODE=$? 
-if [[ "${HOST_RESP_CODE}" -eq 200 ]]; then
-    sudo touch /var/opt/MarkLogic/ready
-    info "Cluster config complete, marking this node as ready."
-fi
+sudo touch /var/opt/MarkLogic/ready
+info "Cluster config complete, marking this node as ready."
+
 ################################################################
 # tail /dev/null to keep container active
 ################################################################

@@ -322,7 +322,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOST_FQDN}" != "${MARK
          -X POST -H \"Content-type: application/zip\" \
         --data-binary @./cluster.zip"
     
-    restart_check ${HOSTNAME} ${TIMESTAMP}
+    restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     rm -f host.xml
     rm -f cluster.zip

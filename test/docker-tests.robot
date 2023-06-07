@@ -121,7 +121,7 @@ Single node compose example
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
-  Host count on port 7102 should be 1
+  Host count on port 8002 should be 1
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
 Three node compose example

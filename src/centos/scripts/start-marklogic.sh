@@ -262,8 +262,8 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     # Only call /v1/instance-admin if host is bootstrap/standalone host
-    # First condition is to make sure request from k8s initializes bootstrap host as MARKLOGIC_JOIN_CLUSTER is true for all nodes and,
-    # second condition is for docker request where MARKLOGIC_JOIN_CLUSTER not true means it's a bootstrap host and it should be initialized.
+    # first condition is to make sure bootstrap host installs security db even when MARKLOGIC_JOIN_CLUSTER is true
+    # second condition is for request where MARKLOGIC_JOIN_CLUSTER is not true, considering it's a bootstrap host
     if [[ "${HOST_FQDN}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         info "Installing admin username and password, and initialize the security database and objects."
 
@@ -334,7 +334,7 @@ else
 fi
 
 ################################################################
-# check if manage appserver is available and mark the node ready
+# check if node is available and mark it ready
 ################################################################
 curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/timestamp" 200 "-o /dev/null -X GET --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\"" true
 HOST_RESP_CODE=$?

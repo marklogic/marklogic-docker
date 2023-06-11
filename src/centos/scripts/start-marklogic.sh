@@ -336,12 +336,19 @@ fi
 ################################################################
 # check if node is available and mark it ready
 ################################################################
-curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/timestamp" 200 "-o /dev/null -X GET --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\"" true
-HOST_RESP_CODE=$?
-if [[ ${HOST_RESP_CODE} -eq 200 ]]; then
-    sudo touch /var/opt/MarkLogic/ready
-    info "Cluster config complete, marking this node as ready."
-fi
+HOST_RESP_CODE=""
+while true 
+do
+    HOST_RESP_CODE=$(curl http://${HOSTNAME}:8001/admin/v1/timestamp -X GET -o /dev/null -s -w "%{http_code}\n" --anyauth --user ${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD})
+    if [ $HOST_RESP_CODE -eq 200 ]; then
+        sudo touch /var/opt/MarkLogic/ready
+        info "Cluster config complete, marking this node as ready."
+        break
+    else
+        info "MarkLogic not ready yet, retrying."
+        sleep 5
+    fi
+done
 
 ################################################################
 # tail /dev/null to keep container active

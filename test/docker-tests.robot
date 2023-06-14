@@ -162,6 +162,40 @@ Two node compose example with node joining enode group
   [Teardown]  Run keywords  
   ...  Delete compose from  ./compose-test-6.yaml
   ...  AND  Delete compose from  ./compose-test-7.yaml
+
+Two node compose example with bootstrap node joining trying to itself
+  Start compose from  ./compose-test-8.yaml
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*HOST cannot join itself, skipped joining cluster.*
+  Host count on port 7102 should be 1
+  [Teardown]  Delete compose from  ./compose-test-8.yaml
+  
+Two node compose example with incorrect bootstrap host name
+  Start compose from  ./compose-test-9.yaml
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*Bootstrap host node1 not found. Please verify the configuration, exiting*
+  Host count on port 7102 should be 1
+  [Teardown]  Delete compose from  ./compose-test-9.yaml
   
 Two node compose with credentials in env and verify restart logic
   Start compose from  ./compose-test-3.yaml

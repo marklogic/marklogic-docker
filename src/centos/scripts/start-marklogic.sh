@@ -316,7 +316,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOST_FQDN}" != "${MARK
         -o cluster.zip"
 
     # Get last restart timestamp directly before cluster-config call to verify restart after
-    TIMESTAMP=$(curl -s --anyauth "http://${HOSTNAME}:8001/admin/v1/timestamp")
+    TIMESTAMP=$(curl -s "http://${HOSTNAME}:8001/admin/v1/timestamp")
 
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
          -X POST -H \"Content-type: application/zip\" \
@@ -336,7 +336,6 @@ fi
 ################################################################
 # check if node is available and mark it ready
 ################################################################
-HOST_RESP_CODE=""
 while true 
 do
     HOST_RESP_CODE=$(curl http://"${HOSTNAME}":8001/admin/v1/timestamp -X GET -o /dev/null -s -w "%{http_code}\n" --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")

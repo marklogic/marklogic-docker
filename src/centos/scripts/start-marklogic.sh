@@ -127,14 +127,13 @@ RETRY_INTERVAL=10
 # Returns 0 if restart is detected, exits with an error if not.
 ################################################################
 function restart_check {
-    local retry_count=0
     info "Waiting for MarkLogic to restart."
+    local retry_count LAST_START
     LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
-    while [ $retry_count -lt $N_RETRY ]; do
+    for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
         if [ "$2" == "${LAST_START}" ] || [ -z "${LAST_START}" ]; then
             sleep ${RETRY_INTERVAL}
             LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
-            retry_count=$((retry_count + 1))
         else
             info "MarkLogic has restarted."
             return 0
@@ -157,43 +156,42 @@ function restart_check {
 #   $3 :  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
-    local return_response_code="${4:-false}"
-    local retry_count=0
-    while true; do
+    local retry_count
+    for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
         request="curl -m 30 -s -w '%{http_code}' $3 $1"
         response_code=$(eval "${request}")
         if [[ ${response_code} -eq $2 ]]; then
-            break
-        else
-            retry_count=$((retry_count + 1))
-            if [[ $retry_count -ge $N_RETRY ]]; then
-                if [[ "${return_response_code}" = "true" ]]; then
-                    return "${response_code}"
-                else
-                    error "Expected response code ${2}, got ${response_code} from ${1}." exit
-                fi
-            fi
-            sleep ${RETRY_INTERVAL}
+            return 0
         fi
+        sleep ${RETRY_INTERVAL}
     done
 
-    return "${response_code}"
+    error "Expected response code ${2}, got ${response_code} from ${1}." exit
 }
 
 ################################################################
-# Validates MarkLogic bootstrap host
+# Fetches host id
+# input:  $1:     host name
+################################################################
+function get_host_id {
+    local hostname=$1
+    local host_id=""
+    host_id=$(curl --anyauth -u "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 50 -s --retry 5 -X GET http://"${hostname}":8001/admin/v1/server-config | grep "host-id" | sed 's%^.*<host-id.*>\(.*\)</host-id>.*$%\1%')
+    echo ${host_id}
+}
+
+################################################################
+# Verifies MarkLogic bootstrap host status
 # input:  $1:        MarkLogic Bootstrap Host
 # returns valid:     if it's a valid MarkLogic bootstrap host
 #         invalid:   if it's not a valid MarkLogic bootstrap host
 #         localhost: if bootstrap host is the localhost
 ################################################################
-function validate_bootstrap {
+function verify_bootstrap_status {
     local bootsrap_host=$1
-    localhost_id=$(curl --anyauth -u "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 30 -s --retry 5 -X GET http://localhost:8001/admin/v1/server-config | grep "host-id" | sed 's%^.*<host-id.*>\(.*\)</host-id>.*$%\1%')
-    bootstrap_id=$(curl --anyauth -u "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 30 -s --retry 5 -X GET http://"${bootsrap_host}":8001/admin/v1/server-config | grep "host-id" | sed 's%^.*<host-id.*>\(.*\)</host-id>.*$%\1%')
-    if [[ $bootstrap_id == "" ]]; then
+    if [ "$(get_host_id "${bootsrap_host}")" == "" ]; then
         echo "invalid"
-    elif [[ "$localhost_id" == "$bootstrap_id" ]]; then
+    elif [ "$(get_host_id "${bootsrap_host}")" == "$(get_host_id "localhost")" ]; then
         echo "localhost"
     else
         echo "valid"
@@ -290,10 +288,10 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     # Check if bootstrap is the localhost to install security database when MARKLOGIC_JOIN_CLUSTER=true
-    CHECK_BOOTSTRAP=$(validate_bootstrap "${MARKLOGIC_BOOTSTRAP_HOST}")
-
+    BOOTSTRAP_STATUS=$(verify_bootstrap_status "${MARKLOGIC_BOOTSTRAP_HOST}")
+    
     # Only call /v1/instance-admin if host is bootstrap/standalone host
-    if [[ "${CHECK_BOOTSTRAP}" == "localhost" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
+    if [[ "${BOOTSTRAP_STATUS}" == "localhost" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         info "Installing admin username and password, and initialize the security database and objects."
 
         # Get last restart timestamp directly before instance-admin call to verify restart after
@@ -307,7 +305,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         restart_check "${HOSTNAME}" "${TIMESTAMP}"
     fi
 
-    sudo touch /var/opt/MarkLogic/DOCKER_INIT
+    sudo touch /var/o pt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
     info "MARKLOGIC_INIT is set to false or not defined, not initializing."
 else
@@ -321,16 +319,15 @@ if [[ -f /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
      # Validate bootsrap host before joining cluster
-    CHECK_BOOTSTRAP=$(validate_bootstrap "${MARKLOGIC_BOOTSTRAP_HOST}")  
-
-    if [[ "${CHECK_BOOTSTRAP}" == "valid" ]]; then
+    BOOTSTRAP_STATUS=$(verify_bootstrap_status "${MARKLOGIC_BOOTSTRAP_HOST}")
+    
+    if [[ "${BOOTSTRAP_STATUS}" == "valid" ]]; then
         info "MARKLOGIC_JOIN_CLUSTER is true and join conditions are met, joining host to the cluster."
         if [[ -z "${MARKLOGIC_GROUP}" ]]; then
             info "MARKLOGIC_GROUP is not specified, adding host to the Default group."
             MARKLOGIC_GROUP_PAYLOAD=\"group=Default\"
         else
-            curl_retry_validate "http://${MARKLOGIC_BOOTSTRAP_HOST}:8002/manage/v2/groups/${MARKLOGIC_GROUP}" 200 "-X GET -o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\"" true
-                GROUP_RESP_CODE=$?
+            GROUP_RESP_CODE=$(curl --anyauth -u "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -s --retry 5 -m 50 -o /dev/null -w '%{http_code}' -X GET http://"${MARKLOGIC_BOOTSTRAP_HOST}":8002/manage/v2/groups/"${MARKLOGIC_GROUP}")
             if [[ ${GROUP_RESP_CODE} -eq 200 ]]; then
                 info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
                 MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
@@ -353,13 +350,13 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
         curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
             -X POST -H \"Content-type: application/zip\" \
             --data-binary @./cluster.zip"
-        
+
         restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
         rm -f host.xml
         rm -f cluster.zip
         sudo touch /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER
-    elif [[ "${CHECK_BOOTSTRAP}" == "localhost" ]]; then
+    elif [[ "${BOOTSTRAP_STATUS}" == "localhost" ]]; then
         info "HOST cannot join itself, skipped joining cluster."
     else
         error "Bootstrap host $MARKLOGIC_BOOTSTRAP_HOST not found. Please verify the configuration, exiting." exit

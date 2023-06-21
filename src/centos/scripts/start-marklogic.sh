@@ -305,7 +305,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         restart_check "${HOSTNAME}" "${TIMESTAMP}"
     fi
 
-    sudo touch /var/o pt/MarkLogic/DOCKER_INIT
+    sudo touch /var/opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
     info "MARKLOGIC_INIT is set to false or not defined, not initializing."
 else

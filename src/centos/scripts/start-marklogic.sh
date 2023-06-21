@@ -177,7 +177,7 @@ function get_host_id {
     local hostname=$1
     local host_id=""
     host_id=$(curl --anyauth -u "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" -m 50 -s --retry 5 -X GET http://"${hostname}":8001/admin/v1/server-config | grep "host-id" | sed 's%^.*<host-id.*>\(.*\)</host-id>.*$%\1%')
-    echo ${host_id}
+    echo "${host_id}"
 }
 
 ################################################################

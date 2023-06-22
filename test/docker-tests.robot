@@ -33,6 +33,21 @@ Initialized MarkLogic container
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   [Teardown]  Delete container
 
+Initialized MarkLogic container with admin password containing special characters
+  Create container with  -e  MARKLOGIC_INIT=true
+  ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+  ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${SPEC CHARS ADMIN PASS}
+  Docker log should contain  *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Docker log should contain  *Starting MarkLogic container with ${MARKLOGIC_VERSION} from ${BUILD_BRANCH}*
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8001  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
+  [Teardown]  Delete container
+
 Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE
   Create container with  -e  MARKLOGIC_INIT=TRUE
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
@@ -52,7 +67,7 @@ Initialized MarkLogic container with license key installed and MARKLOGIC_INIT se
 Initialized MarkLogic container without credentials
   [Tags]  negative
   Create failing container with  -e  MARKLOGIC_INIT=true
-  Docker log should contain  *ML_ADMIN_USERNAME and ML_ADMIN_PASSWORD must be set.*
+  Docker log should contain  *MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD must be set.*
   [Teardown]  Delete container
 
 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
@@ -106,6 +121,7 @@ Single node compose example
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
+  Host count on port 8002 should be 1
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
 Three node compose example

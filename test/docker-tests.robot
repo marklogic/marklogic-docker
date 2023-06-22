@@ -163,7 +163,7 @@ Two node compose example with node joining enode group
   ...  Delete compose from  ./compose-test-6.yaml
   ...  AND  Delete compose from  ./compose-test-7.yaml
 
-Two node compose example with bootstrap node joining trying to itself
+Single node compose example with bootstrap node joining trying to itself
   Start compose from  ./compose-test-8.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*
   Verify response for unauthenticated request with  7101  *Unauthorized*

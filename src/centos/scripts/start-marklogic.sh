@@ -336,9 +336,17 @@ fi
 ################################################################
 # check if node is available and mark it ready
 ################################################################
+
+# use latest health check only for version 11 and up
+if [[ "${MARKLOGIC_VERSION}" =~ "10" ]] || [[ "${MARKLOGIC_VERSION}" =~ "9" ]]; then
+    HEALTH_CHECK="7997"
+else 
+     HEALTH_CHECK="7997/LATEST/healthcheck"
+fi
+
 while true 
 do
-    HOST_RESP_CODE=$(curl http://"${HOSTNAME}":8001/admin/v1/timestamp -X GET -o /dev/null -s -w "%{http_code}\n" --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
+    HOST_RESP_CODE=$(curl http://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o /dev/null -s -w "%{http_code}\n")
     if [ "${HOST_RESP_CODE}" -eq 200 ]; then
         sudo touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this node as ready."

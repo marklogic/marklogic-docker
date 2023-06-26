@@ -344,12 +344,18 @@ else
      HEALTH_CHECK="7997/LATEST/healthcheck"
 fi
 
-while true 
+while true
 do
-    HOST_RESP_CODE=$(curl http://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o /dev/null -s -w "%{http_code}\n")
-    if [ "${HOST_RESP_CODE}" -eq 200 ]; then
+    HOST_RESP_CODE=$(curl http://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n")
+    [[ -f host_health.xml ]] && error_message=$(< host_health.xml grep "SEC-DEFAULTUSERDNE")
+    if [[ "${MARKLOGIC_INIT}" == "true" ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
         sudo touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this node as ready."
+        break
+    elif [[ "${MARKLOGIC_INIT}" == "false" ]] && [[ "${error_message}" =~ "SEC-DEFAULTUSERDNE" ]]; then
+        sudo touch /var/opt/MarkLogic/ready
+        info "Cluster config complete, marking this node as ready."
+        rm -f host_health.xml
         break
     else
         info "MarkLogic not ready yet, retrying."

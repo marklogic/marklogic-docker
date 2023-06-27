@@ -33,6 +33,11 @@ log () {
 }
 
 ###############################################################
+# removing MarkLogic ready file and create it when 8001 is accessible on node
+###############################################################
+rm -f /var/opt/MarkLogic/ready
+
+###############################################################
 # Prepare script
 ###############################################################
 info "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
@@ -257,6 +262,8 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     # Only call /v1/instance-admin if host is bootstrap/standalone host
+    # first condition is to make sure bootstrap host installs security db even when MARKLOGIC_JOIN_CLUSTER is true
+    # second condition is for request where MARKLOGIC_JOIN_CLUSTER is not true, considering it's a bootstrap host
     if [[ "${HOST_FQDN}" == "${MARKLOGIC_BOOTSTRAP_HOST}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         info "Installing admin username and password, and initialize the security database and objects."
 
@@ -308,9 +315,14 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]] && [[ "${HOST_FQDN}" != "${MARK
         -H \"Content-type: application/x-www-form-urlencoded\" \
         -o cluster.zip"
 
+    # Get last restart timestamp directly before cluster-config call to verify restart after
+    TIMESTAMP=$(curl -s "http://${HOSTNAME}:8001/admin/v1/timestamp")
+
     curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
          -X POST -H \"Content-type: application/zip\" \
         --data-binary @./cluster.zip"
+    
+    restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
     rm -f host.xml
     rm -f cluster.zip
@@ -322,10 +334,34 @@ else
 fi
 
 ################################################################
-# mark the node ready
+# check if node is available and mark it ready
 ################################################################
-info "Cluster config complete, marking this node as ready."
-sudo touch /var/opt/MarkLogic/ready
+
+# use latest health check only for version 11 and up
+if [[ "${MARKLOGIC_VERSION}" =~ "10" ]] || [[ "${MARKLOGIC_VERSION}" =~ "9" ]]; then
+    HEALTH_CHECK="7997"
+else 
+     HEALTH_CHECK="7997/LATEST/healthcheck"
+fi
+
+while true
+do
+    HOST_RESP_CODE=$(curl http://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n")
+    [[ -f host_health.xml ]] && error_message=$(< host_health.xml grep "SEC-DEFAULTUSERDNE")
+    if [[ "${MARKLOGIC_INIT}" == "true" ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
+        sudo touch /var/opt/MarkLogic/ready
+        info "Cluster config complete, marking this node as ready."
+        break
+    elif [[ "${MARKLOGIC_INIT}" == "false" ]] && [[ "${error_message}" =~ "SEC-DEFAULTUSERDNE" ]]; then
+        sudo touch /var/opt/MarkLogic/ready
+        info "Cluster config complete, marking this node as ready."
+        rm -f host_health.xml
+        break
+    else
+        info "MarkLogic not ready yet, retrying."
+        sleep 5
+    fi
+done
 
 ################################################################
 # tail /dev/null to keep container active

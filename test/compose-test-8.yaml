@@ -1,0 +1,26 @@
+#Docker compose file sample to setup a one node cluster
+version: '3.6'
+services:
+    bootstrap:
+      image: marklogic-centos/marklogic-server-centos:10-internal
+      hostname: bootstrap
+      container_name: bootstrap
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=True
+        - MARKLOGIC_ADMIN_USERNAME=test_admin
+        - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
+        - MARKLOGIC_JOIN_CLUSTER=True
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
+        - TZ=America/Los_Angeles
+      volumes:
+        - MarkLogic_2n_vol1:/var/opt/MarkLogic
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_2n_vol1:

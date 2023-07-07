@@ -312,6 +312,8 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     BOOTSTRAP_STATUS=$(verify_bootstrap_status "${MARKLOGIC_BOOTSTRAP_HOST}")
 
     # Only call /v1/instance-admin if host is bootstrap/standalone host
+    # first condition is to make sure bootstrap host installs security db even when MARKLOGIC_JOIN_CLUSTER is true
+    # second condition is for request where MARKLOGIC_JOIN_CLUSTER is not true, considering it's a bootstrap host
     if [[ "${BOOTSTRAP_STATUS}" == "localhost" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" != "true" ]]; then
         info "Installing admin username and password, and initialize the security database and objects."
 
@@ -372,7 +374,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
         curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
             -X POST -H \"Content-type: application/zip\" \
             --data-binary @./cluster.zip"
-
+    
         restart_check "${HOSTNAME}" "${TIMESTAMP}"
 
         rm -f host.xml

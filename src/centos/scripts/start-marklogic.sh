@@ -53,7 +53,7 @@ done
 HOST_FQDN="${HOSTNAME}"
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
-        echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
 fi
 
 ################################################################

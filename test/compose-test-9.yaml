@@ -1,4 +1,4 @@
-#Docker compose file sample to setup a three node cluster
+#Docker compose file sample to setup a two node cluster
 version: '3.6'
 services:
     bootstrap:
@@ -12,7 +12,7 @@ services:
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
         - TZ=America/Los_Angeles
       volumes:
-        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+        - MarkLogic_2n_vol1:/var/opt/MarkLogic
       ports:
         - 7100-7110:8000-8010
         - 7197:7997
@@ -28,10 +28,11 @@ services:
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
         - MARKLOGIC_JOIN_CLUSTER=True
-        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
+        - MARKLOGIC_BOOTSTRAP_HOST=node1
+        - MARKLOGIC_GROUP=Default
         - TZ=America/Los_Angeles
       volumes:
-        - MarkLogic_3n_vol2:/var/opt/MarkLogic
+        - MarkLogic_2n_vol2:/var/opt/MarkLogic
       ports:
         - 7200-7210:8000-8010
         - 7297:7997
@@ -42,5 +43,5 @@ services:
 networks:
   external_net: {}
 volumes:
-  MarkLogic_3n_vol1:
-  MarkLogic_3n_vol2:
+  MarkLogic_2n_vol1:
+  MarkLogic_2n_vol2:

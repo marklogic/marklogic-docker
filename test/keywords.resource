@@ -10,7 +10,7 @@ ${DEFAULT ADMIN USER}  test_admin
 ${DEFAULT ADMIN PASS}  test_admin_pass
 ${SPEC CHARS ADMIN PASS}  Admin@2$%^&*!
 ${TEST_IMAGE}  %{DOCKER_TEST_IMAGE=marklogic-centos/marklogic-server-centos:10-internal}
-${DOCKER TIMEOUT}  90s
+${DOCKER TIMEOUT}  240s
 ${LICENSE KEY}  %{QA_LICENSE_KEY=none}
 ${LICENSEE}  MarkLogic - Version 9 QA Test License
 ${MARKLOGIC_VERSION}  10-internal

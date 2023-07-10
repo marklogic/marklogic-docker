@@ -28,6 +28,7 @@ services:
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
         - MARKLOGIC_JOIN_CLUSTER=False
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
         - TZ=America/Los_Angeles
       volumes:
         - MarkLogic_3n_vol2:/var/opt/MarkLogic

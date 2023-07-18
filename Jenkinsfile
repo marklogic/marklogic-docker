@@ -6,9 +6,9 @@
 import groovy.json.JsonSlurperClassic
 
 // email list for scheduled builds (includes security vulnerability)
-emailList = 'vkorolev@marklogic.com, Barkha.Choithani@marklogic.com, Fayez.Saliba@marklogic.com, Sumanth.Ravipati@marklogic.com, Peng.Zhou@marklogic.com'
+emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Fayez.Saliba@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com'
 // email list for security vulnerabilities only
-emailSecList = 'Rangan.Doreswamy@marklogic.com, Mahalakshmi.Srinivasan@marklogic.com'
+emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
 gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
 JIRA_ID = ''
 JIRA_ID_PATTERN = /CLD-\d{3,4}/

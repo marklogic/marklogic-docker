@@ -3,6 +3,7 @@ Library   Process
 Library   String
 Library   OperatingSystem
 Library   RequestsLibrary
+Library   Collections
 
 *** Variables ***
 @{DOCKER DEFAULTS}  -it  -d  -p  8000:8000  -p  8001:8001  -p  8002:8002  -p7997:7997
@@ -25,7 +26,7 @@ Create container with
   ${container name}=  Remove spaces from  ${TEST NAME}
   Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}  ${TEST_IMAGE}  stderr=test_results/stderr-${container name}.txt  stdout=test_results/stdout-${container name}.txt  timeout=${DOCKER TIMEOUT}
   File Should Be Empty  test_results/stderr-${container name}.txt
-  Docker log should contain  *Cluster config complete, marking this node as ready.*
+  Docker log should contain  *Cluster config complete, marking this container as ready.*
 
 Create failing container with
   [Arguments]  @{input parameters}
@@ -41,7 +42,7 @@ Create second container with
   ${container name}=  Remove spaces from  ${TEST NAME}
   Run Process  docker  run  @{DOCKER DEFAULTS}  @{input parameters}  --name  ${container name}-2  ${TEST_IMAGE}  stderr=test_results/stderr-${container name}-2.txt  stdout=test_results/stdout-${container name}-2.txt  timeout=${DOCKER TIMEOUT}
   File Should Be Empty  test_results/stderr-${container name}-2.txt
-  Docker log should contain  *Cluster config complete, marking this node as ready.*
+  Docker log should contain  *Cluster config complete, marking this container as ready.*
 
 Delete container
   [Documentation]  Delete Docker container that is named the same as the test case.
@@ -72,7 +73,7 @@ Start compose from
   @{nodes}=  Split to lines  ${result.stdout}
   FOR    ${node}    IN    @{nodes}
     ${node}=   Get Variable Value  ${node}
-    Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this node as ready.*
+    Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this container as ready.*
   END
 
 Delete compose from
@@ -193,4 +194,41 @@ Check host ${hostname} should be in group ${group}
   ${host group}=  Set Variable  ${response.json()['group']} 
   Should Be Equal  ${host group}  ${group}
 
-  
+Add certificate template on bootstrap host
+  [Arguments]  ${certtemplate path}  ${port}
+  [Documentation]  Uses manange endpoint to add a certificate template on a bootstrap host
+  ${dir}  ${newfile}=  Split Path  ${certtemplate path}
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${header}=  Create Dictionary  Content-Type=application/json
+  ${json_file}=  Set Variable  test_template.json
+  ${json_data}=  Get File  ${json_file}
+  ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}  
+  ${response}=  POST On Session  RestSession  url=http://localhost:${port}/manage/v2/certificate-templates  data=${json_data}  headers=${header}
+  ${response}=  GET On Session  RestSession  url=http://localhost:${port}/manage/v2/certificate-templates?format=json
+
+Apply certificate ${templateName} on App Server ${appServer} ${port}
+  [Documentation]  Uses manange endpoint to enable https on an AppSever in default group
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${header}=  Create Dictionary  Content-type=application/json 
+  ${body}=  Create Dictionary  ssl-certificate-template=testTemplate   
+  ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}
+  ${response}=  PUT On Session  RestSession  url=http://localhost:${port}/manage/v2/servers/${appServer}/properties?group-id=Default  json=${body}
+
+Get CAcertificate for ${templateName} ${port}
+  [Documentation]  Uses eval endpoint to get the CA of Cert template
+  ${auth}  ${headers}=  Generate digest authorization for  ${DEFAULT ADMIN USER}  ${DEFAULT ADMIN PASS}
+  ${header}=  Create Dictionary  Content-type=application/x-www-form-urlencoded   Accept=multipart/mixed  boundary=BOUNDARY
+  ${xqy_data}=  Get File  get_ca_xquery.xqy
+  ${response}=  Create Digest Session  RestSession  url=http://localhost:${port}  headers=${headers}  auth=${auth}  disable_warnings=1
+  ${response}=  POST On Session  RestSession  url=http://localhost:${port}/v1/eval?database=Security  data=${xqy_data}  headers=${header}
+  ${resptext}=  Set Variable  ${response.text}
+  ${sep}=  Set Variable  X-Path: /*:certificate/*:pem/text()
+  ${regex}=  Set Variable  --(?=.*[a-zA-Z])(?=.*[0-9])[A-Za-z0-9]+--
+  ${pre}  ${post}=  Split String  ${resptext}  ${sep}
+  ${rest}=  Remove String Using Regexp  ${post}  ${regex}
+  ${cert}=	Strip String  ${rest}
+  Create File  test_results/certificate.cer  ${cert}
+
+Create invalid certificate file
+  ${invalid_cert}=  Set Variable  This is an invalid cert for testing negative scenarios
+  Create File  test_results/certificate.cer  ${invalid_cert}

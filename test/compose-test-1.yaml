@@ -1,0 +1,24 @@
+version: '3.6'
+services:
+    bootstrap_3n:
+      image: marklogic-centos/marklogic-server-centos:11-746
+      container_name: bootstrap_3n
+      hostname: bootstrap_3n
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME=test_admin
+        - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
+        - REALM=public
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_3n_vol1:

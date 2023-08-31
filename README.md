@@ -162,6 +162,8 @@ MarkLogic Server Docker containers are configured using a set of environment var
 | MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password via Docker secrets    |
 | MARKLOGIC_WALLET_PASSWORD_FILE | secret_wallet_password         | no                                | n/a       | set MarkLogic Server wallet password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                |           | will join cluster via MARKLOGIC_BOOTSTRAP_HOST          |
+| MARKLOGIC_JOIN_TLS_ENABLED        | false                            | no                                |           | will join cluster using TLS and MARKLOGIC_JOIN_CACERT_FILE          |
+| MARKLOGIC_JOIN_CACERT_FILE        | CA certificate/ certificate chain file                            | no                                |           | will join cluster using TLS and certificate          |
 | MARKLOGIC_BOOTSTRAP_HOST           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
 | MARKLOGIC_GROUP           | dnode                     | no                                | n/a       | will join the host to the given MarkLogic group                  |
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
@@ -169,6 +171,7 @@ MarkLogic Server Docker containers are configured using a set of environment var
 |INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
 |OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
 
+Note: MARKLOGIC_JOIN_TLS_ENABLED and MARKLOGIC_JOIN_CACERT_FILE should be used only for nodes joining the cluster. These two parameters will be ignored for bootstrap host configurations.
 
 MarkLogic Server also can be configured through a configuration file on the image at `/etc/marklogic.conf`. To change the configuration file, pass in the parameter `OVERWRITE_ML_CONF` set to `true` The following env variables can also be written to the `/etc/marklogic.conf` file if the parameter is set. 
 
@@ -689,6 +692,117 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 ```
 
 When you complete these steps, you will have multiple containers; one on each VM, and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
+
+## How to join TLS enabled cluster
+
+This example shows how to join a node to a TLS enabled cluster. There are two prerequistes for this configuration, first is TLS enabled bootstrap host App servers, second is the CA certificate or certificate chain of the host.
+
+Below example uses docker stack for MarkLogic cluster deployment. It will create a docker stack named mlstack with two services named bootstrap and node2.
+
+1. Create a bootstrap host using below compose file:
+```
+version: '3.6'
+services:
+    bootstrap_3n:
+      image: marklogicdb/marklogic-db
+      container_name: bootstrap_3n
+      hostname: bootstrap_3n
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME=test_admin
+        - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
+        - REALM=public
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_3n_vol1:
+```
+2. Use below command to create stack and service:
+```
+docker stack deploy -c bootstrap-compose.yaml mlstack
+```
+3. Once the bootstrap host is up and running, enable TLS on App servers(8001, 8002) using the procedure from MarkLogic documentation [https://docs.marklogic.com/guide/security/SSL](https://docs.marklogic.com/guide/security/SSL).
+4. Extract the certificate for bootstrap host and store it in the same directory as compose file. CA certificate/certificate chain used to join the cluster will be stored as Docker secret.
+2. Create files mldb_admin_username.txt and mldb_admin_password.txt to set admin username/password used for joining bootstrap host.
+3. Use below compose file to create node2. Please note MARKLOGIC_JOIN_TLS_ENABLED parameter is set to true and MARKLOGIC_JOIN_CACERT_FILE is set as a Docker secret with it's value set to the CA certificate/certificate chain file path. Please see [Configuration](#Configuration) section for more details on these two parameters.
+```
+version: '3.6'
+services:
+    node2:
+      image: marklogicdb/marklogic-db
+      container_name: node2
+      hostname: node2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_TLS_ENABLED=true
+        - MARKLOGIC_JOIN_CACERT_FILE=certificate.cer
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_2n_vol2:/var/opt/MarkLogic
+      secrets:sta
+        - source: mldb_admin_username
+          target: mldb_admin_username
+        - source: mldb_admin_password
+          target: mldb_admin_password
+        - source: certificate.cer
+          target: certificate.cer
+      ports:
+        - 7200-7210:8000-8010
+        - 7297:7997
+      networks:
+      - external_net
+secrets:
+  mldb_admin_password:
+    file: ./mldb_admin_password.txt
+  mldb_admin_username:
+    file: ./mldb_admin_username.txt
+  certificate.cer:
+    file: ./certificate.cer
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_2n_vol2:
+```
+4. Use below command to create the node2 Docker container:
+```
+docker stack deploy -c node2-compose.yaml mlstack
+```
+5. Verify the node2 joined the cluster using MarkLogic Admin console.
+
+### How to update CA certificate/certificate chain in a Docker container?
+
+In case, CA certificate/certificate chain is renewed, it should be updated to ensure Docker container is running uninterrupted.
+Follow below steps to update the certificate:
+
+1. Create a new docker secret for new certificate for the host.
+
+- For instance new certificate is stored in file certificate_v2.cer, use the following command to add a new Docker secret:
+```
+  $docker secret create certificate_v2.cer certificate_v2.cer
+```
+2. Use the below command to rotate the Docker secret for the mlstack_node2 Docker services created above using Docker stack:
+```
+docker service update \
+    --secret-rm certificate_v1.cer \
+    --secret-add source=certificate_v2.cer,target=certificate.cer \
+    mlstack_node2
+```
+Above command will remove old certificate and update service with new certificate from certificate2.cer.
+Wait for the service to be updated. Secret inside the container under /run/secrets directory will be updated with new certificate.
 
 # Upgrading to the latest MarkLogic Docker Release
 

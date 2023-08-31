@@ -1,0 +1,19 @@
+{
+    "template-name": "testTemplate",
+    "template-description": "This is a test Template",
+    "key-type": "rsa",
+    "key-options": {
+        "key-length": "2048"
+    },
+    "req": {
+        "version": "0",
+        "subject": {
+            "countryName": "US",
+            "stateOrProvinceName": "CA",
+            "localityName": "Redwood City",
+            "organizationName": "Progress",
+            "organizationalUnitName": "Engineering",
+            "emailAddress": "docker.test@progress.com"
+        }
+    }
+}

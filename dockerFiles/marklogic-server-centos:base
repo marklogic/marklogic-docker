@@ -95,7 +95,8 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user \
     MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password \
-    BUILD_BRANCH=${BUILD_BRANCH}
+    BUILD_BRANCH=${BUILD_BRANCH} \
+    MARKLOGIC_JOIN_TLS_ENABLED=false
     
 
 ###############################################################

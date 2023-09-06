@@ -124,6 +124,26 @@ Single node compose example
   Host count on port 8002 should be 1
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
+Single node compose example with special characters in secrets file
+  Start compose from  ../docker-compose/marklogic-centos.yaml  ${SPEC CHARS ADMIN PASS}
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8001  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
+
+Single node compose with special characters in yaml
+  Start compose from  ../test/compose-test-1.yaml  ${SPEC CHARS ADMIN PASS}
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  7101  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
+
 Three node compose example
   Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*

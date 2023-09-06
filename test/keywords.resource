@@ -9,7 +9,7 @@ Library   Collections
 @{DOCKER DEFAULTS}  -it  -d  -p  8000:8000  -p  8001:8001  -p  8002:8002  -p7997:7997
 ${DEFAULT ADMIN USER}  test_admin
 ${DEFAULT ADMIN PASS}  test_admin_pass
-${SPEC CHARS ADMIN PASS}  Admin@2$%^&*!
+${SPEC CHARS ADMIN PASS}  Admin@2$s%^&*!
 ${TEST_IMAGE}  %{DOCKER_TEST_IMAGE=marklogic-centos/marklogic-server-centos:10-internal}
 ${DOCKER TIMEOUT}  240s
 ${LICENSE KEY}  %{QA_LICENSE_KEY=none}
@@ -50,7 +50,7 @@ Delete container
   Run Process  docker  rm  -f  -v  ${container name}  timeout=${DOCKER TIMEOUT}
 
 Start compose from
-  [Arguments]  ${compose path}
+  [Arguments]  ${compose path}  ${password}=${DEFAULT ADMIN PASS}  ${readiness}=True
   [Documentation]  Creates Docker compose stack based on yaml path.
   ...              Yaml file is copied to current directory for easier access.
   ...              Yaml file is updated with new image label and credentials.
@@ -61,19 +61,22 @@ Start compose from
   ${compose file}=  Get File  ${compose path}
   ${compose file}=  Replace String Using Regexp  ${compose file}  image:.*  image: ${TEST_IMAGE}
   ${compose file}=  Replace String Using Regexp  ${compose file}  MARKLOGIC_ADMIN_USERNAME=.*  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-  ${compose file}=  Replace String Using Regexp  ${compose file}  MARKLOGIC_ADMIN_PASSWORD=.*  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+  ${compose file}=  Replace String Using Regexp  ${compose file}  MARKLOGIC_ADMIN_PASSWORD=.*  MARKLOGIC_ADMIN_PASSWORD=${password}
+  ${compose file}=  Replace String  ${compose file}  $  $$
 
   Create File  ${new path}  ${compose file}
   Create File  test_results/mldb_admin_username.txt  ${DEFAULT ADMIN USER}
-  Create File  test_results/mldb_admin_password.txt  ${DEFAULT ADMIN PASS}
+  Create File  test_results/mldb_admin_password.txt  ${password}
   Run Process  docker  compose  -f  ${new path}  up  -d  --no-color  stderr=test_results/stderr-${compose name}.txt  stdout=test_results/stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
   
   #get a list of nodes from compose and check readyness for each
-  ${result}=  Run Process  docker  compose  -f  ${compose file}  ps  --services
-  @{nodes}=  Split to lines  ${result.stdout}
-  FOR    ${node}    IN    @{nodes}
-    ${node}=   Get Variable Value  ${node}
-    Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this container as ready.*
+  IF  ${readiness} == True
+    ${result}=  Run Process  docker  compose  -f  ${new path}  ps  --services
+    @{nodes}=  Split to lines  ${result.stdout}
+    FOR    ${node}    IN    @{nodes}
+      ${node}=   Get Variable Value  ${node}
+      Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this container as ready.*
+    END
   END
 
 Delete compose from

@@ -124,6 +124,26 @@ Single node compose example
   Host count on port 8002 should be 1
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
+Single node compose example with special characters in secrets file
+  Start compose from  ../docker-compose/marklogic-centos.yaml  ${SPEC CHARS ADMIN PASS}
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8001  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
+
+Single node compose with special characters in yaml
+  Start compose from  ../test/compose-test-1.yaml  ${SPEC CHARS ADMIN PASS}
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  7101  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
+  [Teardown]  Delete compose from  ../test/compose-test-1.yaml
+
 Three node compose example
   Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
   Verify response for unauthenticated request with  7100  *Unauthorized*
@@ -167,12 +187,12 @@ Two node compose example with node joining enode group
 # Tests for invalid certificate/CA, invalid  value for MARKLOGIC_JOIN_TLS_ENABLED 
 Compose example with node joining cluster using https with invalid parameter values
   Create invalid certificate file
-  Start compose from  ./compose-test-10.yaml
+  Start compose from  ./compose-test-10.yaml  readiness=False
   Compose logs should contain  ./compose-test-10.yaml  *MARKLOGIC_JOIN_TLS_ENABLED must be set to true or false, please review the configuration. Container shutting down.*
   [Teardown]  Delete compose from  ./compose-test-10.yaml
 
 Compose example with node joining cluster using https and missing certificate parameter
-  Start compose from  ./compose-test-11.yaml
+  Start compose from  ./compose-test-11.yaml  readiness=False
   Compose logs should contain  ./compose-test-11.yaml  *MARKLOGIC_JOIN_CACERT_FILE is not set, please review the configuration. Container shutting down.*
   [Teardown]  Delete compose from  ./compose-test-11.yaml
 

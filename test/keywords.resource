@@ -70,7 +70,7 @@ Start compose from
   Run Process  docker  compose  -f  ${new path}  up  -d  --no-color  stderr=test_results/stderr-${compose name}.txt  stdout=test_results/stdout-${compose name}.txt  timeout=${DOCKER TIMEOUT}
   
   #get a list of nodes from compose and check readyness for each
-  ${result}=  Run Process  docker  compose  -f  ${compose file}  ps  --services
+  ${result}=  Run Process  docker  compose  -f  ${new path}  ps  --services
   @{nodes}=  Split to lines  ${result.stdout}
   FOR    ${node}    IN    @{nodes}
     ${node}=   Get Variable Value  ${node}

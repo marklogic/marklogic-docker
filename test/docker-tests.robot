@@ -142,7 +142,7 @@ Single node compose with special characters in yaml
   Verify response for authenticated request with  7100  *Query Console*  ${SPEC CHARS ADMIN PASS}
   Verify response for authenticated request with  7101  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
   Verify response for authenticated request with  7102  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
-  [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
+  [Teardown]  Delete compose from  ../test/compose-test-1.yaml
 
 Three node compose example
   Start compose from  ../docker-compose/marklogic-cluster-centos.yaml

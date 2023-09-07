@@ -187,12 +187,12 @@ Two node compose example with node joining enode group
 # Tests for invalid certificate/CA, invalid  value for MARKLOGIC_JOIN_TLS_ENABLED 
 Compose example with node joining cluster using https with invalid parameter values
   Create invalid certificate file
-  Start compose from  ./compose-test-10.yaml
+  Start compose from  ./compose-test-10.yaml  readiness=False
   Compose logs should contain  ./compose-test-10.yaml  *MARKLOGIC_JOIN_TLS_ENABLED must be set to true or false, please review the configuration. Container shutting down.*
   [Teardown]  Delete compose from  ./compose-test-10.yaml
 
 Compose example with node joining cluster using https and missing certificate parameter
-  Start compose from  ./compose-test-11.yaml
+  Start compose from  ./compose-test-11.yaml  readiness=False
   Compose logs should contain  ./compose-test-11.yaml  *MARKLOGIC_JOIN_CACERT_FILE is not set, please review the configuration. Container shutting down.*
   [Teardown]  Delete compose from  ./compose-test-11.yaml
 

@@ -50,7 +50,7 @@ Delete container
   Run Process  docker  rm  -f  -v  ${container name}  timeout=${DOCKER TIMEOUT}
 
 Start compose from
-  [Arguments]  ${compose path}  ${password}=${DEFAULT ADMIN PASS}
+  [Arguments]  ${compose path}  ${password}=${DEFAULT ADMIN PASS}  ${readiness}=True
   [Documentation]  Creates Docker compose stack based on yaml path.
   ...              Yaml file is copied to current directory for easier access.
   ...              Yaml file is updated with new image label and credentials.
@@ -74,7 +74,7 @@ Start compose from
   @{nodes}=  Split to lines  ${result.stdout}
   FOR    ${node}    IN    @{nodes}
     ${node}=   Get Variable Value  ${node}
-    Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this container as ready.*
+    IF  ${readiness} == True  Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this container as ready.*
   END
 
 Delete compose from

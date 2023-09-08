@@ -12,8 +12,14 @@ The tests are run through the a makefile command runnable using:
 If you'd like to change the image being tested change the variables in the makefile and if you want to change the tests themselves refer to the structure-test.yaml file in this folder.
 
 ## Docker Image Tests
-Docker image tests are implemented with Robot framework. The framework requires Python 3.6+ and pip. Framework requirements are listed in requirements file and can be installed with
-`pip install -r requirements.txt`
+Docker image tests are implemented with Robot framework. The framework requires Python 3.6+ and pip. Framework requirements are listed in requirements file and can be installed with the following commands:
+`python3 -m venv python_env`
+`source ./python_env/bin/activate`
+`pip3 install -r requirements.txt`
+
+After running the tests, you can deactivate the environment and delete it if needed.
+`deactivate`
+`rm -r ./python_env/`
 
 For additional installation instruction see https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#installation-instructions
 

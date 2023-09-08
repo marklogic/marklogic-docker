@@ -1,6 +1,6 @@
 version: '3.6'
 services:
-    node2:
+    node3:
       image: marklogic-centos/marklogic-server-centos:11-746
       container_name: node3
       hostname: node3

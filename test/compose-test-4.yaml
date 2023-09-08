@@ -1,7 +1,7 @@
 #Docker compose file sample to setup a three node cluster
 version: '3.6'
 services:
-    bootstrap:
+    testbootstrap:
       image: marklogic-centos/marklogic-server-centos:10-internal
       hostname: testbootstrap
       container_name: testbootstrap
@@ -18,7 +18,7 @@ services:
         - 7197:7997
       networks:
       - external_net
-    node2:
+    testnode:
       image: marklogic-centos/marklogic-server-centos:10-internal
       hostname: testnode
       container_name: testnode

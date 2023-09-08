@@ -305,7 +305,7 @@ fi
 sleep 5s
 
 ################################################################
-# Check if admin password is a secret or env var
+# Extract admin credentials from a secret or env var
 ################################################################
 SECRET_USR_FILE="/run/secrets/${MARKLOGIC_ADMIN_USERNAME_FILE}"
 SECRET_PWD_FILE="/run/secrets/${MARKLOGIC_ADMIN_PASSWORD_FILE}"
@@ -334,6 +334,10 @@ else
     info "MARKLOGIC_WALLET_PASSWORD is set, using ENV for wallet-password."
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
+
+# escape $ in password variables
+ML_ADMIN_PASSWORD="${ML_ADMIN_PASSWORD//$/\\$}"
+ML_WALLET_PASSWORD="${ML_WALLET_PASSWORD//$/\\$}"
 
 ################################################################
 # check marklogic init (eg. MARKLOGIC_INIT is set)

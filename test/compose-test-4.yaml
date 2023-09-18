@@ -36,7 +36,7 @@ services:
         - 7200-7210:8000-8010
         - 7297:7997
       depends_on:
-      - bootstrap
+      - testbootstrap
       networks:
       - external_net
 networks:

@@ -22,8 +22,6 @@ services:
       ports:
         - 7200-7210:8000-8010
         - 7297:7997
-      depends_on:
-      - bootstrap_2n
       networks:
       - external_net
 secrets:

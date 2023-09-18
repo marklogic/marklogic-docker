@@ -202,29 +202,29 @@ function validate_cert {
 }
 
 ################################################################
-# retry_and_timeout(target_url, expected_response_code, additional_options, return_error)
-# The third argument is optional and can be used to pass additional options to curl.
-# Fourth argurment is optional, default is set to true, can be used when custom error handling is required,
-# if set to true means function will return error and exit if curl fails N_RETRY times
-# setting to false means function will return response code instead of failing and exiting.
+# curl_retry_validate(return_error, endpoint, expected_response_code, curl_options)
 # Retry a curl command until it returns the expected response
 # code or fails N_RETRY times.
 # Use RETRY_INTERVAL to tune the test length.
 # Validate that response code is the same as expected response
 # code or exit with an error.
 #
-#   $1 :  The target url to test against
-#   $2 :  The expected response code
-#   $3 :  Additional options to pass to curl
-#   $4 :  Option to return error or response code in case of error   
+#   $1 :  Option to return error or response code in case of error 
+#   $2 :  The target url to test against
+#   $3 :  The expected response code
+#   $4+:  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
     local retry_count response_code request
-    local return_error="${4:-true}" curl_options=$3 endpoint=$1
+    local return_error=$1; shift
+    local endpoint=$1; shift
+    local expected_response_code=$1; shift
+    local curl_options=("$@")
+
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
-        request="curl -m 30 -s -w '%{http_code}' $curl_options $endpoint"
-        response_code=$(eval "${request}")
-        if [[ ${response_code} -eq $2 ]]; then
+        response_code=$(curl -m 30 -s -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+
+        if [[ ${response_code} -eq ${expected_response_code} ]]; then
             return "${response_code}"
         fi
         sleep ${RETRY_INTERVAL}
@@ -232,7 +232,7 @@ function curl_retry_validate {
     if [[ "${return_error}" = "false" ]] ; then
         return "${response_code}"
     fi
-    error "Expected response code ${2}, got ${response_code} from ${1}." exit
+    error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
 }
 
 ################################################################
@@ -261,8 +261,8 @@ function get_host_id {
     hostname=$1 
     host_id=""
     ML_BOOTSTRAP_PROTOCOL=$(get_host_protocol "${hostname}")
-    curl_retry_validate "${ML_BOOTSTRAP_PROTOCOL}://${hostname}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
-            -o host_config.xml -X GET -H \"Accept: application/xml\" --cacert \"${ML_CACERT_FILE}\"" false
+    curl_retry_validate false "${ML_BOOTSTRAP_PROTOCOL}://${hostname}:8001/admin/v1/server-config" 200 \
+            "--anyauth" "--user" "${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD}" "-o" "host_config.xml" "-X" "GET" "-H" "Accept: application/xml" "--cacert" "${ML_CACERT_FILE}"
     [[ -f host_config.xml ]] && host_id=$(< host_config.xml grep "host-id" | sed 's%^.*<host-id.*>\(.*\)</host-id>.*$%\1%')
     echo "${host_id}"
     rm -f host_config.xml
@@ -335,10 +335,6 @@ else
     ML_WALLET_PASSWORD="${MARKLOGIC_WALLET_PASSWORD}"
 fi
 
-# escape $ in password variables
-ML_ADMIN_PASSWORD="${ML_ADMIN_PASSWORD//$/\\$}"
-ML_WALLET_PASSWORD="${ML_WALLET_PASSWORD//$/\\$}"
-
 ################################################################
 # check marklogic init (eg. MARKLOGIC_INIT is set)
 ################################################################
@@ -406,9 +402,8 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         # Get last restart timestamp directly before instance-admin call to verify restart after
         TIMESTAMP=$(curl -s --anyauth "http://${HOSTNAME}:8001/admin/v1/timestamp")
 
-        curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 "-o /dev/null -X POST \
-            -H \"Content-type:application/x-www-form-urlencoded; charset=utf-8\" -d \"${ML_ADMIN_USERNAME_PAYLOAD}\" \
-            --data-urlencode \"${ML_ADMIN_PASSWORD_PAYLOAD}\" -d \"${ML_REALM_PAYLOAD}\" --data-urlencode \"${ML_WALLET_PASSWORD_PAYLOAD}\""
+        curl_retry_validate true "http://${HOSTNAME}:8001/admin/v1/instance-admin" 202 \
+            "-o" "/dev/null" "-X" "POST" "-H" "Content-type:application/x-www-form-urlencoded; charset=utf-8" "-d" "${ML_ADMIN_USERNAME_PAYLOAD}" "--data-urlencode" "${ML_ADMIN_PASSWORD_PAYLOAD}" "-d" "${ML_REALM_PAYLOAD}" "--data-urlencode" "${ML_WALLET_PASSWORD_PAYLOAD}"
 
         restart_check "${HOSTNAME}" "${TIMESTAMP}"
     fi
@@ -437,32 +432,29 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
         info "MARKLOGIC_JOIN_CLUSTER is true and join conditions are met, joining host to the cluster."
         if [[ -z "${MARKLOGIC_GROUP}" ]]; then
             info "MARKLOGIC_GROUP is not specified, adding host to the Default group."
-            MARKLOGIC_GROUP_PAYLOAD=\"group=Default\"
+            MARKLOGIC_GROUP_PAYLOAD="group=Default"
         else
-            curl_retry_validate "${ML_BOOTSTRAP_PROTOCOL}://${MARKLOGIC_BOOTSTRAP_HOST}:8002/manage/v2/groups/${MARKLOGIC_GROUP}" 200 "-X GET -o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" --cacert \"${ML_CACERT_FILE}\"" false
+            curl_retry_validate false "${ML_BOOTSTRAP_PROTOCOL}://${MARKLOGIC_BOOTSTRAP_HOST}:8002/manage/v2/groups/${MARKLOGIC_GROUP}" 200 \
+                "-X" "GET" "-o" "/dev/null" "--anyauth" "--user" "${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD}" "--cacert" "${ML_CACERT_FILE}"
             GROUP_RESP_CODE=$?
             if [[ ${GROUP_RESP_CODE} -eq 200 ]]; then
                 info "MARKLOGIC_GROUP is specified, adding host to the ${MARKLOGIC_GROUP} group."
-                MARKLOGIC_GROUP_PAYLOAD=\"group=${MARKLOGIC_GROUP}\"
+                MARKLOGIC_GROUP_PAYLOAD="group=${MARKLOGIC_GROUP}"
             else
                 error "MARKLOGIC_GROUP ${MARKLOGIC_GROUP} does not exist on the cluster" exit
             fi
         fi
-        curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/server-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
-            -o host.xml -X GET -H \"Accept: application/xml\""
+        curl_retry_validate true "http://${HOSTNAME}:8001/admin/v1/server-config" 200 \
+            "--anyauth" "--user" "${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD}" "-o" "host.xml" "-X" "GET" "-H" "Accept: application/xml"
 
-        curl_retry_validate "${ML_BOOTSTRAP_PROTOCOL}://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 "--anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
-            -X POST -d \"${MARKLOGIC_GROUP_PAYLOAD}\" \
-            --data-urlencode \"server-config@./host.xml\" \
-            -H \"Content-type: application/x-www-form-urlencoded\" \
-            -o cluster.zip --cacert \"${ML_CACERT_FILE}\""
+        curl_retry_validate true "${ML_BOOTSTRAP_PROTOCOL}://${MARKLOGIC_BOOTSTRAP_HOST}:8001/admin/v1/cluster-config" 200 \
+            "--anyauth" "--user" "${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD}" "-X" "POST" "-d" "${MARKLOGIC_GROUP_PAYLOAD}" "--data-urlencode" "server-config@./host.xml" "-H" "Content-type: application/x-www-form-urlencoded" "-o" "cluster.zip" "--cacert" "${ML_CACERT_FILE}"
 
         # Get last restart timestamp directly before cluster-config call to verify restart after
         TIMESTAMP=$(curl -s --anyauth "http://${HOSTNAME}:8001/admin/v1/timestamp")
 
-        curl_retry_validate "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 "-o /dev/null --anyauth --user \"${ML_ADMIN_USERNAME}\":\"${ML_ADMIN_PASSWORD}\" \
-            -X POST -H \"Content-type: application/zip\" \
-            --data-binary @./cluster.zip"
+        curl_retry_validate true "http://${HOSTNAME}:8001/admin/v1/cluster-config" 202 \
+            "-o" "/dev/null" "--anyauth" "--user" "${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD}" "-X" "POST" "-H" "Content-type: application/zip" "--data-binary" "@./cluster.zip"
     
         restart_check "${HOSTNAME}" "${TIMESTAMP}"
 

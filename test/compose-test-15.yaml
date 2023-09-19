@@ -1,7 +1,7 @@
 version: '3.6'
 services:
     node2:
-      image: marklogic-centos/marklogic-server-centos:11-746
+      image: marklogicdb/marklogic-db
       container_name: node2
       hostname: node2
       dns_search: ""

@@ -193,8 +193,8 @@ function validate_tls_parameters {
 ################################################################
 function validate_cert {
     local cacertfile=$1
-    local request response
-    request=$(curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
+    local response
+    curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}"
     response=$?
     if [ $response -ne 0 ]; then
         error "MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down." exit
@@ -213,10 +213,6 @@ function validate_cert {
 #   $2 :  The target url to test against
 #   $3 :  The expected response code
 #   $4+:  Additional options to pass to curl
-#   $1 :  Option to return error or response code in case of error 
-#   $2 :  The target url to test against
-#   $3 :  The expected response code
-#   $4+:  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
     local retry_count response_code
@@ -229,9 +225,6 @@ function curl_retry_validate {
         response_code=$(curl -m 30 -s -w '%{http_code}' "${curl_options[@]}" "$endpoint")
 
         if [[ ${response_code} -eq ${expected_response_code} ]]; then
-        response_code=$(curl -m 30 -s -w '%{http_code}' "${curl_options[@]}" "$endpoint")
-
-        if [[ ${response_code} -eq ${expected_response_code} ]]; then
             return "${response_code}"
         fi
         sleep ${RETRY_INTERVAL}
@@ -239,7 +232,6 @@ function curl_retry_validate {
     if [[ "${return_error}" = "false" ]] ; then
         return "${response_code}"
     fi
-    error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
     error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
 }
 
@@ -269,8 +261,6 @@ function get_host_id {
     hostname=$1 
     host_id=""
     ML_BOOTSTRAP_PROTOCOL=$(get_host_protocol "${hostname}")
-    curl_retry_validate false "${ML_BOOTSTRAP_PROTOCOL}://${hostname}:8001/admin/v1/server-config" 200 \
-            "--anyauth" "--user" "${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD}" "-o" "host_config.xml" "-X" "GET" "-H" "Accept: application/xml" "--cacert" "${ML_CACERT_FILE}"
     curl_retry_validate false "${ML_BOOTSTRAP_PROTOCOL}://${hostname}:8001/admin/v1/server-config" 200 \
             "--anyauth" "--user" "${ML_ADMIN_USERNAME}:${ML_ADMIN_PASSWORD}" "-o" "host_config.xml" "-X" "GET" "-H" "Accept: application/xml" "--cacert" "${ML_CACERT_FILE}"
     [[ -f host_config.xml ]] && host_id=$(< host_config.xml grep "host-id" | sed 's%^.*<host-id.*>\(.*\)</host-id>.*$%\1%')

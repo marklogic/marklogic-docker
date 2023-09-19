@@ -202,31 +202,37 @@ function validate_cert {
 }
 
 ################################################################
-# curl_retry_validate(return_error, endpoint, expected_response_code, curl_options)
+# curl_retry_validate(return_error, endpoint, expected_response_code, curl_options...)
 # Retry a curl command until it returns the expected response
 # code or fails N_RETRY times.
 # Use RETRY_INTERVAL to tune the test length.
 # Validate that response code is the same as expected response
 # code or exit with an error.
 #
-#   $1 :  Option to return error or response code in case of error 
+#   $1 :  Flag indicating if the script should exit if the given response code is not received ("true" to exit, "false" to return the response code")
 #   $2 :  The target url to test against
 #   $3 :  The expected response code
 #   $4+:  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
-    local retry_count response_code
+    local retry_count response response_code response_content
     local return_error=$1; shift
     local endpoint=$1; shift
     local expected_response_code=$1; shift
     local curl_options=("$@")
 
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
-        response_code=$(curl -m 30 -s -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+        
+        response=$(curl -m 30 -v -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+        response_code=$(tail -n1 <<< "$response")
+        response_content=$(sed '$ d' <<< "$response")
 
         if [[ ${response_code} -eq ${expected_response_code} ]]; then
             return "${response_code}"
+        else
+            echo "${response_content}" > start-marklogic_curl_retry_validate.log
         fi
+        
         sleep ${RETRY_INTERVAL}
     done
     if [[ "${return_error}" = "false" ]] ; then

@@ -178,7 +178,8 @@ Two node compose example with node joining enode group
   Verify response for authenticated request with  7101  *No license key has been entered*
   Verify response for authenticated request with  7102  *Monitoring Dashboard*
   Add group enode on host on port 7102
-  Start compose from  ./compose-test-7.yaml
+  Start compose from  ./compose-test-7.yaml  readiness=False
+  Compose logs should contain  ./compose-test-7.yaml  *Cluster config complete, marking this container as ready.*
   Host node2 should be part of group enode
   [Teardown]  Run keywords  
   ...  Delete compose from  ./compose-test-6.yaml
@@ -198,7 +199,6 @@ Compose example with node joining cluster using https and missing certificate pa
 
 Two node compose example with bootstrap node without SSL enabled and node joining cluster using https 
   Start compose from  ./compose-test-12.yaml
-  Compose logs should contain  ./compose-test-12.yaml  *Cluster config complete, marking this container as ready.*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7102  *Unauthorized*
@@ -206,7 +206,7 @@ Two node compose example with bootstrap node without SSL enabled and node joinin
   Verify response for authenticated request with  7101  *No license key has been entered*
   Verify response for authenticated request with  7102  *Monitoring Dashboard*
   Create invalid certificate file
-  Start compose from  ./compose-test-13.yaml
+  Start compose from  ./compose-test-13.yaml  readiness=False
   Compose logs should contain  ./compose-test-13.yaml  *TLS is not enabled on bootstrap_host_name host, please verify the configuration. Container shutting down.*
   [Teardown]  Run keywords  
   ...  Delete compose from  ./compose-test-12.yaml
@@ -214,7 +214,6 @@ Two node compose example with bootstrap node without SSL enabled and node joinin
 
 Two node compose example with node joining cluster using invalid CAcertificate
   Start compose from  ./compose-test-14.yaml
-  Compose logs should contain  ./compose-test-14.yaml  *Cluster config complete, marking this container as ready.*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for authenticated request with  7101  *No license key has been entered*
   Add certificate template on bootstrap host  ./test_template.json  7102
@@ -222,7 +221,7 @@ Two node compose example with node joining cluster using invalid CAcertificate
   Apply certificate testTemplate on App Server Admin 7102
   Apply certificate testTemplate on App Server Manage 7102
   Create invalid certificate file
-  Start compose from  ./compose-test-15.yaml
+  Start compose from  ./compose-test-15.yaml  readiness=False
   Compose logs should contain  ./compose-test-15.yaml  *MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down.*
   [Teardown]  Run keywords  
   ...  Delete compose from  ./compose-test-14.yaml
@@ -230,14 +229,13 @@ Two node compose example with node joining cluster using invalid CAcertificate
 
 Two node compose example with node joining cluster using https
   Start compose from  ./compose-test-1.yaml
-  Compose logs should contain  ./compose-test-1.yaml  *Cluster config complete, marking this container as ready.*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for authenticated request with  7101  *No license key has been entered*
   Add certificate template on bootstrap host  ./test_template.json  7102
   Get CAcertificate for testTemplate 7100
   Apply certificate testTemplate on App Server Admin 7102
   Apply certificate testTemplate on App Server Manage 7102
-  Start compose from  ./compose-test-2.yaml
+  Start compose from  ./compose-test-2.yaml  readiness=False
   Compose logs should contain  ./compose-test-2.yaml  *Cluster config complete, marking this container as ready.*
   [Teardown]  Run keywords  
   ...  Delete compose from  ./compose-test-1.yaml
@@ -245,7 +243,6 @@ Two node compose example with node joining cluster using https
 
 Single node compose example with bootstrap node joining trying to itself
   Start compose from  ./compose-test-8.yaml
-  Compose logs should contain  ./compose-test-8.yaml  *Cluster config complete, marking this container as ready.*
   Verify response for unauthenticated request with  7100  *Unauthorized*
   Verify response for unauthenticated request with  7101  *Unauthorized*
   Verify response for unauthenticated request with  7102  *Unauthorized*

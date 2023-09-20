@@ -73,6 +73,7 @@ Start compose from
   IF  ${readiness} == True
     ${result}=  Run Process  docker  compose  -f  ${new path}  ps  --services
     @{nodes}=  Split to lines  ${result.stdout}
+    IF  @{nodes} == []  Fail  No containers detected in ${new path}!
     FOR    ${node}    IN    @{nodes}
       ${node}=   Get Variable Value  ${node}
       Compose logs should contain  ${new path}  *${node}*Cluster config complete, marking this container as ready.*

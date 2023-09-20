@@ -2,7 +2,7 @@
 version: '3.6'
 services:
     testbootstrap:
-      image: marklogic-centos/marklogic-server-centos:10-internal
+      image: marklogicdb/marklogic-db
       hostname: testbootstrap
       container_name: testbootstrap
       dns_search: ""
@@ -19,7 +19,7 @@ services:
       networks:
       - external_net
     testnode:
-      image: marklogic-centos/marklogic-server-centos:10-internal
+      image: marklogicdb/marklogic-db
       hostname: testnode
       container_name: testnode
       dns_search: ""
@@ -36,7 +36,7 @@ services:
         - 7200-7210:8000-8010
         - 7297:7997
       depends_on:
-      - bootstrap
+      - testbootstrap
       networks:
       - external_net
 networks:

@@ -18,6 +18,7 @@
 This README serves as a technical guide for using MarkLogic Docker and MarkLogic Docker images. These tasks are covered in this README:
 - How to use images to setup initialized/uninitialized MarkLogic servers
 - How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
+- How to join a TLS(HTTPS) enabled cluster
 - How to enable security using Docker secrets
 - How to mount volumes for Docker containers 
 - How to upgrade to the latest MarkLogic Docker release  
@@ -693,13 +694,13 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 
 When you complete these steps, you will have multiple containers; one on each VM, and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
 
-## How to join TLS enabled cluster
+## How to join a TLS(HTTPS) enabled cluster
 
 This example shows how to join a node to a TLS enabled cluster. There are two prerequistes for this configuration, first is TLS enabled bootstrap host App servers, second is the CA certificate or certificate chain of the host.
 
 Below example uses docker stack for MarkLogic cluster deployment. It will create a docker stack named mlstack with two services named bootstrap and node2.
 
-1. Create a bootstrap host using below compose file:
+1. Create a bootstrap host using the following compose file:
 ```
 version: '3.6'
 services:
@@ -726,14 +727,14 @@ networks:
 volumes:
   MarkLogic_3n_vol1:
 ```
-2. Use below command to create stack and service:
+2. Use the following command to create a stack and service:
 ```
 docker stack deploy -c bootstrap-compose.yaml mlstack
 ```
-3. Once the bootstrap host is up and running, enable TLS on App servers(8001, 8002) using the procedure from MarkLogic documentation [https://docs.marklogic.com/guide/security/SSL](https://docs.marklogic.com/guide/security/SSL).
-4. Extract the certificate for bootstrap host and store it in the same directory as compose file. CA certificate/certificate chain used to join the cluster will be stored as Docker secret.
-2. Create files mldb_admin_username.txt and mldb_admin_password.txt to set admin username/password used for joining bootstrap host.
-3. Use below compose file to create node2. Please note MARKLOGIC_JOIN_TLS_ENABLED parameter is set to true and MARKLOGIC_JOIN_CACERT_FILE is set as a Docker secret with it's value set to the CA certificate/certificate chain file path. Please see [Configuration](#Configuration) section for more details on these two parameters.
+3. Once the bootstrap host is up and running, enable HTTPS on the Admin and Manage app servers (ports 8001 and 8002) using the procedures from the MarkLogic documentation https://docs.marklogic.com/guide/security/SSL.
+4. Obtain the CA certificate for SSL enabled app servers on the bootstrap host and store it in the same directory as the compose file. The CA certificate/certificate chain used to join the cluster will be stored as Docker secret.
+5. Create files `mldb_admin_username.txt` and `mldb_admin_password.txt` to set the admin username/password used for joining the bootstrap host.
+6. Use the compose file below to create node2. Please note the {MARKLOGIC_JOIN_TLS_ENABLED} parameter is set to true and the {MARKLOGIC_JOIN_CACERT_FILE} is set as a Docker secret with the value set to the CA certificate/certificate chain file path. Please see the [Configuration](#Configuration) section for more details on these two parameters.
 ```
 version: '3.6'
 services:

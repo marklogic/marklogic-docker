@@ -238,6 +238,7 @@ function curl_retry_validate {
     if [[ "${return_error}" = "false" ]] ; then
         return "${response_code}"
     fi
+    [ -f "start-marklogic_curl_retry_validate.log" ] && cat start-marklogic_curl_retry_validate.log
     error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
 }
 

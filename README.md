@@ -1,7 +1,7 @@
 # Table of contents
  * [Introduction](#Introduction)
  * [Prerequisites](#Prerequisites)
- * [Supported tags](#Supported-tags)
+ * [Tag explanation](#Tag-explanation)
  * [Architecture reference](#Architecture-reference)
  * [MarkLogic](#MarkLogic)
  * [Using this Image](#Using-this-Image)
@@ -11,8 +11,8 @@
  * [Backing Up and Restoring a Database](#Backing-Up-and-Restoring-a-Database)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
+ * [Image Tag](#Image-Tag)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
- * [Older Supported Tags](#Older-Supported-Tags)
 
 # Introduction
 This README serves as a technical guide for using MarkLogic Docker and MarkLogic Docker images. These tasks are covered in this README:
@@ -970,6 +970,46 @@ Finally, disconnect VMs from the swarm running the following command on each VM:
 docker swarm leave --force
 ```
 If the process is successful, a message saying the node has left the swarm will be displayed.
+
+# Image Tag
+
+The `marklogic` image tags allow the user to pin their applications to images for a specific release, a specific minor release, a specific major release, or the latest release of MarkLogic Server
+
+## `{ML release version}-{platform}-{ML Docker release version}`
+
+This tag points to the exact version of MarkLogic Server, the base OS, and the startup scripts version. This allows an application to pin to a very specific version of the image. The image will not be updated without incrementing either the MarkLogic Sever version or the version of the startup scripts.
+
+e.g. `11.0.3-centos-1.0.2` is the MarkLogic Server 11.0.3 release, CentOS, version 1.0.2 of the startup scripts.
+
+## `latest-xx.x`
+
+This tag points to the latest patch release of a specific minor version of MarkLogic Server on CentOS. The image will contain the latest startup scripts and OS patches.
+
+e.g. `latest-11.0` is the latest patch release of MarkLogic Server 11.0 (11.0.0, 11.0.1, etc.).
+
+For MarkLogic 10, because the numbering scheme was changed, the maintenance release is equivalent to the minor release in MarkLogic 11. Use the `latest-10.0-x` tag to pin to a specific maintenance release of MarkLogic 10.
+
+## `latest-xx`
+
+This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on CentOS. The image will contain the latest startup scripts and OS patches.
+
+e.g. `latest-11` is the latest patch release of the latest minor release of MarkLogic Server 11 (11.0.0, 11.0.1, 11.1.0, 11.1.1, etc.)
+
+For MarkLogic 10, because the numbering scheme was changed, the maintenance release is equivalent to the minor release in MarkLogic 11. Use the `latest-10` tag to get the latest patch release of the latest maintenance release MarkLogic 10.
+
+## `latest`
+
+This tag points to the latest minor, patch, and major release of MarkLogic Server on CentOS. The image will contain the latest startup scripts and OS patches.
+
+It will pull the latest image and can cross patch, minor or major release numbers (11.0.0, 11.0.1, 11.1.0, 11.1.1, 12.0.0, etc.)
+
+
+**Note: The 'latest' images should not be used in production**
+
+
+
+
+
 
 # Known Issues and Limitations
 

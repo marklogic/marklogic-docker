@@ -1,7 +1,7 @@
 # Table of contents
  * [Introduction](#Introduction)
  * [Prerequisites](#Prerequisites)
- * [Tag explanation](#Tag-explanation)
+ * [Supported tags](#Supported-tags)
  * [Architecture reference](#Architecture-reference)
  * [MarkLogic](#MarkLogic)
  * [Using this Image](#Using-this-Image)
@@ -977,13 +977,13 @@ The `marklogic` image tags allow the user to pin their applications to images fo
 
 ## `{ML release version}-{platform}-{ML Docker release version}`
 
-This tag points to the exact version of MarkLogic Server, the base OS, and the startup scripts version. This allows an application to pin to a very specific version of the image. The image will not be updated without incrementing either the MarkLogic Sever version or the version of the startup scripts.
+This tag points to the exact version of MarkLogic Server, the base OS, and the supporting scripts version. This allows an application to pin to a very specific version of the image. The image will not be updated without incrementing either the MarkLogic Sever version or the version of the supporting scripts.
 
-e.g. `11.0.3-centos-1.0.2` is the MarkLogic Server 11.0.3 release, CentOS, version 1.0.2 of the startup scripts.
+e.g. `11.0.3-centos-1.0.2` is the MarkLogic Server 11.0.3 release, CentOS, version 1.0.2 of the docker scripts.
 
 ## `latest-xx.x`
 
-This tag points to the latest patch release of a specific minor version of MarkLogic Server on CentOS. The image will contain the latest startup scripts and OS patches.
+This tag points to the latest patch release of a specific minor version of MarkLogic Server on CentOS. The image will contain the latest docker supporting scripts and OS patches.
 
 e.g. `latest-11.0` is the latest patch release of MarkLogic Server 11.0 (11.0.0, 11.0.1, etc.).
 
@@ -991,7 +991,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest-xx`
 
-This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on CentOS. The image will contain the latest startup scripts and OS patches.
+This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
 
 e.g. `latest-11` is the latest patch release of the latest minor release of MarkLogic Server 11 (11.0.0, 11.0.1, 11.1.0, 11.1.1, etc.)
 
@@ -999,7 +999,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest`
 
-This tag points to the latest minor, patch, and major release of MarkLogic Server on CentOS. The image will contain the latest startup scripts and OS patches.
+This tag points to the latest minor, patch, and major release of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
 
 It will pull the latest image and can cross patch, minor or major release numbers (11.0.0, 11.0.1, 11.1.0, 11.1.1, 12.0.0, etc.)
 
@@ -1013,7 +1013,7 @@ It will pull the latest image and can cross patch, minor or major release number
 
 # Known Issues and Limitations
 
-1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
+1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.

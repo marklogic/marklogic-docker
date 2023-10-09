@@ -1,8 +1,8 @@
 #Docker compose file sample to setup a three node cluster
 version: '3.6'
 services:
-    bootstrap:
-      image: marklogic-centos/marklogic-server-centos:10-internal
+    testbootstrap:
+      image: marklogicdb/marklogic-db
       hostname: testbootstrap
       container_name: testbootstrap
       dns_search: ""
@@ -18,8 +18,8 @@ services:
         - 7197:7997
       networks:
       - external_net
-    node2:
-      image: marklogic-centos/marklogic-server-centos:10-internal
+    testnode:
+      image: marklogicdb/marklogic-db
       hostname: testnode
       container_name: testnode
       dns_search: ""
@@ -28,6 +28,7 @@ services:
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
         - MARKLOGIC_JOIN_CLUSTER=FALSE
+        - MARKLOGIC_BOOTSTRAP_HOST=testbootstrap
         - TZ=America/Los_Angeles
       volumes:
         - MarkLogic_3n_vol2:/var/opt/MarkLogic
@@ -35,7 +36,7 @@ services:
         - 7200-7210:8000-8010
         - 7297:7997
       depends_on:
-      - bootstrap
+      - testbootstrap
       networks:
       - external_net
 networks:

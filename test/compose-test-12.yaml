@@ -1,18 +1,18 @@
-#Docker compose file to setup the bootstrap node on cluster
 version: '3.6'
 services:
-  bootstrap_2n:
+    bootstrap_3n:
       image: marklogicdb/marklogic-db
-      hostname: bootstrap_2n
-      container_name: bootstrap_2n
+      container_name: bootstrap_3n
+      hostname: bootstrap_3n
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
-        - TZ=America/Los_Angeles
+        - REALM=public
+        - TZ=Europe/Prague
       volumes:
-        - MarkLogic_2n_vol1:/var/opt/MarkLogic
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
       ports:
         - 7100-7110:8000-8010
         - 7197:7997
@@ -21,5 +21,4 @@ services:
 networks:
   external_net: {}
 volumes:
-  MarkLogic_2n_vol1:
-  
+  MarkLogic_3n_vol1:

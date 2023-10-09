@@ -121,7 +121,28 @@ Single node compose example
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
   Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
+  Host count on port 8002 should be 1
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
+
+Single node compose example with special characters in secrets file
+  Start compose from  ../docker-compose/marklogic-centos.yaml  ${SPEC CHARS ADMIN PASS}
+  Verify response for unauthenticated request with  8000  *Unauthorized*
+  Verify response for unauthenticated request with  8001  *Unauthorized*
+  Verify response for unauthenticated request with  8002  *Unauthorized*
+  Verify response for authenticated request with  8000  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8001  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  8002  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
+  [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
+
+Single node compose with special characters in yaml
+  Start compose from  ../test/compose-test-1.yaml  ${SPEC CHARS ADMIN PASS}
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  7101  *No license key has been entered*  ${SPEC CHARS ADMIN PASS}
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*  ${SPEC CHARS ADMIN PASS}
+  [Teardown]  Delete compose from  ../test/compose-test-1.yaml
 
 Three node compose example
   Start compose from  ../docker-compose/marklogic-cluster-centos.yaml
@@ -157,11 +178,102 @@ Two node compose example with node joining enode group
   Verify response for authenticated request with  7101  *No license key has been entered*
   Verify response for authenticated request with  7102  *Monitoring Dashboard*
   Add group enode on host on port 7102
-  Start compose from  ./compose-test-7.yaml
+  Start compose from  ./compose-test-7.yaml  readiness=False
+  Compose logs should contain  ./compose-test-7.yaml  *Cluster config complete, marking this container as ready.*
   Host node2 should be part of group enode
   [Teardown]  Run keywords  
   ...  Delete compose from  ./compose-test-6.yaml
   ...  AND  Delete compose from  ./compose-test-7.yaml
+
+# Tests for invalid certificate/CA, invalid  value for MARKLOGIC_JOIN_TLS_ENABLED 
+Compose example with node joining cluster using https with invalid parameter values
+  Create invalid certificate file
+  Start compose from  ./compose-test-10.yaml  readiness=False
+  Compose logs should contain  ./compose-test-10.yaml  *MARKLOGIC_JOIN_TLS_ENABLED must be set to true or false, please review the configuration. Container shutting down.*
+  [Teardown]  Delete compose from  ./compose-test-10.yaml
+
+Compose example with node joining cluster using https and missing certificate parameter
+  Start compose from  ./compose-test-11.yaml  readiness=False
+  Compose logs should contain  ./compose-test-11.yaml  *MARKLOGIC_JOIN_CACERT_FILE is not set, please review the configuration. Container shutting down.*
+  [Teardown]  Delete compose from  ./compose-test-11.yaml
+
+Two node compose example with bootstrap node without SSL enabled and node joining cluster using https 
+  Start compose from  ./compose-test-12.yaml
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*
+  Create invalid certificate file
+  Start compose from  ./compose-test-13.yaml  readiness=False
+  Compose logs should contain  ./compose-test-13.yaml  *TLS is not enabled on bootstrap_host_name host, please verify the configuration. Container shutting down.*
+  [Teardown]  Run keywords  
+  ...  Delete compose from  ./compose-test-12.yaml
+  ...  AND  Delete compose from  ./compose-test-13.yaml
+
+Two node compose example with node joining cluster using invalid CAcertificate
+  Start compose from  ./compose-test-14.yaml
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Add certificate template on bootstrap host  ./test_template.json  7102
+  Get CAcertificate for testTemplate 7100
+  Apply certificate testTemplate on App Server Admin 7102
+  Apply certificate testTemplate on App Server Manage 7102
+  Create invalid certificate file
+  Start compose from  ./compose-test-15.yaml  readiness=False
+  Compose logs should contain  ./compose-test-15.yaml  *MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down.*
+  [Teardown]  Run keywords  
+  ...  Delete compose from  ./compose-test-14.yaml
+  ...  AND  Delete compose from  ./compose-test-15.yaml
+
+Two node compose example with node joining cluster using https
+  Start compose from  ./compose-test-1.yaml
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Add certificate template on bootstrap host  ./test_template.json  7102
+  Get CAcertificate for testTemplate 7100
+  Apply certificate testTemplate on App Server Admin 7102
+  Apply certificate testTemplate on App Server Manage 7102
+  Start compose from  ./compose-test-2.yaml  readiness=False
+  Compose logs should contain  ./compose-test-2.yaml  *Cluster config complete, marking this container as ready.*
+  [Teardown]  Run keywords  
+  ...  Delete compose from  ./compose-test-1.yaml
+  ...  AND  Delete compose from  ./compose-test-2.yaml
+
+Single node compose example with bootstrap node joining trying to itself
+  Start compose from  ./compose-test-8.yaml
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*HOST cannot join itself, skipped joining cluster.*
+  Host count on port 7102 should be 1
+  [Teardown]  Delete compose from  ./compose-test-8.yaml
+  
+Two node compose example with incorrect bootstrap host name
+  Start compose from  ./compose-test-9.yaml
+  Verify response for unauthenticated request with  7100  *Unauthorized*
+  Verify response for unauthenticated request with  7101  *Unauthorized*
+  Verify response for unauthenticated request with  7102  *Unauthorized*
+  Verify response for authenticated request with  7100  *Query Console*
+  Verify response for authenticated request with  7101  *No license key has been entered*
+  Verify response for authenticated request with  7102  *Monitoring Dashboard*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+  Compose logs should contain  ./compose-test-9.yaml  *node2*Bootstrap host node1 not found. Please verify the configuration, exiting*
+  Host count on port 7102 should be 1
+  [Teardown]  Delete compose from  ./compose-test-9.yaml
   
 Two node compose with credentials in env and verify restart logic
   Start compose from  ./compose-test-3.yaml

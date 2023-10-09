@@ -1,4 +1,3 @@
-#Docker compose file to setup and join node2 on cluster using MARKLOGIC_GROUP param
 version: '3.6'
 services:
     node2:
@@ -10,15 +9,20 @@ services:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_TLS_ENABLED=true
+        - MARKLOGIC_JOIN_CACERT_FILE=certificate.cer
         - MARKLOGIC_JOIN_CLUSTER=true
-        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_2n
-        - MARKLOGIC_GROUP=enode
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n
         - TZ=Europe/Prague
       volumes:
-        - MarkLogic_2n_vol2:/var/opt/MarkLogic
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
       secrets:
-        - mldb_admin_password
-        - mldb_admin_username
+        - source: mldb_admin_username
+          target: mldb_admin_username
+        - source: mldb_admin_password
+          target: mldb_admin_password
+        - source: certificate.cer
+          target: certificate.cer
       ports:
         - 7200-7210:8000-8010
         - 7297:7997
@@ -29,8 +33,9 @@ secrets:
     file: ./mldb_admin_password.txt
   mldb_admin_username:
     file: ./mldb_admin_username.txt
+  certificate.cer:
+    file: ./certificate.cer
 networks:
   external_net: {}
 volumes:
-  MarkLogic_2n_vol2:
-  
+  MarkLogic_3n_vol2:

@@ -11,13 +11,14 @@
  * [Backing Up and Restoring a Database](#Backing-Up-and-Restoring-a-Database)
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
+ * [Image Tag](#Image-Tag)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
- * [Older Supported Tags](#Older-Supported-Tags)
 
 # Introduction
 This README serves as a technical guide for using MarkLogic Docker and MarkLogic Docker images. These tasks are covered in this README:
 - How to use images to setup initialized/uninitialized MarkLogic servers
 - How to use Docker compose and Docker swarm to setup single/multi node MarkLogic cluster
+- How to join a TLS(HTTPS) enabled cluster
 - How to enable security using Docker secrets
 - How to mount volumes for Docker containers 
 - How to upgrade to the latest MarkLogic Docker release  
@@ -162,6 +163,8 @@ MarkLogic Server Docker containers are configured using a set of environment var
 | MARKLOGIC_ADMIN_PASSWORD_FILE | secret_password                 | required if MARKLOGIC_INIT is set | n/a       | set MarkLogic Server admin password via Docker secrets    |
 | MARKLOGIC_WALLET_PASSWORD_FILE | secret_wallet_password         | no                                | n/a       | set MarkLogic Server wallet password via Docker secrets    |
 | MARKLOGIC_JOIN_CLUSTER        | true                            | no                                |           | will join cluster via MARKLOGIC_BOOTSTRAP_HOST          |
+| MARKLOGIC_JOIN_TLS_ENABLED        | false                            | no                                |           | will join cluster using TLS and MARKLOGIC_JOIN_CACERT_FILE          |
+| MARKLOGIC_JOIN_CACERT_FILE        | CA certificate/ certificate chain file                            | no                                |           | will join cluster using TLS and certificate          |
 | MARKLOGIC_BOOTSTRAP_HOST           | someother.bootstrap.host.domain | no                                | bootstrap | must define if not connecting to default bootstrap |
 | MARKLOGIC_GROUP           | dnode                     | no                                | n/a       | will join the host to the given MarkLogic group                  |
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
@@ -169,6 +172,7 @@ MarkLogic Server Docker containers are configured using a set of environment var
 |INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
 |OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
 
+Note: MARKLOGIC_JOIN_TLS_ENABLED and MARKLOGIC_JOIN_CACERT_FILE should be used only for nodes joining the cluster. These two parameters will be ignored for bootstrap host configurations.
 
 MarkLogic Server also can be configured through a configuration file on the image at `/etc/marklogic.conf`. To change the configuration file, pass in the parameter `OVERWRITE_ML_CONF` set to `true` The following env variables can also be written to the `/etc/marklogic.conf` file if the parameter is set. 
 
@@ -690,12 +694,124 @@ $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
 
 When you complete these steps, you will have multiple containers; one on each VM, and all connected to each other on the 'ml-cluster-network' network. All the containers will be part of same cluster.
 
+## How to join a TLS(HTTPS) enabled cluster
+
+This example shows how to join a node to a TLS enabled cluster. There are two prerequistes for this configuration, first is TLS enabled bootstrap host App servers, second is the CA certificate or certificate chain of the host.
+
+Below example uses docker stack for MarkLogic cluster deployment. It will create a docker stack named mlstack with two services named bootstrap and node2.
+
+1. Create a bootstrap host using the following compose file:
+```
+version: '3.6'
+services:
+    bootstrap_3n:
+      image: marklogicdb/marklogic-db
+      container_name: bootstrap_3n
+      hostname: bootstrap_3n
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME=test_admin
+        - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
+        - REALM=public
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_3n_vol1:
+```
+2. Use the following command to create a stack and service:
+```
+docker stack deploy -c bootstrap-compose.yaml mlstack
+```
+3. Once the bootstrap host is up and running, enable HTTPS on the Admin and Manage app servers (ports 8001 and 8002) using the procedures from the MarkLogic documentation https://docs.marklogic.com/guide/security/SSL.
+4. Obtain the CA certificate for SSL enabled app servers on the bootstrap host and store it in the same directory as the compose file. The CA certificate/certificate chain used to join the cluster will be stored as Docker secret.
+5. Create files `mldb_admin_username.txt` and `mldb_admin_password.txt` to set the admin username/password used for joining the bootstrap host.
+6. Use the compose file below to create node2. Please note the {MARKLOGIC_JOIN_TLS_ENABLED} parameter is set to true and the {MARKLOGIC_JOIN_CACERT_FILE} is set as a Docker secret with the value set to the CA certificate/certificate chain file path. Please see the [Configuration](#Configuration) section for more details on these two parameters.
+```
+version: '3.6'
+services:
+    node2:
+      image: marklogicdb/marklogic-db
+      container_name: node2
+      hostname: node2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_TLS_ENABLED=true
+        - MARKLOGIC_JOIN_CACERT_FILE=certificate.cer
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_2n_vol2:/var/opt/MarkLogic
+      secrets:sta
+        - source: mldb_admin_username
+          target: mldb_admin_username
+        - source: mldb_admin_password
+          target: mldb_admin_password
+        - source: certificate.cer
+          target: certificate.cer
+      ports:
+        - 7200-7210:8000-8010
+        - 7297:7997
+      networks:
+      - external_net
+secrets:
+  mldb_admin_password:
+    file: ./mldb_admin_password.txt
+  mldb_admin_username:
+    file: ./mldb_admin_username.txt
+  certificate.cer:
+    file: ./certificate.cer
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_2n_vol2:
+```
+4. Use below command to create the node2 Docker container:
+```
+docker stack deploy -c node2-compose.yaml mlstack
+```
+5. Verify the node2 joined the cluster using MarkLogic Admin console.
+
+### How to update CA certificate/certificate chain in a Docker container?
+
+In case, CA certificate/certificate chain is renewed, it should be updated to ensure Docker container is running uninterrupted.
+Follow below steps to update the certificate:
+
+1. Create a new docker secret for new certificate for the host.
+
+- For instance new certificate is stored in file certificate_v2.cer, use the following command to add a new Docker secret:
+```
+  $docker secret create certificate_v2.cer certificate_v2.cer
+```
+2. Use the below command to rotate the Docker secret for the mlstack_node2 Docker services created above using Docker stack:
+```
+docker service update \
+    --secret-rm certificate_v1.cer \
+    --secret-add source=certificate_v2.cer,target=certificate.cer \
+    mlstack_node2
+```
+Above command will remove old certificate and update service with new certificate from certificate2.cer.
+Wait for the service to be updated. Secret inside the container under /run/secrets directory will be updated with new certificate.
+
 # Upgrading to the latest MarkLogic Docker Release
 
 MarkLogic has extensive documentation about upgrades, see [https://docs.marklogic.com/guide/relnotes/chap2](https://docs.marklogic.com/guide/relnotes/chap2). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.marklogic.com/guide/admin/rolling-upgrades](https://docs.marklogic.com/guide/admin/rolling-upgrades) if you need to upgrade with zero downtime.
 
 To upgrade MarkLogic Docker from release 10.x to the latest release, perform following steps:
-Note: In the below example, we are upgrading the container to the latest MarkLogic version supported for Docker.
+
+Note: In the below example, we are upgrading an initialized MarkLogic host to the latest MarkLogic version supported for Docker.
 
 1. Stop the MarkLogic Docker container.
 Use following command to stop the container:
@@ -708,9 +824,6 @@ $ docker stop container_id
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      --name MarkLogic_cont_2 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
-     -e MARKLOGIC_INIT=true \
-     -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
-     -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
     marklogicdb/marklogic-db
 ```
 3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
@@ -858,9 +971,49 @@ docker swarm leave --force
 ```
 If the process is successful, a message saying the node has left the swarm will be displayed.
 
+# Image Tag
+
+The `marklogic` image tags allow the user to pin their applications to images for a specific release, a specific minor release, a specific major release, or the latest release of MarkLogic Server
+
+## `{ML release version}-{platform}-{ML Docker release version}`
+
+This tag points to the exact version of MarkLogic Server, the base OS, and the supporting scripts version. This allows an application to pin to a very specific version of the image. The image will not be updated without incrementing either the MarkLogic Sever version or the version of the supporting scripts.
+
+e.g. `11.0.3-centos-1.0.2` is the MarkLogic Server 11.0.3 release, CentOS, version 1.0.2 of the docker scripts.
+
+## `latest-xx.x`
+
+This tag points to the latest patch release of a specific minor version of MarkLogic Server on CentOS. The image will contain the latest docker supporting scripts and OS patches.
+
+e.g. `latest-11.0` is the latest patch release of MarkLogic Server 11.0 (11.0.0, 11.0.1, etc.).
+
+For MarkLogic 10, because the numbering scheme was changed, the maintenance release is equivalent to the minor release in MarkLogic 11. Use the `latest-10.0-x` tag to pin to a specific maintenance release of MarkLogic 10.
+
+## `latest-xx`
+
+This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+
+e.g. `latest-11` is the latest patch release of the latest minor release of MarkLogic Server 11 (11.0.0, 11.0.1, 11.1.0, 11.1.1, etc.)
+
+For MarkLogic 10, because the numbering scheme was changed, the maintenance release is equivalent to the minor release in MarkLogic 11. Use the `latest-10` tag to get the latest patch release of the latest maintenance release MarkLogic 10.
+
+## `latest`
+
+This tag points to the latest minor, patch, and major release of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+
+It will pull the latest image and can cross patch, minor or major release numbers (11.0.0, 11.0.1, 11.1.0, 11.1.1, 12.0.0, etc.)
+
+
+**Note: The 'latest' images should not be used in production**
+
+
+
+
+
+
 # Known Issues and Limitations
 
-1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
+1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.

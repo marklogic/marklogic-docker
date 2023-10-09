@@ -1,15 +1,17 @@
-#Docker compose file to setup the bootstrap node on cluster
+#Docker compose file sample to setup a one node cluster
 version: '3.6'
 services:
-  bootstrap_2n:
+    bootstrap:
       image: marklogicdb/marklogic-db
-      hostname: bootstrap_2n
-      container_name: bootstrap_2n
+      hostname: bootstrap
+      container_name: bootstrap
       dns_search: ""
       environment:
-        - MARKLOGIC_INIT=true
+        - MARKLOGIC_INIT=True
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
+        - MARKLOGIC_JOIN_CLUSTER=True
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
         - TZ=America/Los_Angeles
       volumes:
         - MarkLogic_2n_vol1:/var/opt/MarkLogic
@@ -22,4 +24,3 @@ networks:
   external_net: {}
 volumes:
   MarkLogic_2n_vol1:
-  

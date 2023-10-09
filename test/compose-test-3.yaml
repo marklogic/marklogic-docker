@@ -2,7 +2,7 @@
 version: '3.6'
 services:
     bootstrap:
-      image: marklogic-centos/marklogic-server-centos:10-internal
+      image: marklogicdb/marklogic-db
       hostname: bootstrap
       container_name: bootstrap
       dns_search: ""
@@ -19,7 +19,7 @@ services:
       networks:
       - external_net
     node2:
-      image: marklogic-centos/marklogic-server-centos:10-internal
+      image: marklogicdb/marklogic-db
       hostname: node2
       container_name: node2
       dns_search: ""
@@ -28,6 +28,7 @@ services:
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
         - MARKLOGIC_JOIN_CLUSTER=True
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
         - TZ=America/Los_Angeles
       volumes:
         - MarkLogic_3n_vol2:/var/opt/MarkLogic

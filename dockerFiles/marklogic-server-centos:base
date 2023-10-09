@@ -68,7 +68,7 @@ ARG BUILD_BRANCH=local
 
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 LABEL "com.marklogic.name"="MarkLogic Server ${ML_VERSION}"
-LABEL "com.marklogic.version"="1.0.2"
+LABEL "com.marklogic.version"="1.1.0"
 LABEL "com.marklogic"="MarkLogic"
 LABEL "com.marklogic.release-type"="production"
 LABEL "com.marklogic.release-version"="${ML_VERSION}"
@@ -95,7 +95,8 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user \
     MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password \
-    BUILD_BRANCH=${BUILD_BRANCH}
+    BUILD_BRANCH=${BUILD_BRANCH} \
+    MARKLOGIC_JOIN_TLS_ENABLED=false
     
 
 ###############################################################

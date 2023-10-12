@@ -223,14 +223,10 @@ function curl_retry_validate {
 
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
         
-        response=$(curl -m 30 -v -w '%{http_code}' "${curl_options[@]}" "$endpoint")
-        response_code=$(tail -n1 <<< "$response")
-        response_content=$(sed '$ d' <<< "$response")
+        response_code=$(curl -m 30 -s -o start-marklogic_curl_error.log -w '%{http_code}' "${curl_options[@]}" "$endpoint")
 
         if [[ ${response_code} -eq ${expected_response_code} ]]; then
             return "${response_code}"
-        else
-            echo "${response_content}" > start-marklogic_curl_retry_validate.log
         fi
         
         sleep ${RETRY_INTERVAL}
@@ -238,7 +234,7 @@ function curl_retry_validate {
     if [[ "${return_error}" = "false" ]] ; then
         return "${response_code}"
     fi
-    [ -f "start-marklogic_curl_retry_validate.log" ] && cat start-marklogic_curl_retry_validate.log
+    [ -f "start-marklogic_curl_error.log" ] && cat start-marklogic_curl_error.log
     error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
 }
 

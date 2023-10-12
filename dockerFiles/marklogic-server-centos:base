@@ -68,7 +68,7 @@ ARG BUILD_BRANCH=local
 
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 LABEL "com.marklogic.name"="MarkLogic Server ${ML_VERSION}"
-LABEL "com.marklogic.version"="1.1.0"
+LABEL "com.marklogic.version"="1.1.1"
 LABEL "com.marklogic"="MarkLogic"
 LABEL "com.marklogic.release-type"="production"
 LABEL "com.marklogic.release-version"="${ML_VERSION}"

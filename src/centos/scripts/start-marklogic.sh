@@ -223,7 +223,7 @@ function curl_retry_validate {
 
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
         
-        response=$(curl -s -m 30 -w '%{http_code}' "${curl_options[@]}" "$endpoint") # 2>&1
+        response=$(curl -s -m 30 -w '%{http_code}' "${curl_options[@]}" "$endpoint")
         response_code=$(tail -n1 <<< "$response")
         response_content=$(sed '$ d' <<< "$response")
 

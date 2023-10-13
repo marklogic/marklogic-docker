@@ -215,7 +215,7 @@ function validate_cert {
 #   $4+:  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
-    local retry_count response response_code response_content
+    local retry_count response_code
     local return_error=$1; shift
     local endpoint=$1; shift
     local expected_response_code=$1; shift

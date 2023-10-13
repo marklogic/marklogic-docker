@@ -215,7 +215,7 @@ function validate_cert {
 #   $4+:  Additional options to pass to curl
 ################################################################
 function curl_retry_validate {
-    local retry_count response_code
+    local retry_count response response_code response_content
     local return_error=$1; shift
     local endpoint=$1; shift
     local expected_response_code=$1; shift
@@ -223,10 +223,14 @@ function curl_retry_validate {
 
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
         
-        response_code=$(curl -m 30 -s -o start-marklogic_curl_error.log -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+        response=$(curl -s -m 30 -w '%{http_code}' "${curl_options[@]}" "$endpoint") # 2>&1
+        response_code=$(tail -n1 <<< "$response")
+        response_content=$(sed '$ d' <<< "$response")
 
         if [[ ${response_code} -eq ${expected_response_code} ]]; then
             return "${response_code}"
+        else
+            echo "${response_content}" > start-marklogic_curl_retry_validate.log
         fi
         
         sleep ${RETRY_INTERVAL}
@@ -234,7 +238,7 @@ function curl_retry_validate {
     if [[ "${return_error}" = "false" ]] ; then
         return "${response_code}"
     fi
-    [ -f "start-marklogic_curl_error.log" ] && cat start-marklogic_curl_error.log
+    [ -f "start-marklogic_curl_retry_validate.log" ] && cat start-marklogic_curl_retry_validate.log
     error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
 }
 

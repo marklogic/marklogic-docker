@@ -246,7 +246,7 @@ void scan() {
 
 void publishToInternalRegistry() {
     publishTag="${mlVersion}-${env.platformString}-${env.dockerVersion}"
-    withCredentials([usernamePassword(credentialsId: '8c2e0b38-9e97-4953-aa60-f2851bb70cc8', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+    withCredentials([usernamePassword(credentialsId: 'builder-docker-db-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             make push-mlregistry version=${publishTag}
@@ -299,7 +299,7 @@ pipeline {
         buildServerPlatform = 'linux64-rh7'
         buildServerPath = "*/${params.ML_SERVER_BRANCH}"
         buildServerVersion = getServerVersion(params.ML_SERVER_BRANCH)
-        dockerRegistry = 'https://ml-docker-dev.marklogic.com'
+        dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
     }
 

@@ -119,21 +119,6 @@ void resultNotification(message) {
     }
 }
 
-String getServerVersion(branchName) {
-    switch (branchName) {
-        case 'develop':
-            return '12.0'
-        case 'develop-11':
-            return '11.2'
-        case 'develop-10.0':
-            return '10.0'
-        case 'develop-9.0':
-            return '9.0'
-        default:
-            return 'INVALID BRANCH'
-    }
-}
-
 void copyRPMs() {
     if (marklogicVersion == "10") {
         RPMsuffix = "-nightly"

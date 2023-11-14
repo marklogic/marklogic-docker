@@ -10,11 +10,13 @@ emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Fayez.S
 // email list for security vulnerabilities only
 emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder'
+dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 JIRA_ID = ''
 JIRA_ID_PATTERN = /(CLD|DEVO|QAINF|BUG|DBI)-\d{3,4}/
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_INFO = 0
+
 // Define local funtions
 void preBuildCheck() {
     // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
@@ -133,66 +135,35 @@ String getServerVersion(branchName) {
 }
 
 void copyRPMs() {
-    timeStamp = sh(returnStdout: true, script: 'date +%Y%m%d').trim()
-    if (buildServerVersion == "11.2" || buildServerVersion == "12.0") {
-        RPMsuffix = ".${timeStamp}-rhel"
+    if (marklogicVersion == "10") {
+        RPMsuffix = "-nightly"
+        RPMbranch = "b10"
+        RPMversion = "10.0"
+    }
+    else if (marklogicVersion == "11") {
+        RPMsuffix = ".nightly-rhel"
+        RPMbranch = "b11"
+        RPMversion = "11.2"
+    }
+    else if (marklogicVersion == "12") {
+        RPMsuffix = ".nightly-rhel"
+        RPMbranch = "b12"
+        RPMversion = "12.0"
     }
     else {
-        RPMsuffix = "-${timeStamp}"
+        error "Invalid value in marklogicVersion parameter."
     }
     sh """
         cd src/centos
         if [ -z ${env.ML_RPM} ]; then
-            unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
-            if [ ! -z \$RETCODE ]; then
-                count_iter=75
-                while [ \$count_iter -gt 0 ] ; do
-                    unset RETCODE
-                    echo "WARN : unable to copy package!! retrying after 5 mins"
-                    sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}/${env.buildServerPlatform}/${buildServerPath}/pkgs.${timeStamp}/MarkLogic-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
-                    if [ -z \$RETCODE ] ; then
-                        echo "INFO" "Successfully copied package"
-                        break
-                    fi
-                    let count_iter--
-                done
-                if [ ! -z \$RETCODE ] ; then
-                    echo "ERROR : unable to copy package"
-                    false
-                else
-                    echo "INFO" "Successfully copied package"
-                fi
-            fi
+            wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.x86_64.rpm
         else
-            cp $ML_RPM .
+            wget --no-verbose ${ML_RPM}
         fi
-    if [ -z ${env.ML_CONVERTERS}]; then
-            unset RETCODE
-            scp ${env.buildServer}:${env.buildServerBasePath}/converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
-            if [ ! -z \$RETCODE ]; then
-                count_iter=75
-                while [ \$count_iter -gt 0 ] ; do
-                    unset RETCODE
-                    echo "WARN : unable to copy package!! retrying after 5 mins"
-                    sleep 300
-                    scp ${env.buildServer}:${env.buildServerBasePath}converter/${buildServerPath}/pkgs.${timeStamp}/MarkLogicConverters-${buildServerVersion}${RPMsuffix}.x86_64.rpm . || RETCODE=\$?
-                    if [ -z \$RETCODE ] ; then
-                        echo "INFO" "Successfully copied package"
-                        break
-                    fi
-                    let count_iter--
-                done
-                if [ ! -z \$RETCODE ] ; then
-                    echo "ERROR : unable to copy package"
-                    false
-                else
-                    echo "INFO" "Successfully copied package"
-                fi
-            fi
+        if [ -z ${env.ML_CONVERTERS}]; then
+            wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.x86_64.rpm
         else
-            cp $ML_CONVERTERS .
+            wget --no-verbose ${ML_CONVERTERS}
         fi
     """
     script {
@@ -254,7 +225,7 @@ void publishToInternalRegistry() {
         
     }
     // Publish to private ECR repository that is used by the performance team. (only ML11)
-    if ( params.ML_SERVER_BRANCH == "develop-11" ) {
+    if ( params.marklogicVersion == "11" ) {
         withCredentials( [[
             $class: 'AmazonWebServicesCredentialsBinding',
             credentialsId: "aws-engineering-ct-ecr",
@@ -289,17 +260,11 @@ pipeline {
         skipStagesAfterUnstable()
     }
     triggers {
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % ML_SERVER_BRANCH=develop-10.0
-                                                             00 04 * * * % ML_SERVER_BRANCH=develop-11
-                                                             00 05 * * * % ML_SERVER_BRANCH=develop''' : '')
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % marklogicVersion=10
+                                                             00 04 * * * % marklogicVersion=11
+                                                             00 05 * * * % marklogicVersion=12''' : '')
     }
     environment {
-        buildServer = 'distro.marklogic.com'
-        buildServerBasePath = '/space/nightly/builds'
-        buildServerPlatform = 'linux64-rh7'
-        buildServerPath = "*/${params.ML_SERVER_BRANCH}"
-        buildServerVersion = getServerVersion(params.ML_SERVER_BRANCH)
-        dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
     }
 
@@ -307,7 +272,7 @@ pipeline {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.1.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         string(name: 'platformString', defaultValue: 'centos', description: 'Platform string for Docker image version. Will be made part of the docker image tag', trim: true)
-        choice(name: 'ML_SERVER_BRANCH', choices: 'develop-11\ndevelop\ndevelop-10.0\ndevelop-9.0', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
+        choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')

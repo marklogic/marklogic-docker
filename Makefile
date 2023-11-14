@@ -1,9 +1,10 @@
-version?=10-internal
+version?=internal
 package?=MarkLogic.rpm
-REPONAME=marklogic-centos
+REPONAME=local-dev
+docker_regestry?=ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com
 repoDir=marklogic
 docker_build_options=--compress
-test_image?=ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
+test_image?=${docker_regestry}/${repoDir}/marklogic-server-centos:${version}
 build_branch?=local
 
 #***************************************************************************
@@ -38,8 +39,8 @@ test: structure-test docker-tests
 # push docker images to mlregistry.marklogic.com
 #***************************************************************************
 push-mlregistry:
-	docker tag ${REPONAME}/marklogic-server-centos:${version} ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
-	docker push ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${version}
+	docker tag ${REPONAME}/marklogic-server-centos:${version} ${docker_regestry}/${repoDir}/marklogic-server-centos:${version}
+	docker push ${docker_regestry}/${repoDir}/marklogic-server-centos:${version}
 
 #***************************************************************************
 # run lint checker on Dockerfiles, print linting issues but do not fail the build

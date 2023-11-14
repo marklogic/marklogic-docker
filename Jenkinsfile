@@ -219,7 +219,7 @@ void publishToInternalRegistry() {
             ]]) {
                 sh """
                     aws ecr get-login --no-include-email --region us-west-2 | bash
-                    docker tag marklogic-centos/marklogic-server-centos:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+                    docker tag local-dev/marklogic-server-centos:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
 	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
                 """
             }

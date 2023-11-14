@@ -9,7 +9,7 @@ import groovy.json.JsonSlurperClassic
 emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Fayez.Saliba@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com'
 // email list for security vulnerabilities only
 emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
-gitCredID = '550650ab-ee92-4d31-a3f4-91a11d5388a3'
+gitCredID = 'marklogic-builder'
 JIRA_ID = ''
 JIRA_ID_PATTERN = /(CLD|DEVO|QAINF|BUG|DBI)-\d{3,4}/
 LINT_OUTPUT = ''

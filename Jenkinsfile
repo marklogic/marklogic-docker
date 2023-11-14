@@ -12,7 +12,7 @@ emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.c
 gitCredID = 'marklogic-builder'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 JIRA_ID = ''
-JIRA_ID_PATTERN = /(CLD|DEVO|QAINF|BUG|DBI)-\d{3,4}/
+JIRA_ID_PATTERN = /(?i)(CLD|DEVO|QAINF|BUG|DBI)-\d{3,4}/
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_INFO = 0
@@ -62,6 +62,9 @@ def extractJiraID() {
         return ''
     }
     try {
+        echo match
+        echo match[0]
+        echo match[0][0]
         return match[0]
     } catch (any) {
         echo 'Warning: Jira ticket number not detected.'

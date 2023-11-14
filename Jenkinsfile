@@ -310,7 +310,7 @@ pipeline {
                 expression { return params.DOCKER_TESTS }
             }
             steps {
-                sh "make docker-tests test_image=marklogic-centos/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
+                sh "make docker-tests test_image=local-dev/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
             }
         }
 

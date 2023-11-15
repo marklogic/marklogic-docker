@@ -22,6 +22,8 @@ void preBuildCheck() {
     // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
     evaluate """${ def script = ''; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
+    sh 'env'
+
     JIRA_ID = extractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
@@ -58,7 +60,7 @@ def extractJiraID() {
         match = env.GIT_BRANCH =~ JIRA_ID_PATTERN
     }
     else {
-        echo 'Warning: Jira ticket number not detected.'
+        echo 'Warning: No Git title or branch available.'
         return ''
     }
     try {

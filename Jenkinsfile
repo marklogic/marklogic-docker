@@ -109,7 +109,7 @@ void resultNotification(message) {
 
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
-        jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, comment: comment
+        jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${JIRA_ID}"
     } else {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"

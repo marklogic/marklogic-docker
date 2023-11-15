@@ -64,10 +64,7 @@ def extractJiraID() {
         return ''
     }
     try {
-        echo match
-        echo match[0]
-        echo match[0][0]
-        return match[0]
+        return match[0][0]
     } catch (any) {
         echo 'Warning: Jira ticket number not detected.'
         return ''

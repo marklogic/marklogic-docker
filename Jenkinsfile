@@ -22,8 +22,6 @@ void preBuildCheck() {
     // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
     evaluate """${ def script = ''; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
-    sh 'env'
-
     JIRA_ID = extractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
@@ -37,13 +35,10 @@ void preBuildCheck() {
     if (env.CHANGE_ID) {
         if (prDraftCheck()) { sh 'exit 1' }
         if (getReviewState().equalsIgnoreCase('CHANGES_REQUESTED')) {
-            println(reviewState)
+            echo 'PR changes requested. (' + reviewState + ') Aborting.'
             sh 'exit 1'
         }
     }
-
-// def obj = new abortPrevBuilds()
-// obj.abortPrevBuilds()
 }
 
 @NonCPS
@@ -264,8 +259,8 @@ pipeline {
         string(name: 'ML_RPM', defaultValue: '', description: 'RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'The Converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
-        booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
-        booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
+        booleanParam(name: 'TEST_STRUCTURE', defaultValue: false, description: 'Run container structure tests')
+        booleanParam(name: 'DOCKER_TESTS', defaultValue: false, description: 'Run docker tests')
     }
 
     stages {

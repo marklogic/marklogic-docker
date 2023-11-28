@@ -7,11 +7,18 @@ test_image?=ml-docker-dev.marklogic.com/${repoDir}/marklogic-server-centos:${ver
 build_branch?=local
 
 #***************************************************************************
-# build docker images
+# build centos docker images
 #***************************************************************************
 build:
 	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-deps-centos:${version}" -f ../../dockerFiles/marklogic-deps-centos:base .
 	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-centos:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-centos:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../../dockerFiles/marklogic-server-centos:base .
+
+#***************************************************************************
+# build ubi docker images
+#***************************************************************************
+build-ubi:
+	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-deps-ubi:${version}" -f ../../dockerFiles/marklogic-deps-ubi:base .
+	cd src/centos/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-ubi:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-ubi:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../../dockerFiles/marklogic-server-ubi:base .
 
 #***************************************************************************
 # strcture test docker images

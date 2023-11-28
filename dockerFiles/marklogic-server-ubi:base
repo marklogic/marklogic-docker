@@ -1,0 +1,130 @@
+###############################################################
+#
+#   Copyright (c) 2023 MarkLogic Corporation
+#
+###############################################################
+
+ARG BASE_IMAGE=marklogic-centos/marklogic-deps-centos:10-internal
+# hadolint ignore=DL3006
+FROM ${BASE_IMAGE} as builder
+
+###############################################################
+# set build args
+###############################################################
+
+ARG ML_RPM=marklogic.rpm
+ARG ML_USER="marklogic_user"
+ARG ML_VERSION=10-internal
+ARG ML_CONVERTERS=marklogic.converters
+####################################################
+# inject init, start and clustering scripts
+###############################################################
+
+COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
+
+###############################################################
+# install MarkLogic server, sudo, and remove mlcmd packages
+###############################################################
+COPY ${ML_RPM} /tmp/marklogic-server.rpm
+RUN rpm -i /tmp/marklogic-server.rpm \
+    && rm /tmp/marklogic-server.rpm \
+    && microdnf -y install sudo \
+    && microdnf -y clean all \
+    && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
+    && rm -rf ./opt/MarkLogic/mlcmd/ext/*
+
+###############################################################
+# Add TINI to serve as PID 1 process
+###############################################################
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+###############################################################
+# Copy converters package 
+###############################################################
+WORKDIR /
+COPY ${ML_CONVERTERS} converters.rpm
+###############################################################
+# create system user
+###############################################################
+
+RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+###############################################################
+# second stage for flattening layers
+###############################################################
+# hadolint ignore=DL3006
+FROM ${BASE_IMAGE}
+
+COPY --from=builder / /
+
+ARG ML_USER="marklogic_user"
+ARG ML_VERSION=10-internal
+ARG BUILD_BRANCH=local
+###############################################################
+# define docker labels
+###############################################################
+
+LABEL "com.marklogic.maintainer"="docker@marklogic.com"
+LABEL "com.marklogic.name"="MarkLogic Server ${ML_VERSION}"
+LABEL "com.marklogic.version"="1.1.1"
+LABEL "com.marklogic"="MarkLogic"
+LABEL "com.marklogic.release-type"="production"
+LABEL "com.marklogic.release-version"="${ML_VERSION}"
+LABEL "com.marklogic.build-branch"="${BUILD_BRANCH}"
+LABEL "com.marklogic.license"="MarkLogic EULA"
+LABEL "com.marklogic.license.description"="By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
+LABEL "com.marklogic.license.url"="https://developer.marklogic.com/eula"
+LABEL "com.marklogic.description"="MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, backup, and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster, and for delivering dynamic content at massive scale. The current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use."
+LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> --mount src=MarkLogic,dst=/var/opt/MarkLogic marklogicdb/marklogic-db:${ML_VERSION}"
+
+
+###############################################################
+# set env vars
+###############################################################
+
+ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
+    MARKLOGIC_DATA_DIR=/var/opt/MarkLogic \
+    MARKLOGIC_USER=${ML_USER} \
+    MARKLOGIC_PID_FILE=/var/run/MarkLogic.pid  \
+    MARKLOGIC_UMASK=022 \
+    LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH:/opt/MarkLogic/lib \
+    MARKLOGIC_VERSION="${ML_VERSION}" \
+    MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
+    MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
+    MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user \
+    MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password \
+    BUILD_BRANCH=${BUILD_BRANCH} \
+    MARKLOGIC_JOIN_TLS_ENABLED=false
+    
+
+###############################################################
+# expose MarkLogic server ports
+###############################################################
+
+EXPOSE 25 7997-8010
+
+###############################################################
+# set system user
+###############################################################
+
+USER ${ML_USER}
+
+####################################################
+# Set Linux Language Settings
+###############################################################
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=C.UTF-8
+
+###############################################################
+# define volume for persistent MarkLogic server data
+###############################################################
+
+VOLUME /var/opt/MarkLogic
+
+###############################################################
+# set entrypoint
+###############################################################
+ENTRYPOINT ["/tini", "--", "/usr/local/bin/start-marklogic.sh"]

@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-ARG BASE_IMAGE=marklogic-centos/marklogic-deps-centos:10-internal
+ARG BASE_IMAGE=marklogic-ubi/marklogic-deps-ubi:11-internal
 # hadolint ignore=DL3006
 FROM ${BASE_IMAGE} as builder
 

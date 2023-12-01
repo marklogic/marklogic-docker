@@ -23,7 +23,7 @@ RUN microdnf install -y wget \
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && microdnf -y update \
     && microdnf -y install gdb.x86_64 glibc.i686 libstdc++.i686 libgcc.i686 initscripts redhat-lsb-core.x86_64 tzdata \
-    && microdnf clean all 
+    && microdnf clean all
 
 ###############################################################
 # platform configurations

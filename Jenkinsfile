@@ -136,7 +136,7 @@ void copyRPMs() {
         error "Invalid value in marklogicVersion parameter."
     }
     sh """
-        cd src/centos
+        cd src
         if [ -z ${env.ML_RPM} ]; then
             wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.x86_64.rpm
         else
@@ -149,8 +149,8 @@ void copyRPMs() {
         fi
     """
     script {
-        RPM = sh(returnStdout: true, script: 'cd src/centos;file MarkLogic-*.rpm | cut -d: -f1').trim()
-        CONVERTERS = sh(returnStdout: true, script: 'cd src/centos;file MarkLogicConverters-*.rpm | cut -d: -f1').trim()
+        RPM = sh(returnStdout: true, script: 'cd src;file MarkLogic-*.rpm | cut -d: -f1').trim()
+        CONVERTERS = sh(returnStdout: true, script: 'cd src;file MarkLogicConverters-*.rpm | cut -d: -f1').trim()
         mlVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' | awk -F \"-rhel\"  '{print \$1;}' ").trim()
     }
 }
@@ -327,7 +327,7 @@ pipeline {
     post {
         always {
             sh '''
-                cd src/centos
+                cd src
                 rm -rf *.rpm
                 docker system prune --force --filter "until=720h"
                 docker volume prune --force

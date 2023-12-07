@@ -53,7 +53,7 @@ done
 HOST_FQDN="${HOSTNAME}"
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
-    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | tee /etc/marklogic.conf
 fi
 
 ################################################################
@@ -61,10 +61,6 @@ fi
 ################################################################
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
-if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
-    info "OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables."
-    rm -f /etc/marklogic.conf
-    sudo touch /etc/marklogic.conf && sudo chmod 777 /etc/marklogic.conf
 
     [[ "${MARKLOGIC_PID_FILE}" ]] && echo "export MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_UMASK}" ]] && echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >>/etc/marklogic.conf
@@ -82,14 +78,6 @@ if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     [[ "${JAVA_HOME}" ]] && echo "export JAVA_HOME=$JAVA_HOME" >>/etc/marklogic.conf
     [[ "${CLASSPATH}" ]] && echo "export CLASSPATH=$CLASSPATH" >>/etc/marklogic.conf
 
-    sudo chmod 400 /etc/marklogic.conf
-
-elif [[ -z ${OVERWRITE_ML_CONF} ]] || [[ "${OVERWRITE_ML_CONF}" == "false" ]]; then
-    info "OVERWRITE_ML_CONF is false, not writing to /etc/marklogic.conf"
-else
-    error "OVERWRITE_ML_CONF must be true or false." exit
-fi
-
 ################################################################
 # Install Converters if required
 ################################################################
@@ -98,8 +86,11 @@ if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
         info "Converters directory: /opt/MarkLogic/Converters already exists, skipping installation of converters."
     else
         info "INSTALL_CONVERTERS is true, installing converters."
-        CONVERTERS_PATH="/converters.rpm"
-        sudo yum localinstall -y $CONVERTERS_PATH
+        CONVERTERS_PATH="/tmp/converters.rpm"
+        cd /tmp
+        rpm2cpio ${CONVERTERS_PATH} | cpio -ivd ./opt/*
+        mv /tmp/opt/MarkLogic/Converters /opt/MarkLogic/
+        rm -rf /tmp/opt && rm -rf ${CONVERTERS_PATH}
     fi
 elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" == "false" ]]; then
     info "INSTALL_CONVERTERS is false, not installing converters."
@@ -107,14 +98,6 @@ else
     error "INSTALL_CONVERTERS must be true or false." exit
 fi
 
-################################################################
-# Setup timezone
-################################################################
-if [ -n "${TZ}" ]; then
-    info "TZ is defined, setting timezone to ${TZ}."
-    sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
-    echo "${TZ}" | sudo tee /etc/timezone
-fi
 
 # Values taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
 N_RETRY=5
@@ -303,9 +286,10 @@ function verify_bootstrap_status {
 ################################################################
 if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
     info "MARKLOGIC_DEV_BUILD is true, starting build using ${MARKLOGIC_INSTALL_DIR}/MarkLogic"
-    sudo "${MARKLOGIC_INSTALL_DIR}/MarkLogic" -i . -d "${MARKLOGIC_DATA_DIR}" -p "${MARKLOGIC_PID_FILE}" &
+    "${MARKLOGIC_INSTALL_DIR}/MarkLogic" -i . -d "${MARKLOGIC_DATA_DIR}" -p "${MARKLOGIC_PID_FILE}" &
 elif [[ -z "${MARKLOGIC_DEV_BUILD}" ]] || [[ "${MARKLOGIC_DEV_BUILD}" == "false" ]]; then
-    sudo /etc/init.d/MarkLogic start
+    # service MarkLogic start
+    /etc/init.d/MarkLogic start
 else
     error "MARKLOGIC_DEV_BUILD must be true or false." exit
 fi
@@ -415,7 +399,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
         restart_check "${HOSTNAME}" "${TIMESTAMP}"
     fi
 
-    sudo touch /var/opt/MarkLogic/DOCKER_INIT
+   touch /var/opt/MarkLogic/DOCKER_INIT
 elif [[ -z "${MARKLOGIC_INIT}" ]] || [[ "${MARKLOGIC_INIT}" == "false" ]]; then
     info "MARKLOGIC_INIT is set to false or not defined, not initializing."
 else
@@ -467,7 +451,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
 
         rm -f host.xml
         rm -f cluster.zip
-        sudo touch /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER
+        touch /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER
     elif [[ "${BOOTSTRAP_STATUS}" == "localhost" ]]; then
         info "HOST cannot join itself, skipped joining cluster."
     else
@@ -496,11 +480,11 @@ do
     HOST_RESP_CODE=$(curl "${ML_HOST_PROTOCOL}"://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n" --cacert "${ML_CACERT_FILE}")
     [[ -f host_health.xml ]] && error_message=$(< host_health.xml grep "SEC-DEFAULTUSERDNE")
     if [[ "${MARKLOGIC_INIT}" == "true" ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
-        sudo touch /var/opt/MarkLogic/ready
+        touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         break
     elif [[ "${MARKLOGIC_INIT}" == "false" ]] && [[ "${error_message}" =~ "SEC-DEFAULTUSERDNE" ]]; then
-        sudo touch /var/opt/MarkLogic/ready
+        touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         rm -f host_health.xml
         break

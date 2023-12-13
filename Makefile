@@ -10,7 +10,7 @@ build_branch?=local
 #***************************************************************************
 # build centos docker images
 #***************************************************************************
-build:
+build-centos:
 	cd src/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-deps-centos:${version}" -f ../dockerFiles/marklogic-deps-centos:base .
 	cd src/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-centos:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-centos:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../dockerFiles/marklogic-server-centos:base .
 
@@ -20,6 +20,13 @@ build:
 build-ubi:
 	cd src/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-deps-ubi:${version}" -f ../dockerFiles/marklogic-deps-ubi:base .
 	cd src/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-ubi:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-ubi:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../dockerFiles/marklogic-server-ubi:base .
+
+#***************************************************************************
+# build ubi rootless docker images
+#***************************************************************************
+build-ubi-rootless:
+	cd src/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-deps-ubi:${version}" -f ../dockerFiles/marklogic-deps-ubi:base .
+	cd src/; docker build ${docker_build_options} -t "${REPONAME}/marklogic-server-ubi-rootless:${version}" --build-arg BASE_IMAGE=${REPONAME}/marklogic-deps-ubi:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../dockerFiles/marklogic-server-ubi-rootless:base .
 
 #***************************************************************************
 # strcture test docker images

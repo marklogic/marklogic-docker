@@ -16,40 +16,60 @@ ARG ML_RPM=marklogic.rpm
 ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
 ARG ML_CONVERTERS=marklogic.converters
+
+###############################################################
+# create system user
+###############################################################
+
+RUN adduser --gid users --uid 1000 ${ML_USER}
+
+###############################################################
+# Copy converters package 
+###############################################################
+WORKDIR /
+COPY ${ML_CONVERTERS }/tmp/converters.rpm
+RUN chown ${ML_USER}:users /tmp/converters.rpm
+
+###############################################################
+# Create directory and set authorisations for converters
+###############################################################
+RUN chown -R ${ML_USER}:users /opt/MarkLogic \
+    && chmod 764 -R /opt/MarkLogic
+
 ####################################################
 # inject init, start and clustering scripts
 ###############################################################
 
-COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
+COPY scripts/start-marklogic-rootless.sh /usr/local/bin/start-marklogic.sh
+RUN chown ${ML_USER} /usr/local/bin/start-marklogic.sh \
+    && chmod +x /usr/local/bin/start-marklogic.sh
 
 ###############################################################
-# install MarkLogic server, sudo, and remove mlcmd packages
+# install MarkLogic server and remove mlcmd packages
 ###############################################################
 COPY ${ML_RPM} /tmp/marklogic-server.rpm
 RUN rpm -i /tmp/marklogic-server.rpm \
     && rm /tmp/marklogic-server.rpm \
-    && microdnf -y install sudo \
     && microdnf -y clean all \
     && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
     && rm -rf ./opt/MarkLogic/mlcmd/ext/*
+
+
+###############################################################
+# set marklogic.conf authorisation
+###############################################################
+
+RUN touch /etc/marklogic.conf \
+    && chown ${ML_USER}:users /etc/marklogic.conf \
+    && chmod 644 /etc/marklogic.conf
 
 ###############################################################
 # Add TINI to serve as PID 1 process
 ###############################################################
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-
-###############################################################
-# Copy converters package 
-###############################################################
-WORKDIR /
-COPY ${ML_CONVERTERS} converters.rpm
-###############################################################
-# create system user
-###############################################################
-
-RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN chown ${ML_USER}:users /tini \
+    && chmod +x /tini
 
 ###############################################################
 # second stage for flattening layers
@@ -87,7 +107,7 @@ LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -
 ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_DATA_DIR=/var/opt/MarkLogic \
     MARKLOGIC_USER=${ML_USER} \
-    MARKLOGIC_PID_FILE=/var/run/MarkLogic.pid  \
+    MARKLOGIC_PID_FILE=/home/${ML_USER}/MarkLogic.pid  \
     MARKLOGIC_UMASK=022 \
     LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH:/opt/MarkLogic/lib \
     MARKLOGIC_VERSION="${ML_VERSION}" \
@@ -96,8 +116,18 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user \
     MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password \
     BUILD_BRANCH=${BUILD_BRANCH} \
-    MARKLOGIC_JOIN_TLS_ENABLED=false
+    MARKLOGIC_JOIN_TLS_ENABLED=false \
+    TZ=:/etc/localtime \
+    OVERWRITE_ML_CONF=true \
+    MARKLOGIC_EC2_HOST=0
     
+################################################################
+# Set appropriate authorisation to MARKLOGIC_DATA_DIR 
+################################################################
+
+RUN mkdir -p ${MARKLOGIC_DATA_DIR} \
+    && chown -R ${ML_USER} ${MARKLOGIC_DATA_DIR} \
+    && chmod 764 -R ${MARKLOGIC_DATA_DIR}
 
 ###############################################################
 # expose MarkLogic server ports

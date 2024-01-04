@@ -32,7 +32,7 @@ build-ubi-rootless:
 # strcture test docker images
 #***************************************************************************
 structure-test:
-	container-structure-test test --config ./test/structure-test.yaml --image ${REPONAME}/marklogic-server-centos:${version} \
+	container-structure-test test --config ./test/structure-test.yaml --image TEST_IMAGE:${test_image} \
 		$(if $(Jenkins), --output junit | tee container-structure-test.xml,)
 
 #***************************************************************************
@@ -61,14 +61,17 @@ push-mlregistry:
 #***************************************************************************
 lint:
 	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/scripts/start-marklogic.sh $(if $(Jenkins), > start-marklogic-lint.txt,)
+	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/scripts/start-marklogic-rootless.sh $(if $(Jenkins), >> start-marklogic-lint.txt,)
 	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base $(if $(Jenkins), > marklogic-deps-centos-base-lint.txt,)
 	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base $(if $(Jenkins), > marklogic-server-centos-base-lint.txt,)
+	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-ubi:base $(if $(Jenkins), >> marklogic-server-centos-base-lint.txt,)
+	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-ubi-rootless:base $(if $(Jenkins), >> marklogic-server-centos-base-lint.txt,)
 
 #***************************************************************************
 # security scan docker images
 #***************************************************************************
 scan:
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${REPONAME}/marklogic-server-centos:${version} $(if $(Jenkins), > scan-server-image.txt,)
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest TEST_IMAGE:${test_image} $(if $(Jenkins), > scan-server-image.txt,)
 	
 #***************************************************************************
 # remove junk

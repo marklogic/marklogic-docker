@@ -11,7 +11,7 @@ emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Fayez.S
 emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
-JIRA_ID_PATTERN = /(?i)(CLD|DEVO|QAINF|BUG|DBI)-\d{3,4}/
+JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,4,5,6}/
 JIRA_ID = ''
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
@@ -109,7 +109,7 @@ void resultNotification(message) {
 
     if (JIRA_ID) {
         def comment = [ body: "Jenkins pipeline build result: ${message}" ]
-        jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
+        //jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${JIRA_ID}"
     } else {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"

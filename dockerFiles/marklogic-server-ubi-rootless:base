@@ -27,14 +27,15 @@ RUN adduser --gid users --uid 1000 ${ML_USER}
 # Copy converters package 
 ###############################################################
 WORKDIR /
-COPY ${ML_CONVERTERS }/tmp/converters.rpm
+COPY ${ML_CONVERTERS} /tmp/converters.rpm
 RUN chown ${ML_USER}:users /tmp/converters.rpm
 
 ###############################################################
 # Create directory and set authorisations for converters
 ###############################################################
-RUN chown -R ${ML_USER}:users /opt/MarkLogic \
-    && chmod 764 -R /opt/MarkLogic
+RUN mkdir -p /opt/MarkLogic \
+    && chown -R ${ML_USER}:users /opt/MarkLogic \
+    && chmod 766 -R /opt/MarkLogic
 
 ####################################################
 # inject init, start and clustering scripts

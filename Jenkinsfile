@@ -169,18 +169,18 @@ void structureTests() {
 }
 
 void lint() {
-    IMAGE_INFO = sh(returnStdout: true, script: 'docker  images | grep \"marklogic-server-centos\"')
+    IMAGE_INFO = sh(returnStdout: true, script: 'docker images | grep \"marklogic-server-'+"${platformString}"+'\"')
 
-    sh '''
+    sh """
         make lint Jenkins=true
-        cat start-marklogic-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
-    '''
+        cat start-scripts-lint.txt marklogic-deps-centos-base-lint.txt marklogic-deps-ubi-base-lint.txt marklogic-server-centos-base-lint.txt marklogic-server-ubi-base-lint.txt marklogic-server-ubi-rootless-base-lint.txt
+    """
 
-    LINT_OUTPUT = sh(returnStdout: true, script: 'echo start-marklogic.sh: ;echo; cat start-marklogic-lint.txt; echo dockerfile-marklogic-server-centos: ; echo marklogic-deps-centos:base: ;echo; cat marklogic-deps-centos-base-lint.txt; echo marklogic-server-centos:base: ;echo; cat marklogic-server-centos-base-lint.txt').trim()
+    LINT_OUTPUT = sh(returnStdout: true, script: "echo start-marklogic.sh: ;echo; cat start-marklogic-lint.txt; echo dockerfile-marklogic-server-${platformString}: ; echo marklogic-deps-${platformString}:base: ;echo; cat marklogic-deps-${platformString}-base-lint.txt; echo marklogic-server-${platformString}:base: ;echo; cat marklogic-server-${platformString}-base-lint.txt").trim()
 
-    sh '''
-        rm -f start-marklogic-lint.txt marklogic-deps-centos-base-lint.txt marklogic-server-centos-base-lint.txt
-    '''
+    sh """
+        rm -f start-marklogic-lint.txt marklogic-deps-${platformString}-base-lint.txt marklogic-server-${platformString}-base-lint.txt
+    """
 }
 
 void scan() {
@@ -216,7 +216,7 @@ void publishToInternalRegistry() {
             ]]) {
                 sh """
                     aws ecr get-login --no-include-email --region us-west-2 | bash
-                    docker tag local-dev/marklogic-server-centos:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+                    docker tag local-dev/marklogic-server-${platformString}:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
 	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
                 """
             }
@@ -307,7 +307,7 @@ pipeline {
                 expression { return params.DOCKER_TESTS }
             }
             steps {
-                sh "make docker-tests test_image=local-dev/marklogic-server-centos:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
+                sh "make docker-tests test_image=local-dev/marklogic-server-${platformString}:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
             }
         }
 

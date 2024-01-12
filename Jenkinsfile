@@ -179,7 +179,7 @@ void lint() {
     LINT_OUTPUT = sh(returnStdout: true, script: "echo start-scripts-lint.txt: ;echo; cat start-scripts-lint.txt; echo; echo dockerfile-lint.txt: ; cat dockerfile-lint.txt; echo").trim()
 
     sh """
-        rm -f start-marklogic-lint.txt marklogic-deps-${platformString}-base-lint.txt marklogic-server-${platformString}-base-lint.txt
+        rm -f start-scripts-lint.txt dockerfile-lint.txt
     """
 }
 

@@ -57,15 +57,17 @@ push-mlregistry:
 	docker push ${docker_registry}/${repoDir}/marklogic-server-centos:${version}
 
 #***************************************************************************
-# run lint checker on Dockerfiles, print linting issues but do not fail the build
+# run lint checker on shell scripts and Dockerfiles, print linting issues but do not fail the build
 #***************************************************************************
+
 lint:
 	docker run --rm -v "${PWD}:/mnt" koalaman/shellcheck:stable src/scripts/*.sh $(if $(Jenkins), > start-scripts-lint.txt,)
-	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-centos:base $(if $(Jenkins), > marklogic-deps-centos-base-lint.txt,)
-	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-deps-ubi:base $(if $(Jenkins), > marklogic-deps-ubi-base-lint.txt,)
-	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-centos:base $(if $(Jenkins), > marklogic-server-centos-base-lint.txt,)
-	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-ubi:base $(if $(Jenkins), >> marklogic-server-ubi-base-lint.txt,)
-	docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/marklogic-server-ubi-rootless:base $(if $(Jenkins), >> marklogic-server-ubi-rootless-base-lint.txt,)
+
+	@for dockerFile in $(shell ls ./dockerFiles/); do\
+	    echo "Lint results for $${dockerFile}" $(if $(Jenkins), >> dockerfile-lint.txt,) ; \
+		docker run --rm -i -v "${PWD}/hadolint.yaml":/.config/hadolint.yaml ghcr.io/hadolint/hadolint < dockerFiles/$${dockerFile} $(if $(Jenkins), >> dockerfile-lint.txt,);\
+		echo $(if $(Jenkins), >> dockerfile-lint.txt,) ;\
+	done
 
 #***************************************************************************
 # security scan docker images

@@ -173,10 +173,10 @@ void lint() {
 
     sh """
         make lint Jenkins=true
-        cat start-scripts-lint.txt marklogic-deps-centos-base-lint.txt marklogic-deps-ubi-base-lint.txt marklogic-server-centos-base-lint.txt marklogic-server-ubi-base-lint.txt marklogic-server-ubi-rootless-base-lint.txt
+        cat start-scripts-lint.txt dockerfile-lint.txt
     """
 
-    LINT_OUTPUT = sh(returnStdout: true, script: "echo start-marklogic.sh: ;echo; cat start-marklogic-lint.txt; echo dockerfile-marklogic-server-${platformString}: ; echo marklogic-deps-${platformString}:base: ;echo; cat marklogic-deps-${platformString}-base-lint.txt; echo marklogic-server-${platformString}:base: ;echo; cat marklogic-server-${platformString}-base-lint.txt").trim()
+    LINT_OUTPUT = sh(returnStdout: true, script: "echo start-scripts-lint.txt: ;echo; cat start-scripts-lint.txt; echo; echo dockerfile-lint.txt: ; cat dockerfile-lint.txt; echo").trim()
 
     sh """
         rm -f start-marklogic-lint.txt marklogic-deps-${platformString}-base-lint.txt marklogic-server-${platformString}-base-lint.txt

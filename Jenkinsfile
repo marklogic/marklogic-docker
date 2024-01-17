@@ -210,7 +210,7 @@ void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
-            make push-mlregistry version=${publishTag}
+            make push-mlregistry version=${publishTag} docker_registry=${dockerRegistry}
         """
         
     }

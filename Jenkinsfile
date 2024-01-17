@@ -206,11 +206,12 @@ void vulnerabilityScan() {
 }
 
 void publishToInternalRegistry() {
-    publishTag="${mlVersion}-${env.dockerImageType}-${env.dockerVersion}"
+    currentImage="marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion}"
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
-            make push-mlregistry version=${publishTag} docker_registry=${dockerRegistry}
+            docker tag ${currentImage} ${dockerRegistry}/${currentImage}
+            docker push ${dockerRegistry}/${currentImage}
         """
         
     }

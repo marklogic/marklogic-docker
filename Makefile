@@ -37,13 +37,6 @@ docker-tests:
 #***************************************************************************
 .PHONY: test
 test: structure-test docker-tests
-	
-#***************************************************************************
-# push docker images to mlregistry.marklogic.com
-#***************************************************************************
-push-mlregistry:
-	docker tag ${repo_dir}/marklogic-server-${docker_image_type}:${version} ${docker_registry}/${repo_dir}/marklogic-server-${docker_image_type}:${version}
-	docker push ${docker_registry}/${repo_dir}/marklogic-server-${docker_image_type}:${version}
 
 #***************************************************************************
 # run lint checker on shell scripts and Dockerfiles, print linting issues but do not fail the build

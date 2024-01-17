@@ -195,6 +195,7 @@ void lint() {
 void vulnerabilityScan() {
     sh """
         make scan current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
+        grep \'High\\|Critical\' scan-server-image.txt
     """
 
     SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')

@@ -225,13 +225,13 @@ void publishToInternalRegistry() {
             ]]) {
                 sh """
                     aws ecr get-login --no-include-email --region us-west-2 | bash
-                    docker tag ${currentImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+                    docker tag ${currentImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${mlVersion}-${env.platformString}-${env.dockerVersion}
 	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${mlVersion}-${env.platformString}-${env.dockerVersion}
                 """
             }
     }
 
-    currentBuild.description = "Publish ${publishTag}" 
+    currentBuild.description = "Publish ${mlVersion}-${env.platformString}-${env.dockerVersion}"
 }
 
 void publishTestResults() {

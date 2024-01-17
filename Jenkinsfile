@@ -155,21 +155,30 @@ void copyRPMs() {
     }
 }
 
+void buildDockerImage() {
+    sh "make build docker_image_type=${dockerImageType} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
+}
+
 void structureTests() {
     sh """
         cd test
         #insert current version
-        sed -i -e 's^VERSION_PLACEHOLDER^${mlVersion}-${env.platformString}-${env.dockerVersion}^g' -e 's^BRANCH_PLACEHOLDER^${env.BRANCH_NAME}^g' ./structure-test.yaml
+        sed -i -e 's^VERSION_PLACEHOLDER^${mlVersion}-${env.dockerImageType}-${env.dockerVersion}^g' -e 's^BRANCH_PLACEHOLDER^${env.BRANCH_NAME}^g' ./structure-test.yaml
         cd ..
+        #install container-structure-test binary
         curl -s -LO https://storage.googleapis.com/container-structure-test/v1.11.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-        make structure-test version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
+        make structure-test version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
         #fix junit output
         sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
     """
 }
 
+void dockerTests() {
+    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
+}
+
 void lint() {
-    IMAGE_INFO = sh(returnStdout: true, script: 'docker images | grep \"marklogic-server-'+"${platformString}"+'\"')
+    IMAGE_INFO = sh(returnStdout: true, script: 'docker images | grep \"marklogic-server-'+"${dockerImageType}"+'\"')
 
     sh """
         make lint Jenkins=true
@@ -183,10 +192,9 @@ void lint() {
     """
 }
 
-void scan() {
+void vulnerabilityScan() {
     sh """
-        make scan version=${mlVersion}-${env.platformString}-${env.dockerVersion} Jenkins=true
-        grep \'High\\|Critical\' scan-server-image.txt
+        make scan current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
     """
 
     SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
@@ -198,7 +206,7 @@ void scan() {
 }
 
 void publishToInternalRegistry() {
-    publishTag="${mlVersion}-${env.platformString}-${env.dockerVersion}"
+    publishTag="${mlVersion}-${env.dockerImageType}-${env.dockerVersion}"
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
@@ -216,7 +224,7 @@ void publishToInternalRegistry() {
             ]]) {
                 sh """
                     aws ecr get-login --no-include-email --region us-west-2 | bash
-                    docker tag local-dev/marklogic-server-${platformString}:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
+                    docker tag marklogic/marklogic-server-${dockerImageType}:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
 	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
                 """
             }
@@ -253,7 +261,7 @@ pipeline {
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.1.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
-        choice(name: 'platformString', choices: 'centos\nubi\nubi-rootless', description: 'Platform type for Docker image. Will be made part of the docker image tag')
+        choice(name: 'dockerImageType', choices: 'centos\nubi\nubi-rootless', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
@@ -277,7 +285,7 @@ pipeline {
 
         stage('Build-Image') {
             steps {
-                sh "make build-${platformString} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
+                buildDockerImage()
             }
         }
 
@@ -289,7 +297,7 @@ pipeline {
 
         stage('Scan') {
             steps {
-                scan()
+                vulnerabilityScan()
             }
         }
 
@@ -307,7 +315,7 @@ pipeline {
                 expression { return params.DOCKER_TESTS }
             }
             steps {
-                sh "make docker-tests test_image=local-dev/marklogic-server-${platformString}:${mlVersion}-${env.platformString}-${env.dockerVersion} version=${mlVersion}-${env.platformString}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
+                dockerTests()
             }
         }
 

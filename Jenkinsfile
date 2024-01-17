@@ -250,9 +250,10 @@ pipeline {
         skipStagesAfterUnstable()
     }
     triggers {
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % marklogicVersion=10
-                                                             00 04 * * * % marklogicVersion=11
-                                                             00 05 * * * % marklogicVersion=12''' : '')
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % marklogicVersion=10 dockerImageType=centos
+                                                             00 04 * * * % marklogicVersion=11 dockerImageType=centos
+                                                             00 05 * * * % marklogicVersion=12 dockerImageType=centos
+                                                             00 06 * * * % marklogicVersion=11 dockerImageType=ubi''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

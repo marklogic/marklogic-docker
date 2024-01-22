@@ -80,7 +80,7 @@ if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
     else
         info "INSTALL_CONVERTERS is true, installing converters."
         CONVERTERS_PATH="/tmp/converters.rpm"
-        cd /tmp
+        cd /tmp || exit
         rpm2cpio ${CONVERTERS_PATH} | cpio -ivd ./opt/*
         mv /tmp/opt/MarkLogic/Converters /opt/MarkLogic/
         rm -rf /tmp/opt && rm -rf ${CONVERTERS_PATH}

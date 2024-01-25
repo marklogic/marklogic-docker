@@ -10,12 +10,13 @@ Library   Collections
 ${DEFAULT ADMIN USER}  test_admin
 ${DEFAULT ADMIN PASS}  test_admin_pass
 ${SPEC CHARS ADMIN PASS}  Admin@2$s%^&*!
-${TEST_IMAGE}  %{DOCKER_TEST_IMAGE=marklogic-centos/marklogic-server-centos:10-internal}
+${TEST_IMAGE}  %{DOCKER_TEST_IMAGE=marklogic/marklogic-server-centos:internal}
 ${DOCKER TIMEOUT}  240s
 ${LICENSE KEY}  %{QA_LICENSE_KEY=none}
 ${LICENSEE}  MarkLogic - Version 9 QA Test License
-${MARKLOGIC_VERSION}  10-internal
+${MARKLOGIC_VERSION}  internal
 ${BUILD_BRANCH}  local
+${IMAGE_TYPE}  centos
 
 *** Keywords ***
 Create container with
@@ -127,7 +128,7 @@ Remove spaces from
   [Arguments]  ${input string}
   [Documentation]  Simple wrapper keyword for replace string
   ${output string}=  Replace String  ${input string}  ${SPACE}  ${EMPTY}
-  [Return]  ${output string}
+  RETURN  ${output string}
 
 Generate digest authorization for
   [Arguments]  ${username}  ${password}
@@ -136,7 +137,7 @@ Generate digest authorization for
   ${base64 encoded}=  Evaluate  base64.b64encode($bytes)  base64
   ${auth}=  Evaluate  ("${username}", "${password}")
   ${headers}=  Create Dictionary  Authorization=Basic ${base64 encoded}
-  [Return]  ${auth}  ${headers}
+  RETURN  ${auth}  ${headers}
 
 Verify response for unauthenticated request with
   [Arguments]  ${port}  ${pattern}

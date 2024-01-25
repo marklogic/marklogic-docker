@@ -161,20 +161,14 @@ void buildDockerImage() {
 
 void structureTests() {
     sh """
-        cd test
-        #insert current version
-        sed -i -e 's^VERSION_PLACEHOLDER^${mlVersion}-${env.dockerImageType}-${env.dockerVersion}^g' -e 's^BRANCH_PLACEHOLDER^${env.BRANCH_NAME}^g' ./structure-test.yaml
-        cd ..
-        #install container-structure-test binary
-        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.11.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-        make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
-        #fix junit output
-        sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
+        #install container-structure-test 1.16.0 binary
+        curl -sLO https://storage.googleapis.com/container-structure-test/v1.16.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && sudo mv container-structure-test-linux-amd64 /usr/local/bin/container-structure-test
+        make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} version=${mlVersion} build_branch=${env.BRANCH_NAME} docker_image_type=${env.dockerImageType} Jenkins=true
     """
 }
 
 void dockerTests() {
-    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
+    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} docker_image_type=${dockerImageType}"
 }
 
 void lint() {

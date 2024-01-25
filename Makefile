@@ -21,6 +21,15 @@ endif
 # strcture test docker images
 #***************************************************************************
 structure-test:
+ifeq ($(docker_image_type),ubi-rootless)
+	@echo type is ${docker_image_type}
+	sed -i -e 's^DOCKER_PID_PLACEHOLDER^/home/marklogic_user/MarkLogic.pid^g' ./test/structure-test.yaml
+else
+	@echo type is ${docker_image_type}
+	sed -i -e 's^DOCKER_PID_PLACEHOLDER^/var/run/MarkLogic.pid^g' ./test/structure-test.yaml
+endif
+	sed -i -e 's^VERSION_PLACEHOLDER^${version}^g' ./test/structure-test.yaml
+	sed -i -e 's^BRANCH_PLACEHOLDER^${build_branch}^g' ./test/structure-test.yaml
 	container-structure-test test --config ./test/structure-test.yaml --image ${current_image} \
 		$(if $(Jenkins), --output junit | tee container-structure-test.xml,)
 
@@ -29,7 +38,7 @@ structure-test:
 #***************************************************************************
 docker-tests: 
 	cd test; python3 -m venv python_env
-	cd test; source ./python_env/bin/activate; pip3 install -r requirements.txt; robot -x docker-tests.xml --outputdir test_results --variable TEST_IMAGE:${current_image} --variable MARKLOGIC_VERSION:${version} --variable BUILD_BRANCH:${build_branch} --maxerrorlines 9999 ./docker-tests.robot; deactivate
+	cd test; source ./python_env/bin/activate; pip3 install -r requirements.txt; robot -x docker-tests.xml --outputdir test_results --variable TEST_IMAGE:${current_image} --variable MARKLOGIC_VERSION:${version} --variable BUILD_BRANCH:${build_branch} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; deactivate
 	rm -r test/python_env/
 	
 #***************************************************************************

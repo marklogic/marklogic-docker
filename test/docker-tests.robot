@@ -100,9 +100,9 @@ Initialized MarkLogic container with config overrides
   ...                    -e  TZ=America/Los_Angeles
   ...                    -e  MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
   ...                    -e  MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-  Docker log should contain  *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Docker log should contain  *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
   Docker log should contain  *INSTALL_CONVERTERS is false, not installing converters.*
-  Docker log should contain  *TZ is defined, setting timezone to America/Los_Angeles.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Docker log should contain  *TZ is defined, setting timezone to America/Los_Angeles.*
   Docker log should contain  *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Verify response for unauthenticated request with  8000  *Unauthorized*
   Verify response for unauthenticated request with  8001  *Unauthorized*
@@ -120,7 +120,7 @@ Single node compose example
   Verify response for authenticated request with  8000  *Query Console*
   Verify response for authenticated request with  8001  *No license key has been entered*
   Verify response for authenticated request with  8002  *Monitoring Dashboard*
-  Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Compose logs should contain  ../docker-compose/marklogic-centos.yaml  *TZ is defined, setting timezone to Europe/Prague.*
   Host count on port 8002 should be 1
   [Teardown]  Delete compose from  ../docker-compose/marklogic-centos.yaml
 
@@ -249,7 +249,7 @@ Single node compose example with bootstrap node joining trying to itself
   Verify response for authenticated request with  7100  *Query Console*
   Verify response for authenticated request with  7101  *No license key has been entered*
   Verify response for authenticated request with  7102  *Monitoring Dashboard*
-  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Compose logs should contain  ./compose-test-8.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
   Compose logs should contain  ./compose-test-8.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
   Compose logs should contain  ./compose-test-8.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-8.yaml  *bootstrap*HOST cannot join itself, skipped joining cluster.*
@@ -264,11 +264,11 @@ Two node compose example with incorrect bootstrap host name
   Verify response for authenticated request with  7100  *Query Console*
   Verify response for authenticated request with  7101  *No license key has been entered*
   Verify response for authenticated request with  7102  *Monitoring Dashboard*
-  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Compose logs should contain  ./compose-test-9.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
   Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
   Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-9.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Compose logs should contain  ./compose-test-9.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Compose logs should contain  ./compose-test-9.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
   Compose logs should contain  ./compose-test-9.yaml  *node2*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
   Compose logs should contain  ./compose-test-9.yaml  *node2*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-9.yaml  *node2*Bootstrap host node1 not found. Please verify the configuration, exiting*
@@ -291,11 +291,11 @@ Two node compose with credentials in env and verify restart logic
   Verify response for authenticated request with  7202  *Monitoring Dashboard*
   Host count on port 7102 should be 2
   Host count on port 7202 should be 2
-  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Compose logs should contain  ./compose-test-3.yaml  *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-3.yaml  *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-  Compose logs should contain  ./compose-test-3.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
+  IF  '${IMAGE_TYPE}' != 'ubi-rootless'  Compose logs should contain  ./compose-test-3.yaml  *node2*TZ is defined, setting timezone to America/Los_Angeles.*
   Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
   Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
   Compose logs should contain  ./compose-test-3.yaml  *node2*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*

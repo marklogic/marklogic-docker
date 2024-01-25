@@ -1,5 +1,4 @@
 failure-threshold: error
-override:
-  info:
-    - DL3033
-    - DL3041
+ignored:
+  - DL3033
+  - DL3041

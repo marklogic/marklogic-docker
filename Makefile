@@ -38,7 +38,7 @@ endif
 #***************************************************************************
 docker-tests: 
 	cd test; python3 -m venv python_env
-	cd test; source ./python_env/bin/activate; pip3 install -r requirements.txt; robot -x docker-tests.xml --outputdir test_results --variable TEST_IMAGE:${current_image} --variable MARKLOGIC_VERSION:${version} --variable BUILD_BRANCH:${build_branch} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; deactivate
+	cd test; source ./python_env/bin/activate; pip3 install -r requirements.txt; robot -x docker-tests.xml --outputdir test_results --randomize all --variable TEST_IMAGE:${current_image} --variable MARKLOGIC_VERSION:${version} --variable BUILD_BRANCH:${build_branch} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; deactivate
 	rm -r test/python_env/
 	
 #***************************************************************************

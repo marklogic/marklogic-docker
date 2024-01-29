@@ -157,6 +157,7 @@ void copyRPMs() {
 
 void buildDockerImage() {
     sh "make build docker_image_type=${dockerImageType} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
+    currentBuild.displayName = "#${BUILD_NUMBER} ${mlVersion}-${env.dockerImageType}-${env.dockerVersion}"
 }
 
 void structureTests() {
@@ -226,7 +227,7 @@ void publishToInternalRegistry() {
             }
     }
 
-    currentBuild.description = "Publish ${mlVersion}-${env.dockerImageType}-${env.dockerVersion}"
+    currentBuild.description = "Published"
 }
 
 void publishTestResults() {

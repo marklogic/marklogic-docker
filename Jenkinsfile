@@ -215,7 +215,7 @@ void publishToInternalRegistry() {
             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
             ]]) {
                 sh """
-                    aws ecr get-login --no-include-email --region us-west-2 | bash
+                    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 713759029616.dkr.ecr.us-west-2.amazonaws.com
                     docker tag local-dev/marklogic-server-centos:${publishTag} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
 	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${publishTag}
                 """

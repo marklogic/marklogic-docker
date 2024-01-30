@@ -126,7 +126,8 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
 # Set Timezone
 ################################################################
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN RUN microdnf reinstall -y tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 ################################################################
 # Set appropriate authorisation to MARKLOGIC_DATA_DIR 

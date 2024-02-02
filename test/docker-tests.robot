@@ -5,6 +5,7 @@ Documentation    Test all initialization options using Docker run and Docker Com
 ...              Verification is done using REST calls to MarkLogic server and Docker logs.
 
 *** Test Cases ***
+
 Uninitialized MarkLogic container
     Create container with    -e    MARKLOGIC_INIT=false
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
@@ -115,7 +116,7 @@ Initialized MarkLogic container with config overrides
     Verify response for authenticated request with    8000    *Query Console*
     Verify response for authenticated request with    8001    *No license key has been entered*
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
-    Verify that container timezone is    America/Los_Angeles
+    Verify container timezone    America/Los_Angeles
     [Teardown]    Delete container
 
 Single node compose example
@@ -132,7 +133,7 @@ Single node compose example
     IF    '${IMAGE_TYPE}' != 'ubi-rootless'
         Compose logs should contain    ${compose test file}    *TZ is defined, setting timezone to Europe/Prague.*
     END
-    Verify that container timezone is    Europe/Prague    compose path=${compose test file}
+    Verify container timezone    Europe/Prague
     [Teardown]    Delete compose from    ../docker-compose/marklogic-centos.yaml
 
 Single node compose example with special characters in secrets file
@@ -278,7 +279,7 @@ Single node compose example with bootstrap node joining trying to itself
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Compose logs should contain    ${compose test file}    *bootstrap*HOST cannot join itself, skipped joining cluster.*
     Host count on port 7102 should be 1
-    Verify that container timezone is    America/Los_Angeles    compose path=${compose test file}
+    Verify container timezone    America/Los_Angeles    port=7100
     [Teardown]    Delete compose from    ${compose test file}
     
 Two node compose example with incorrect bootstrap host name
@@ -329,7 +330,8 @@ Two node compose with credentials in env and verify restart logic
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-    Verify that container timezone is    America/Los_Angeles    compose path=${compose test file}
+    Verify container timezone    America/Los_Angeles    port=7100
+    Verify container timezone    America/Los_Angeles    port=7200
     IF    '${IMAGE_TYPE}' != 'ubi-rootless'
         Compose logs should contain    ${compose test file}    *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
         Compose logs should contain    ${compose test file}    *node2*TZ is defined, setting timezone to America/Los_Angeles.*
@@ -340,7 +342,8 @@ Two node compose with credentials in env and verify restart logic
     Restart compose from    ${compose test file}
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization.*
     Compose logs should contain    ${compose test file}    *node2*MARKLOGIC_INIT is true, but the server is already initialized. Skipping initialization.*
-    Verify that container timezone is    America/Los_Angeles    compose path=${compose test file}
+    Verify container timezone    America/Los_Angeles    port=7100
+    Verify container timezone    America/Los_Angeles    port=7200
     [Teardown]    Delete compose from    ${compose test file}
 
 Two node compose with second node uncoupled

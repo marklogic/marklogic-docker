@@ -4,6 +4,7 @@ Library    String
 Library    OperatingSystem
 Library    RequestsLibrary
 Library    Collections
+Library    DateTime
 
 *** Variables ***
 @{DOCKER DEFAULTS}    -it    -d    -p    8000:8000    -p    8001:8001    -p    8002:8002    -p7997:7997
@@ -256,21 +257,28 @@ Create invalid certificate file
     ${invalid_cert}=    Set Variable    This is an invalid cert for testing negative scenarios
     Create File    test_results/certificate.cer    ${invalid_cert}
 
-Verify that container timezone is
-    [Documentation]    Checks the actual timezone inside the cotainer.
-    [Arguments]    ${time zone}    ${compose path}=None
-    #If compose is used
-    IF    '${compose path}' != 'None'
-        ${dir}    ${file}=    Split Path    ${compose path}
-        ${new path}=    Set Variable    test_results/${file}
-        ${result}=    Run Process    docker    compose    -f    ${new path}    
-        ...           exec    bootstrap    /bin/bash    -c    readlink /etc/localtime    timeout=${DOCKER TIMEOUT}
-        ${actual timezone}=    Remove String Using Regexp    ${result.stdout}    .*/zoneinfo/
-    #otherwise we're working with container
-    ELSE
-        ${container name}=    Remove spaces from    ${TEST NAME}
-        ${result}=    Run Process    docker    exec    ${container name}    /bin/bash    -c    
-        ...           readlink /etc/localtime    timeout=${DOCKER TIMEOUT}
-        ${actual timezone}=    Remove String Using Regexp    ${result.stdout}    .*/zoneinfo/
-    END
-    Should Be Equal    ${actual timezone}    ${time zone}
+Convert timezone to MarkLogic offset
+    [Documentation]    Converts time zone string (America/St_Johns) to MarkLogic quivalent offset (-PT3H30M)
+    [Arguments]    ${TZ}
+
+    Set Environment Variable    TZ    ${TZ}
+    ${result}=    Run Process    date    +%-z
+    ${offset}=    Set Variable    ${result.stdout}
+    ${absolute_value} =    Evaluate    abs(${offset})
+    ${hours} =    Evaluate    int(${absolute_value}/100)
+    ${minutes} =    Evaluate    ${absolute_value}%100
+    ${sign} =    Run Keyword If    ${offset} < 0    Set Variable    -    ELSE    Set Variable    ${EMPTY}
+    ${ML offset} =    Run Keyword If    ${minutes} > 0    Set Variable    ${sign}PT${hours}H${minutes}M    
+    ...                                       ELSE    Set Variable    ${sign}PT${hours}H
+    RETURN    ${ML offset}
+
+Verify container timezone
+    [Arguments]    ${timezone}    ${port}=8000    ${password}=${DEFAULT ADMIN PASS}
+    [Documentation]    Get time zone offset from MarkLogic via /v1/eval REST call.
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${password}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${body}=    Create Dictionary    javascript=fn.timezoneFromDateTime(fn.currentDateTime())
+    ${response}=    POST On Session    RestSession    url=http://localhost:${port}/v1/eval    data=${body}
+    ${offset}=    Get Regexp Matches    ${response.text}    -?PT[HM0-9]+
+    ${expected}=    Convert timezone to MarkLogic offset    ${timezone}
+    Should Be Equal    ${expected}    ${offset[0]}

@@ -118,7 +118,6 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password \
     BUILD_BRANCH=${BUILD_BRANCH} \
     MARKLOGIC_JOIN_TLS_ENABLED=false \
-    TZ=UTC \
     OVERWRITE_ML_CONF=true \
     MARKLOGIC_EC2_HOST=0
 
@@ -126,7 +125,7 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
 # Set Timezone
 ################################################################
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN microdnf -y reinstall tzdata
 
 ################################################################
 # Set appropriate authorisation to MARKLOGIC_DATA_DIR 

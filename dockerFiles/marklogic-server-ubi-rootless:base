@@ -38,13 +38,13 @@ RUN mkdir -p /opt/MarkLogic \
     && chmod 766 -R /opt/MarkLogic
 
 ####################################################
-# inject init, start and clustering scripts
+# inject init, start and clustering scripts and set permission
 ###############################################################
 
 COPY scripts/start-marklogic-rootless.sh /usr/local/bin/start-marklogic.sh
 RUN chown ${ML_USER} /usr/local/bin/start-marklogic.sh \
     && chmod +x /usr/local/bin/start-marklogic.sh
-
+    
 ###############################################################
 # install MarkLogic server and remove mlcmd packages
 ###############################################################
@@ -54,7 +54,6 @@ RUN rpm -i /tmp/marklogic-server.rpm \
     && microdnf -y clean all \
     && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
     && rm -rf ./opt/MarkLogic/mlcmd/ext/*
-
 
 ###############################################################
 # set marklogic.conf authorisation
@@ -100,7 +99,6 @@ LABEL "com.marklogic.license.url"="https://developer.marklogic.com/eula"
 LABEL "com.marklogic.description"="MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, backup, and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster, and for delivering dynamic content at massive scale. The current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use."
 LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> --mount src=MarkLogic,dst=/var/opt/MarkLogic marklogicdb/marklogic-db:${ML_VERSION}"
 
-
 ###############################################################
 # set env vars
 ###############################################################
@@ -119,7 +117,8 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     BUILD_BRANCH=${BUILD_BRANCH} \
     MARKLOGIC_JOIN_TLS_ENABLED=false \
     OVERWRITE_ML_CONF=true \
-    MARKLOGIC_EC2_HOST=0
+    MARKLOGIC_EC2_HOST=0 \
+    TZ=UTC
 
 ################################################################
 # Set Timezone
@@ -133,7 +132,7 @@ RUN microdnf -y reinstall tzdata
 
 RUN mkdir -p ${MARKLOGIC_DATA_DIR} \
     && chown -R ${ML_USER} ${MARKLOGIC_DATA_DIR} \
-    && chmod 764 -R ${MARKLOGIC_DATA_DIR}
+    && chmod 764 -R ${MARKLOGIC_DATA_DIR}     
 
 ###############################################################
 # expose MarkLogic server ports

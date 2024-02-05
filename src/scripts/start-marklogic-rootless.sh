@@ -169,10 +169,12 @@ function validate_tls_parameters {
 ################################################################
 function validate_cert {
     local cacertfile=$1
-    local response
-    curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}"
-    response=$?
-    if [ $response -ne 0 ]; then
+    local return_code
+    local curl_output
+    curl_output=$(curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
+    return_code=$?
+    if [ $return_code -ne 0 ]; then
+        info "$curl_output"
         error "MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down." exit
     fi
 }

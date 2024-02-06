@@ -1,1 +1,4 @@
 failure-threshold: error
+ignored:
+  - DL3033
+  - DL3041

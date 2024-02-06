@@ -27,3 +27,4 @@ test/test_results/*
 test/log.html
 test/report.html
 test/output.xml
+test/python_env/*

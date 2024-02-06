@@ -157,24 +157,19 @@ void copyRPMs() {
 
 void buildDockerImage() {
     sh "make build docker_image_type=${dockerImageType} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
+    currentBuild.displayName = "#${BUILD_NUMBER} ${mlVersion}-${env.dockerImageType}-${env.dockerVersion}"
 }
 
 void structureTests() {
     sh """
-        cd test
-        #insert current version
-        sed -i -e 's^VERSION_PLACEHOLDER^${mlVersion}-${env.dockerImageType}-${env.dockerVersion}^g' -e 's^BRANCH_PLACEHOLDER^${env.BRANCH_NAME}^g' ./structure-test.yaml
-        cd ..
-        #install container-structure-test binary
-        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.11.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
-        make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
-        #fix junit output
-        sed -i -e 's/<\\/testsuites>//' -e 's/<testsuite>//' -e 's/<testsuites/<testsuite name="container-structure-test"/' ./container-structure-test.xml
+        #install container-structure-test 1.16.0 binary
+        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.16.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+        make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} docker_image_type=${env.dockerImageType} Jenkins=true
     """
 }
 
 void dockerTests() {
-    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME}"
+    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${mlVersion}-${env.dockerImageType}-${env.dockerVersion} version=${mlVersion}-${env.dockerImageType}-${env.dockerVersion} build_branch=${env.BRANCH_NAME} docker_image_type=${dockerImageType}"
 }
 
 void lint() {
@@ -232,7 +227,7 @@ void publishToInternalRegistry() {
             }
     }
 
-    currentBuild.description = "Publish ${mlVersion}-${env.dockerImageType}-${env.dockerVersion}"
+    currentBuild.description = "Published"
 }
 
 void publishTestResults() {

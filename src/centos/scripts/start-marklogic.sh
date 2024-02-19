@@ -193,10 +193,12 @@ function validate_tls_parameters {
 ################################################################
 function validate_cert {
     local cacertfile=$1
-    local response
-    curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}"
-    response=$?
-    if [ $response -ne 0 ]; then
+    local return_code
+    local curl_output
+    curl_output=$(curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
+    return_code=$?
+    if [ $return_code -ne 0 ]; then
+        info "$curl_output"
         error "MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down." exit
     fi
 }
@@ -427,6 +429,8 @@ fi
 ################################################################
 if [[ -f /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
+elif [[ "${MARKLOGIC_CLUSTER_TYPE}" == "bootstrap" ]] && [[ $(hostname) == *-0 ]]; then
+    info "MarkLogic is Boostrap node, not joining cluster"
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
     # Check if TLS is enabled on Bootstrap host
     # Using INIT_BOOTSTRAP_STATUS to verify if it's not localhost

@@ -1013,8 +1013,23 @@ It will pull the latest image and can cross patch, minor or major release number
 
 # Known Issues and Limitations
 
+## CentOS base docker image
+
 1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.
 5. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 (CVE-2015-8387, CVE-2015-8390, CVE-2015-8394), glibc (CVE-2019-1010022), pcre (CVE-2015-8380, CVE-2015-8387, CVE-2015-8390, CVE-2015-8393, CVE-2015-8394), SQLite (CVE-2019-5827), nss (CVE-2014-3566), and bind-license (CVE-2023-6516, CVE-2023-5679, CVE-2023-5517, CVE-2023-50868, CVE-2023-50387, CVE-2023-4408). These libraries are included in the CentOS base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+
+## RedHat UBI base docker image
+
+1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
+2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
+3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
+4. MarkLogic Server will default to the UTC timezone.
+5. The latest released version of RedHat UBI 8 has known security vulnerabilities :
+- glibc (CVE-2019-1010022) for which RedHat does not consider to be a vulnerability.
+- kernel-headers (CVE-2023-6546).
+- pip (GHSA-gpvv-69j7-gwj8) and setuptools (GHSA-r9hx-vwmv-q579).
+
+These libraries are included in the RedHat UBI 8 base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.

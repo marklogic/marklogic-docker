@@ -339,6 +339,7 @@ pipeline {
             sh '''
                 cd src
                 rm -rf *.rpm
+                docker rm -f $(docker ps -a -q) || true
                 docker system prune --force --filter "until=720h"
                 docker volume prune --force
                 docker image prune --force --all

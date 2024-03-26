@@ -1023,7 +1023,7 @@ It will pull the latest image and can cross patch, minor or major release number
 
 ## RedHat UBI base docker image
 
-1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
+1. The image must be run in privileged mode. If the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions. To run in non-privileged mode, use one of the “rootless” image options.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.

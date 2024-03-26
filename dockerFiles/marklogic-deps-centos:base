@@ -8,7 +8,7 @@ FROM centos:centos7
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
-# install networking, base deps and ntp/tzdata for timezone
+# install networking, base deps and tzdata for timezone
 ###############################################################
 
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \

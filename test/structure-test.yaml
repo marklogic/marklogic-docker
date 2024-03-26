@@ -1,7 +1,7 @@
 schemaVersion: "2.0.0"
  
 metadataTest:
-  env:
+  envVars:
     - key: MARKLOGIC_VERSION
       value: VERSION_PLACEHOLDER
     - key: MARKLOGIC_ADMIN_USERNAME_FILE
@@ -13,11 +13,11 @@ metadataTest:
     - key: MARKLOGIC_DATA_DIR
       value: /var/opt/MarkLogic
     - key: MARKLOGIC_PID_FILE
-      value: /var/run/MarkLogic.pid
+      value: DOCKER_PID_PLACEHOLDER
     - key: MARKLOGIC_INSTALL_DIR
       value: /opt/MarkLogic
     - key: MARKLOGIC_UMASK
-      value: 022
+      value: "022"
     - key: BUILD_BRANCH
       value: BRANCH_PLACEHOLDER
   labels:

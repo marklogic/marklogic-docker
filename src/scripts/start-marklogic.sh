@@ -307,7 +307,7 @@ if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
     info "MARKLOGIC_DEV_BUILD is true, starting build using ${MARKLOGIC_INSTALL_DIR}/MarkLogic"
     sudo "${MARKLOGIC_INSTALL_DIR}/MarkLogic" -i . -d "${MARKLOGIC_DATA_DIR}" -p "${MARKLOGIC_PID_FILE}" &
 elif [[ -z "${MARKLOGIC_DEV_BUILD}" ]] || [[ "${MARKLOGIC_DEV_BUILD}" == "false" ]]; then
-    sudo service MarkLogic start
+    sudo /etc/init.d/MarkLogic start
 else
     error "MARKLOGIC_DEV_BUILD must be true or false." exit
 fi

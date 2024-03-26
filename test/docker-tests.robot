@@ -121,7 +121,7 @@ Initialized MarkLogic container with config overrides
 
 Single node compose example
     [Tags]    compose
-    ${compose test file}=    Set Variable    ../docker-compose/marklogic-centos.yaml
+    ${compose test file}=    Set Variable    ../docker-compose/marklogic-single-node.yaml
     Start compose from    ${compose test file}
     Verify response for unauthenticated request with    8000    *Unauthorized*
     Verify response for unauthenticated request with    8001    *Unauthorized*
@@ -134,18 +134,18 @@ Single node compose example
         Compose logs should contain    ${compose test file}    *TZ is defined, setting timezone to Europe/Prague.*
     END
     Verify container timezone    Europe/Prague
-    [Teardown]    Delete compose from    ../docker-compose/marklogic-centos.yaml
+    [Teardown]    Delete compose from    ../docker-compose/marklogic-single-node.yaml
 
 Single node compose example with special characters in secrets file
     [Tags]    compose
-    Start compose from    ../docker-compose/marklogic-centos.yaml    ${SPEC CHARS ADMIN PASS}
+    Start compose from    ../docker-compose/marklogic-single-node.yaml    ${SPEC CHARS ADMIN PASS}
     Verify response for unauthenticated request with    8000    *Unauthorized*
     Verify response for unauthenticated request with    8001    *Unauthorized*
     Verify response for unauthenticated request with    8002    *Unauthorized*
     Verify response for authenticated request with    8000    *Query Console*    ${SPEC CHARS ADMIN PASS}
     Verify response for authenticated request with    8001    *No license key has been entered*    ${SPEC CHARS ADMIN PASS}
     Verify response for authenticated request with    8002    *Monitoring Dashboard*    ${SPEC CHARS ADMIN PASS}
-    [Teardown]    Delete compose from    ../docker-compose/marklogic-centos.yaml
+    [Teardown]    Delete compose from    ../docker-compose/marklogic-single-node.yaml
 
 Single node compose with special characters in yaml
     [Tags]    compose
@@ -160,7 +160,7 @@ Single node compose with special characters in yaml
 
 Three node compose example
     [Tags]    compose
-    Start compose from    ../docker-compose/marklogic-cluster-centos.yaml
+    Start compose from    ../docker-compose/marklogic-multi-node.yaml
     Verify response for unauthenticated request with    7100    *Unauthorized*
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7102    *Unauthorized*
@@ -182,7 +182,7 @@ Three node compose example
     Host count on port 7102 should be 3
     Host count on port 7202 should be 3
     Host count on port 7302 should be 3
-    [Teardown]    Delete compose from    ../docker-compose/marklogic-cluster-centos.yaml
+    [Teardown]    Delete compose from    ../docker-compose/marklogic-multi-node.yaml
 
 Two node compose example with node joining enode group
     [Tags]    compose

@@ -238,7 +238,7 @@ The credentials for the admin user are configured using Docker secrets, and are 
 ## Single node MarkLogic Server on a single VM
 Single node configurations are used primarily on a development machine with a single user.
 
-Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
+Create these files on your host machine: `marklogic-single-node.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
 
 **marklogic-centos.yaml**
 
@@ -309,7 +309,7 @@ volumes:
 Once the files are ready, run this command to start the MarkLogic Server container.
 
 ```
-$ docker-compose -f marklogic-centos.yaml up -d
+$ docker-compose -f marklogic-single-node.yaml up -d
 ```
 The previous command starts a container running MarkLogic Server named "bootstrap".
 
@@ -323,7 +323,7 @@ After the container is initialized, you can access the MarkLogic Query Console o
 
 ## Three node cluster on a single VM
 
-The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
+The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-multi-node.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
 
 **marklogic-cluster-centos.yaml**
 
@@ -429,7 +429,7 @@ volumes:
 Once the files have been created, run the following command to start the MarkLogic Server container:
 
 ```
-$ docker-compose -f marklogic-cluster-centos.yaml up -d
+$ docker-compose -f marklogic-multi-node.yaml up -d
 ```
 
 This command will start three Docker containers running MarkLogic Server, named "bootstrap_3n", "node2" and, "node3".
@@ -468,7 +468,7 @@ Using Docker secrets, username and password information are secured when transmi
 ```
   $docker secret create mldb_wallet_password_v1 mldb_wallet_password_v1.txt
 ```
-3. Create marklogic-multi-centos.yaml using below:
+3. Create marklogic-multi-node.yaml using below:
 ```
 version: '3.6'
 services:
@@ -569,7 +569,7 @@ volumes:
 ```
 4. Use the Docker stack command to deploy the cluster:
 ```
-  $docker stack deploy -c marklogic-multi-centos.yaml mlstack
+  $docker stack deploy -c marklogic-multi-node.yaml mlstack
 ```
 All the cluster nodes will now be up and running.
 Now that the nodes have been initialized, we rotate the secrets files to overwrite the initial secrets files.
@@ -943,7 +943,7 @@ This section describes the teardown process for clusters set up on a single VM u
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
 ```
-$ docker-compose -f marklogic-centos.yaml down
+$ docker-compose -f marklogic-single-node.yaml down
 ```
 
 ### Remove volumes
@@ -1017,4 +1017,4 @@ It will pull the latest image and can cross patch, minor or major release number
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.
-5. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 CVE-2016-3191, CVE-2015-8385, CVE-2015-8387, CVE-2015-8390, CVE-2015-8394, CVE-2016-3191, glibc CVE-2019-1010022, pcre CVE-2015-8380, CVE-2015-8387, CVE-2015-8390, CVE-2015-8393, CVE-2015-8394, SQLite CVE-2019-5827. These libraries are included in the CentOS base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+5. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 (CVE-2015-8387, CVE-2015-8390, CVE-2015-8394), glibc (CVE-2019-1010022), pcre (CVE-2015-8380, CVE-2015-8387, CVE-2015-8390, CVE-2015-8393, CVE-2015-8394), SQLite (CVE-2019-5827), nss (CVE-2014-3566), and bind-license (CVE-2023-6516, CVE-2023-5679, CVE-2023-5517, CVE-2023-50868, CVE-2023-50387, CVE-2023-4408). These libraries are included in the CentOS base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.

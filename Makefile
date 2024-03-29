@@ -1,10 +1,10 @@
-version?=internal
+dockerTag?=internal
 package?=MarkLogic.rpm
 repo_dir=marklogic
 docker_build_options=--compress
 build_branch?=local
 docker_image_type?=ubi
-current_image?=${repo_dir}/marklogic-server-${docker_image_type}:${version}
+current_image?=${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}
 
 #***************************************************************************
 # build docker image
@@ -14,8 +14,8 @@ build:
 ifeq ($(docker_image_type),ubi-rootless)
 	cp dockerFiles/marklogic-deps-ubi\:base dockerFiles/marklogic-deps-ubi-rootless\:base
 endif
-	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-deps-${docker_image_type}:${version}" -f ../dockerFiles/marklogic-deps-${docker_image_type}:base .
-	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-server-${docker_image_type}:${version}" --build-arg BASE_IMAGE=${repo_dir}/marklogic-deps-${docker_image_type}:${version} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_VERSION=${version} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../dockerFiles/marklogic-server-${docker_image_type}:base .
+	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag}" -f ../dockerFiles/marklogic-deps-${docker_image_type}:base .
+	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}" --build-arg BASE_IMAGE=${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_DOCKER_VERSION=${dockerVersion} --build-arg ML_VERSION=${marklogicVersion} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../dockerFiles/marklogic-server-${docker_image_type}:base .
 	rm -f dockerFiles/marklogic-deps-ubi-rootless\:base
 #***************************************************************************
 # strcture test docker images
@@ -28,7 +28,8 @@ else
 	@echo type is ${docker_image_type}
 	sed -i -e 's^DOCKER_PID_PLACEHOLDER^/var/run/MarkLogic.pid^g' ./test/structure-test.yaml
 endif
-	sed -i -e 's^VERSION_PLACEHOLDER^${version}^g' ./test/structure-test.yaml
+	sed -i -e 's^ML_VERSION_PLACEHOLDER^${marklogicVersion}^g' ./test/structure-test.yaml
+	sed -i -e 's^ML_DOCKER_VERSION_PLACEHOLDER^${dockerVersion}^g' ./test/structure-test.yaml
 	sed -i -e 's^BRANCH_PLACEHOLDER^${build_branch}^g' ./test/structure-test.yaml
 	container-structure-test test --config ./test/structure-test.yaml --image ${current_image} \
 		$(if $(Jenkins), --output junit | tee container-structure-test.xml,)
@@ -37,9 +38,13 @@ endif
 # docker image tests
 #***************************************************************************
 docker-tests: 
-	cd test; python3 -m venv python_env
-	cd test; source ./python_env/bin/activate; pip3 install -r requirements.txt; robot -x docker-tests.xml --outputdir test_results --randomize all --variable TEST_IMAGE:${current_image} --variable MARKLOGIC_VERSION:${version} --variable BUILD_BRANCH:${build_branch} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; deactivate
-	rm -r test/python_env/
+	cd test; \
+	python3 -m venv python_env; \
+	source ./python_env/bin/activate; \
+	pip3 install -r requirements.txt; \
+	robot -x docker-tests.xml --outputdir test_results --randomize all --variable TEST_IMAGE:${current_image} --variable MARKLOGIC_VERSION:${marklogicVersion} --variable BUILD_BRANCH:${build_branch} --variable MARKLOGIC_DOCKER_VERSION:${dockerVersion} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; \
+	deactivate; \
+	rm -rf python_env
 	
 #***************************************************************************
 # run all tests

@@ -35,7 +35,7 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 # Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
+Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}`
 
 All Supported Tags: [https://hub.docker.com/r/marklogicdb/marklogic-db/tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
 
@@ -45,7 +45,7 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: CentOS
+Base OS: UBI, UBI-rootless and CentOS
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/marklogicdb/marklogic-db
 
@@ -240,7 +240,7 @@ Single node configurations are used primarily on a development machine with a si
 
 Create these files on your host machine: `marklogic-single-node.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
 
-**marklogic-centos.yaml**
+**marklogic-single-node.yaml**
 
 ```
 #Docker compose file sample to setup single node cluster
@@ -325,7 +325,7 @@ After the container is initialized, you can access the MarkLogic Query Console o
 
 The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-multi-node.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
 
-**marklogic-cluster-centos.yaml**
+**marklogic-multi-node.yaml**
 
 ```
 #Docker compose file sample to setup a three node cluster
@@ -975,15 +975,17 @@ If the process is successful, a message saying the node has left the swarm will 
 
 The `marklogic` image tags allow the user to pin their applications to images for a specific release, a specific minor release, a specific major release, or the latest release of MarkLogic Server
 
-## `{ML release version}-{platform}-{ML Docker release version}`
+## `{ML release version}-{platform}`
 
-This tag points to the exact version of MarkLogic Server, the base OS, and the supporting scripts version. This allows an application to pin to a very specific version of the image. The image will not be updated without incrementing either the MarkLogic Sever version or the version of the supporting scripts.
+This tag points to the exact version of MarkLogic Server and the base OS. This allows an application to pin to a very specific version of the image and base OS (platform).
 
-e.g. `11.0.3-centos-1.0.2` is the MarkLogic Server 11.0.3 release, CentOS, version 1.0.2 of the docker scripts.
+Platform can be `centos`, `ubi` (RedHat Universal Base Image) or `ubi-rootless` (RedHat Universal Base Image for rootless containers). When `latest` tag is used, the platform will default to `ubi-rootless`.
+
+e.g. `11.2.0-centos` is the MarkLogic Server 11.2.0 release and CentOS base OS.
 
 ## `latest-xx.x`
 
-This tag points to the latest patch release of a specific minor version of MarkLogic Server on CentOS. The image will contain the latest docker supporting scripts and OS patches.
+This tag points to the latest patch release of a specific minor version of MarkLogic Server on UBI-rootless.
 
 e.g. `latest-11.0` is the latest patch release of MarkLogic Server 11.0 (11.0.0, 11.0.1, etc.).
 
@@ -991,7 +993,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest-xx`
 
-This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on UBI-rootless.
 
 e.g. `latest-11` is the latest patch release of the latest minor release of MarkLogic Server 11 (11.0.0, 11.0.1, 11.1.0, 11.1.1, etc.)
 
@@ -999,7 +1001,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest`
 
-This tag points to the latest minor, patch, and major release of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+This tag points to the latest minor, patch, and major release of MarkLogic Server on UBI-rootless.
 
 It will pull the latest image and can cross patch, minor or major release numbers (11.0.0, 11.0.1, 11.1.0, 11.1.1, 12.0.0, etc.)
 

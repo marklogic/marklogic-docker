@@ -10,7 +10,7 @@ Uninitialized MarkLogic container
     Create container with    -e    MARKLOGIC_INIT=false
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is set to false or not defined, not initializing.*
-    Docker log should contain    *Starting MarkLogic container with ${MARKLOGIC_VERSION} from ${BUILD_BRANCH}*
+    Docker log should contain    *Starting container with MarkLogic ${MARKLOGIC_VERSION} and Docker script version ${MARKLOGIC_DOCKER_VERSION} built from ${BUILD_BRANCH} branch.*
     Verify response for unauthenticated request with    8000    *Forbidden*
     Verify response for unauthenticated request with    8001    *This server must now self-install the initial databases and application servers. Click OK to continue.*
     Verify response for unauthenticated request with    8002    *Forbidden*
@@ -25,7 +25,7 @@ Initialized MarkLogic container
     ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
-    Docker log should contain    *Starting MarkLogic container with ${MARKLOGIC_VERSION} from ${BUILD_BRANCH}*
+    Docker log should contain    *Starting container with MarkLogic ${MARKLOGIC_VERSION} and Docker script version ${MARKLOGIC_DOCKER_VERSION} built from ${BUILD_BRANCH} branch.*
     Verify response for unauthenticated request with    8000    *Unauthorized*
     Verify response for unauthenticated request with    8001    *Unauthorized*
     Verify response for unauthenticated request with    8002    *Unauthorized*
@@ -40,7 +40,7 @@ Initialized MarkLogic container with admin password containing special character
     ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${SPEC CHARS ADMIN PASS}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
-    Docker log should contain    *Starting MarkLogic container with ${MARKLOGIC_VERSION} from ${BUILD_BRANCH}*
+    Docker log should contain    *Starting container with MarkLogic ${MARKLOGIC_VERSION} and Docker script version ${MARKLOGIC_DOCKER_VERSION} built from ${BUILD_BRANCH} branch.*
     Verify response for unauthenticated request with    8000    *Unauthorized*
     Verify response for unauthenticated request with    8001    *Unauthorized*
     Verify response for unauthenticated request with    8002    *Unauthorized*

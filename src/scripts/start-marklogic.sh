@@ -35,7 +35,7 @@ log () {
 ###############################################################
 # removing MarkLogic ready file and create it when 8001 is accessible on node
 ###############################################################
-rm -f /var/opt/MarkLogic/ready
+sudo rm -f /var/opt/MarkLogic/ready
 
 ###############################################################
 # Prepare script
@@ -507,6 +507,10 @@ do
         sudo touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         rm -f host_health.xml
+        break
+    elif [[ -f /var/opt/MarkLogic/DOCKER_INIT ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
+        sudo touch /var/opt/MarkLogic/ready
+        info "Cluster config complete, marking this container as ready."
         break
     else
         info "MarkLogic not ready yet, retrying."

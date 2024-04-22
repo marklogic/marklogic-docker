@@ -35,7 +35,7 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 # Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
+Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}`
 
 All Supported Tags: [https://hub.docker.com/r/marklogicdb/marklogic-db/tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
 
@@ -45,7 +45,7 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: CentOS
+Base OS: UBI, UBI-rootless and CentOS
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/marklogicdb/marklogic-db
 
@@ -238,9 +238,9 @@ The credentials for the admin user are configured using Docker secrets, and are 
 ## Single node MarkLogic Server on a single VM
 Single node configurations are used primarily on a development machine with a single user.
 
-Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
+Create these files on your host machine: `marklogic-single-node.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
 
-**marklogic-centos.yaml**
+**marklogic-single-node.yaml**
 
 ```
 #Docker compose file sample to setup single node cluster
@@ -309,7 +309,7 @@ volumes:
 Once the files are ready, run this command to start the MarkLogic Server container.
 
 ```
-$ docker-compose -f marklogic-centos.yaml up -d
+$ docker-compose -f marklogic-single-node.yaml up -d
 ```
 The previous command starts a container running MarkLogic Server named "bootstrap".
 
@@ -323,9 +323,9 @@ After the container is initialized, you can access the MarkLogic Query Console o
 
 ## Three node cluster on a single VM
 
-The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
+The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-multi-node.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
 
-**marklogic-cluster-centos.yaml**
+**marklogic-multi-node.yaml**
 
 ```
 #Docker compose file sample to setup a three node cluster
@@ -429,7 +429,7 @@ volumes:
 Once the files have been created, run the following command to start the MarkLogic Server container:
 
 ```
-$ docker-compose -f marklogic-cluster-centos.yaml up -d
+$ docker-compose -f marklogic-multi-node.yaml up -d
 ```
 
 This command will start three Docker containers running MarkLogic Server, named "bootstrap_3n", "node2" and, "node3".
@@ -468,7 +468,7 @@ Using Docker secrets, username and password information are secured when transmi
 ```
   $docker secret create mldb_wallet_password_v1 mldb_wallet_password_v1.txt
 ```
-3. Create marklogic-multi-centos.yaml using below:
+3. Create marklogic-multi-node.yaml using below:
 ```
 version: '3.6'
 services:
@@ -569,7 +569,7 @@ volumes:
 ```
 4. Use the Docker stack command to deploy the cluster:
 ```
-  $docker stack deploy -c marklogic-multi-centos.yaml mlstack
+  $docker stack deploy -c marklogic-multi-node.yaml mlstack
 ```
 All the cluster nodes will now be up and running.
 Now that the nodes have been initialized, we rotate the secrets files to overwrite the initial secrets files.
@@ -943,7 +943,7 @@ This section describes the teardown process for clusters set up on a single VM u
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
 ```
-$ docker-compose -f marklogic-centos.yaml down
+$ docker-compose -f marklogic-single-node.yaml down
 ```
 
 ### Remove volumes
@@ -975,15 +975,17 @@ If the process is successful, a message saying the node has left the swarm will 
 
 The `marklogic` image tags allow the user to pin their applications to images for a specific release, a specific minor release, a specific major release, or the latest release of MarkLogic Server
 
-## `{ML release version}-{platform}-{ML Docker release version}`
+## `{ML release version}-{platform}`
 
-This tag points to the exact version of MarkLogic Server, the base OS, and the supporting scripts version. This allows an application to pin to a very specific version of the image. The image will not be updated without incrementing either the MarkLogic Sever version or the version of the supporting scripts.
+This tag points to the exact version of MarkLogic Server and the base OS. This allows an application to pin to a very specific version of the image and base OS (platform).
 
-e.g. `11.0.3-centos-1.0.2` is the MarkLogic Server 11.0.3 release, CentOS, version 1.0.2 of the docker scripts.
+Platform can be `centos`, `ubi` (RedHat Universal Base Image) or `ubi-rootless` (RedHat Universal Base Image for rootless containers). When `latest` tag is used, the platform will default to `ubi-rootless`.
+
+e.g. `11.2.0-centos` is the MarkLogic Server 11.2.0 release and CentOS base OS.
 
 ## `latest-xx.x`
 
-This tag points to the latest patch release of a specific minor version of MarkLogic Server on CentOS. The image will contain the latest docker supporting scripts and OS patches.
+This tag points to the latest patch release of a specific minor version of MarkLogic Server on UBI-rootless.
 
 e.g. `latest-11.0` is the latest patch release of MarkLogic Server 11.0 (11.0.0, 11.0.1, etc.).
 
@@ -991,7 +993,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest-xx`
 
-This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on UBI-rootless.
 
 e.g. `latest-11` is the latest patch release of the latest minor release of MarkLogic Server 11 (11.0.0, 11.0.1, 11.1.0, 11.1.1, etc.)
 
@@ -999,7 +1001,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest`
 
-This tag points to the latest minor, patch, and major release of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+This tag points to the latest minor, patch, and major release of MarkLogic Server on UBI-rootless.
 
 It will pull the latest image and can cross patch, minor or major release numbers (11.0.0, 11.0.1, 11.1.0, 11.1.1, 12.0.0, etc.)
 

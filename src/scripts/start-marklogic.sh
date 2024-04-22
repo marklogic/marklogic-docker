@@ -40,7 +40,7 @@ rm -f /var/opt/MarkLogic/ready
 ###############################################################
 # Prepare script
 ###############################################################
-info "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
+info "Starting container with MarkLogic $MARKLOGIC_VERSION and Docker script version $MARKLOGIC_DOCKER_VERSION built from $BUILD_BRANCH branch."
 cd ~ || exit
 # Convert booleans to lowercase
 for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER MARKLOGIC_JOIN_TLS_ENABLED; do
@@ -429,6 +429,8 @@ fi
 ################################################################
 if [[ -f /var/opt/MarkLogic/DOCKER_JOIN_CLUSTER ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is true, but skipping join because this instance has already joined a cluster."
+elif [[ "${MARKLOGIC_CLUSTER_TYPE}" == "bootstrap" ]] && [[ $(hostname) == *-0 ]]; then
+    info "MarkLogic is Boostrap node, not joining cluster"
 elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
     # Check if TLS is enabled on Bootstrap host
     # Using INIT_BOOTSTRAP_STATUS to verify if it's not localhost

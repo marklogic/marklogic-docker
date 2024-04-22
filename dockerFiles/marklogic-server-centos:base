@@ -5,7 +5,6 @@
 ###############################################################
 
 ARG BASE_IMAGE=marklogic-centos/marklogic-deps-centos:10-internal
-# hadolint ignore=DL3006
 FROM ${BASE_IMAGE} as builder
 
 ###############################################################
@@ -54,25 +53,26 @@ RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPA
 ###############################################################
 # second stage for flattening layers
 ###############################################################
-# hadolint ignore=DL3006
 FROM ${BASE_IMAGE}
 
 COPY --from=builder / /
 
 ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
+ARG ML_DOCKER_VERSION=local
 ARG BUILD_BRANCH=local
+
 ###############################################################
 # define docker labels
 ###############################################################
 
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 LABEL "com.marklogic.name"="MarkLogic Server ${ML_VERSION}"
-LABEL "com.marklogic.version"="1.1.1"
-LABEL "com.marklogic"="MarkLogic"
-LABEL "com.marklogic.release-type"="production"
+LABEL "com.marklogic.docker-version"="${ML_DOCKER_VERSION}"
 LABEL "com.marklogic.release-version"="${ML_VERSION}"
 LABEL "com.marklogic.build-branch"="${BUILD_BRANCH}"
+LABEL "com.marklogic"="MarkLogic"
+LABEL "com.marklogic.release-type"="production"
 LABEL "com.marklogic.license"="MarkLogic EULA"
 LABEL "com.marklogic.license.description"="By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
 LABEL "com.marklogic.license.url"="https://developer.marklogic.com/eula"
@@ -91,6 +91,7 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_UMASK=022 \
     LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH:/opt/MarkLogic/lib \
     MARKLOGIC_VERSION="${ML_VERSION}" \
+    MARKLOGIC_DOCKER_VERSION="${ML_DOCKER_VERSION}" \
     MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
     MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user \

@@ -3,7 +3,9 @@ schemaVersion: "2.0.0"
 metadataTest:
   envVars:
     - key: MARKLOGIC_VERSION
-      value: VERSION_PLACEHOLDER
+      value: ML_VERSION_PLACEHOLDER
+    - key: MARKLOGIC_DOCKER_VERSION
+      value: ML_DOCKER_VERSION_PLACEHOLDER
     - key: MARKLOGIC_ADMIN_USERNAME_FILE
       value: mldb_admin_user
     - key: MARKLOGIC_ADMIN_PASSWORD_FILE
@@ -36,11 +38,11 @@ metadataTest:
     - key: "com.marklogic.license.url"
       value: "https://developer.marklogic.com/eula"
     - key: "com.marklogic.name"
-      value: "MarkLogic Server VERSION_PLACEHOLDER"
-    - key: "com.marklogic.version"
-      value: "1.1.1"
+      value: "MarkLogic Server ML_VERSION_PLACEHOLDER"
+    - key: "com.marklogic.docker-version"
+      value: "ML_DOCKER_VERSION_PLACEHOLDER"
     - key: "com.marklogic.release-version"
-      value: "VERSION_PLACEHOLDER"
+      value: "ML_VERSION_PLACEHOLDER"
     - key: "com.marklogic.build-branch"
       value: "BRANCH_PLACEHOLDER"
     

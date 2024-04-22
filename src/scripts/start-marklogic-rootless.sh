@@ -484,7 +484,7 @@ do
         rm -f host_health.xml
         break
     elif [[ -f /var/opt/MarkLogic/DOCKER_INIT ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
-        sudo touch /var/opt/MarkLogic/ready
+        touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         break
     else

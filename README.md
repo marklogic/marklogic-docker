@@ -49,7 +49,7 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: UBI, UBI-rootless and CentOS
+Base OS: CentOS
 
 Published image artifact details: <https://github.com/marklogic/marklogic-docker>, <https://hub.docker.com/r/marklogicdb/marklogic-db>
 
@@ -252,9 +252,9 @@ The credentials for the admin user are configured using Docker secrets, and are 
 
 Single node configurations are used primarily on a development machine with a single user.
 
-Create these files on your host machine: `marklogic-single-node.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
+Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
 
-**marklogic-single-node.yaml.**
+**marklogic-centos.yaml.**
 
 ```YAML
 #Docker compose file sample to setup single node cluster
@@ -323,7 +323,7 @@ volumes:
 Once the files are ready, run this command to start the MarkLogic Server container.
 
 ```text
-docker-compose -f marklogic-single-node.yaml up -d
+docker-compose -f marklogic-centos.yaml up -d
 ```
 
 The previous command starts a container running MarkLogic Server named "bootstrap".
@@ -340,9 +340,9 @@ After the container is initialized, you can access the MarkLogic Query Console o
 
 ### Three node cluster on a single VM
 
-The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-multi-node.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
+The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
 
-**marklogic-multi-node.yaml.**
+**marklogic-cluster-centos.yaml.**
 
 ```YAML
 #Docker compose file sample to setup a three node cluster
@@ -448,7 +448,7 @@ volumes:
 Once the files have been created, run the following command to start the MarkLogic Server container:
 
 ```text
-docker-compose -f marklogic-multi-node.yaml up -d
+docker-compose -f marklogic-cluster-centos.yaml up -d
 ```
 
 This command will start three Docker containers running MarkLogic Server, named "bootstrap_3n", "node2" and, "node3".
@@ -497,7 +497,7 @@ Using Docker secrets, username and password information are secured when transmi
   $docker secret create mldb_wallet_password_v1 mldb_wallet_password_v1.txt
 ```
 
-3. Create marklogic-multi-node.yaml using below:
+3. Create marklogic-cluster-centos.yaml using below:
 
 ```YAML
 version: '3.6'
@@ -601,7 +601,7 @@ volumes:
 4. Use the Docker stack command to deploy the cluster:
 
 ```bash
-  $docker stack deploy -c marklogic-multi-node.yaml mlstack
+  $docker stack deploy -c marklogic-cluster-centos.yaml mlstack
 ```
 
 All the cluster nodes will now be up and running.
@@ -1014,7 +1014,7 @@ This section describes the teardown process for clusters set up on a single VM u
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
 ```bash
-docker-compose -f marklogic-single-node.yaml down
+docker-compose -f marklogic-centos.yaml down
 ```
 
 #### Remove volumes
@@ -1088,19 +1088,19 @@ Since MarkLogic 11.2, MarkLogic is able to detect on which container runtime it 
 
 When running on Docker Engine the following entry will show up in the ErrorLogs.txt:
 
-`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Docker runtime.A maximum of 1152 huge pages will be used if available`
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Docker runtime. A maximum of 1152 huge pages will be used if available`
 
 ### Containerd Engine
 
 When running on Containerd Engine the following entry will show up in the ErrorLogs.txt:
 
-`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Containerd runtime.A maximum of 1152 huge pages will be used if available`
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Containerd runtime. A maximum of 1152 huge pages will be used if available`
 
 ### CRI-O Engine
 
 When running on CRI-O Engine the following entry will show up in the ErrorLogs.txt:
 
-`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using CRI-O runtime.A maximum of 1152 huge pages will be used if available`
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using CRI-O runtime. A maximum of 1152 huge pages will be used if available`
 
 ## Known Issues and Limitations
 

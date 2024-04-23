@@ -1082,7 +1082,7 @@ It will pull the latest image and can cross patch, minor or major release number
 
 ## Container Runtime Detection
 
-Since MarkLogic 11.2, MarkLogic is able to detect on which container runtime it is running on.
+Starting with version 11.2, MarkLogic is able to detect which container runtime the container is running in.
 
 ### Docker Engine
 

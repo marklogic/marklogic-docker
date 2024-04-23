@@ -1088,19 +1088,25 @@ Since MarkLogic 11.2, MarkLogic is able to detect on which container runtime it 
 
 When running on Docker Engine the following entry will show up in the ErrorLogs.txt:
 
-`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Docker runtime. A maximum of 1152 huge pages will be used if available`
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Docker runtime. A maximum of <x> huge pages will be used if available.`
+
+Where is calculated as described in the [Configuring HugePages](https://github.com/marklogic/marklogic-docker/pull/configuring-hugepages) section.
 
 ### Containerd Engine
 
 When running on Containerd Engine the following entry will show up in the ErrorLogs.txt:
 
-`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Containerd runtime. A maximum of 1152 huge pages will be used if available`
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Containerd runtime. A maximum of <x> huge pages will be used if available.`
+
+Where is calculated as described in the [Configuring HugePages](https://github.com/marklogic/marklogic-docker/pull/configuring-hugepages) section.
 
 ### CRI-O Engine
 
 When running on CRI-O Engine the following entry will show up in the ErrorLogs.txt:
 
-`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using CRI-O runtime. A maximum of 1152 huge pages will be used if available`
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using CRI-O runtime. A maximum of <x> huge pages will be used if available.`
+
+Where is calculated as described in the [Configuring HugePages](https://github.com/marklogic/marklogic-docker/pull/configuring-hugepages) section.
 
 ## Known Issues and Limitations
 

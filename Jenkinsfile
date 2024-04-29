@@ -125,7 +125,7 @@ void copyRPMs() {
     else if (marklogicVersion == "11") {
         RPMsuffix = ".nightly-rhel"
         RPMbranch = "b11"
-        RPMversion = "11.2"
+        RPMversion = "11.3"
     }
     else if (marklogicVersion == "12") {
         RPMsuffix = ".nightly-rhel"

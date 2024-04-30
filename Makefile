@@ -4,6 +4,8 @@ repo_dir=marklogic
 docker_build_options=--compress
 build_branch?=local
 docker_image_type?=ubi
+upgrade_docker_image_type?=ubi
+upgrade_image?=${repo_dir}/marklogic-server-${upgrade_docker_image_type}:${dockerTag}
 current_image?=${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}
 
 #***************************************************************************
@@ -42,7 +44,7 @@ docker-tests:
 	python3 -m venv python_env; \
 	source ./python_env/bin/activate; \
 	pip3 install -r requirements.txt; \
-	robot -x docker-tests.xml --outputdir test_results --randomize all --variable TEST_IMAGE:${current_image} --variable MARKLOGIC_VERSION:${marklogicVersion} --variable BUILD_BRANCH:${build_branch} --variable MARKLOGIC_DOCKER_VERSION:${dockerVersion} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; \
+	robot -x docker-tests.xml --outputdir test_results --randomize all --variable TEST_IMAGE:${current_image} --variable UPGRADE_TEST_IMAGE:${upgrade_image} --variable MARKLOGIC_VERSION:${marklogicVersion} --variable BUILD_BRANCH:${build_branch} --variable MARKLOGIC_DOCKER_VERSION:${dockerVersion} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; \
 	deactivate; \
 	rm -rf python_env
 	

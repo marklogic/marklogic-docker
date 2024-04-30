@@ -166,6 +166,19 @@ void buildDockerImage() {
     currentBuild.displayName = "#${BUILD_NUMBER}: ${marklogicVersion}-${env.dockerImageType} (${env.dockerVersion})"
 }
 
+void pullDocker() {
+    if (upgradeDockerImage != "" ) {
+        sh """
+            echo 'upgradeDockerImage: ${upgradeDockerImage}'
+            docker pull ${upgradeDockerImage}
+        """
+    } else {
+        sh """
+            echo 'upgradeDockerImage is not specified, upgrade test will be skipped'
+        """
+    }
+}
+
 void structureTests() {
     sh """
         #install container-structure-test 1.16.0 binary
@@ -175,7 +188,7 @@ void structureTests() {
 }
 
 void dockerTests() {
-    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType}"
+    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType}"
 }
 
 void lint() {
@@ -276,6 +289,7 @@ pipeline {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '1.1.2', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\ncentos', description: 'Platform type for Docker image. Will be made part of the docker image tag')
+        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for upgrading Docker container. Will used for testing docker image upgrades.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
@@ -300,6 +314,12 @@ pipeline {
         stage('Build-Image') {
             steps {
                 buildDockerImage()
+            }
+        }
+
+        stage('Pull-Upgrade-Image') {
+            steps {
+                pullDocker()
             }
         }
 

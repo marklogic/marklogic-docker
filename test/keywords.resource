@@ -12,12 +12,15 @@ ${DEFAULT ADMIN USER}    test_admin
 ${DEFAULT ADMIN PASS}    test_admin_pass
 ${SPEC CHARS ADMIN PASS}    Admin@2$s%^&*!
 ${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=marklogic/marklogic-server-centos:internal}
+${UPGRADE_TEST_IMAGE}    marklogic/marklogic-server-ubi:internal
 ${DOCKER TIMEOUT}    240s
 ${LICENSE KEY}    %{QA_LICENSE_KEY=none}
 ${LICENSEE}    MarkLogic - Version 9 QA Test License
 ${MARKLOGIC_VERSION}    internal
 ${BUILD_BRANCH}    local
 ${IMAGE_TYPE}    centos
+${VOL_NAME}    MarkLogic_vol_1
+${VOL_INFO}    src=${VOL_NAME},dst=/var/opt/MarkLogic
 
 *** Keywords ***
 Create container with
@@ -44,23 +47,49 @@ Create failing container with
     ...            stdout=test_results/stdout-${container name}.txt    
     ...            timeout=${DOCKER TIMEOUT}
 
-Create second container with
-    [Documentation]    NOT USED. Creates a second container for testing.
-    ...                            TODO: still need to figure out how to id the second container in tests and cleanup. 
+Create test container with
     [Arguments]    @{input parameters}
+    [Documentation]    Creates a test container for upgrade testing.
     ${container name}=    Remove spaces from    ${TEST NAME}
     Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}    
-    ...            --name    ${container name}-2    ${TEST_IMAGE}    
+    ...            --name    ${container name}
+    ...            --mount    ${VOL_INFO}    ${TEST_IMAGE} 
+    ...            stderr=test_results/stderr-${container name}.txt    
+    ...            stdout=test_results/stdout-${container name}.txt    
+    ...            timeout=${DOCKER TIMEOUT}
+    File Should Be Empty    test_results/stderr-${container name}.txt
+    Docker log should contain    *Cluster config complete, marking this container as ready.*
+
+Create upgrade container with
+    [Arguments]    @{input parameters}
+    [Documentation]    Creates a second test container for upgrade testing.
+    ${container name}=    Remove spaces from    ${TEST NAME}
+    Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}    
+    ...            --name    ${container name}-2
+    ...            --mount    ${VOL_INFO}    ${UPGRADE_TEST_IMAGE}  
     ...            stderr=test_results/stderr-${container name}-2.txt    
     ...            stdout=test_results/stdout-${container name}-2.txt    
     ...            timeout=${DOCKER TIMEOUT}
     File Should Be Empty    test_results/stderr-${container name}-2.txt
-    Docker log should contain    *Cluster config complete, marking this container as ready.*
+    Docker log should contain    *Cluster config complete, marking this container as ready.*    True
+
+Stop container
+    [Documentation]    Stop Docker container that is named the same as the test case.
+    ${container name}=    Remove spaces from    ${TEST NAME}
+    Run Process    docker    stop    ${container name}    timeout=${DOCKER TIMEOUT}
 
 Delete container
+    [Arguments]    ${second container}=False
     [Documentation]    Delete Docker container that is named the same as the test case.
     ${container name}=    Remove spaces from    ${TEST NAME}
     Run Process    docker    rm    -f    -v    ${container name}    timeout=${DOCKER TIMEOUT}
+    IF    ${second container} == True
+        Run Process    docker    rm    -f    -v    ${container name}-2    timeout=${DOCKER TIMEOUT}
+    END
+
+Delete volume
+    [Documentation]    Delete Docker volume.
+    Run Process    docker    volume    rm    ${VOL_NAME}    timeout=${DOCKER TIMEOUT}
 
 Start compose from
     [Arguments]    ${compose path}    ${password}=${DEFAULT ADMIN PASS}    ${readiness}=True
@@ -112,14 +141,17 @@ Restart compose from
     Run Process        docker    compose    -f    ${new path}    restart
 
 Docker log should contain
-    [Arguments]    ${string pattern}
-    [Documentation]    Wrapper keyword that reties Get container log message
-    Wait Until Keyword Succeeds    ${DOCKER TIMEOUT}    10s    Get container log message    ${string pattern}
+    [Arguments]    ${string pattern}    ${second container}=False
+    [Documentation]    Wrapper keyword that reties Get container log message, set second argument to True get logs of second container.
+    Wait Until Keyword Succeeds    ${DOCKER TIMEOUT}    10s    Get container log message    ${string pattern}    ${second container}
 
 Get container log message
-    [Arguments]    ${string pattern}
-    [Documentation]    Get Docker logs for a current image and find a matching string based on input pattern.
+    [Arguments]    ${string pattern}    ${second container}=False
+    [Documentation]    Get Docker logs for a current image and find a matching string based on input pattern, set second argument to True get logs of second container.
     ${container name}=    Remove spaces from    ${TEST NAME}
+    IF    ${second container} == True
+         ${container name}=    Set Variable    ${container name}-2
+    END
     Run Process    docker    logs    ${container name}    stdout=test_results/stdout-${container name}.txt    timeout=${DOCKER TIMEOUT}
     ${docker log}=    Get File    test_results/stdout-${container name}.txt
     Should Match    ${docker log}    ${string pattern}    msg=Did not find ${string pattern} in ${container name} container log

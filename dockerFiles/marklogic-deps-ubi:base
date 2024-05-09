@@ -12,6 +12,7 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 ###############################################################
 
 RUN microdnf install -y wget \
+    && microdnf -y update \
     && wget --quiet https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-release-tierpoint/devdependencies/libnsl-2.28-236.el8_9.13.x86_64.rpm \
     && rpm -i libnsl-2.28-236.el8_9.13.x86_64.rpm \
     && rm libnsl-2.28-236.el8_9.13.x86_64.rpm
@@ -21,6 +22,5 @@ RUN microdnf install -y wget \
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y update \
     && microdnf -y install gdb.x86_64 glibc.i686 libstdc++.i686 libgcc.i686 initscripts redhat-lsb-core.x86_64 tzdata \
     && microdnf clean all

@@ -19,6 +19,19 @@ Uninitialized MarkLogic container
     Verify response for authenticated request with    8002    *Forbidden*
     [Teardown]    Delete container
 
+Uninitialized MarkLogic container no parameters
+    Create container with
+    Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+    Docker log should contain    *MARKLOGIC_INIT is set to false or not defined, not initializing.*
+    Docker log should contain    *Starting container with MarkLogic ${MARKLOGIC_VERSION} and Docker script version ${MARKLOGIC_DOCKER_VERSION} built from ${BUILD_BRANCH} branch.*
+    Verify response for unauthenticated request with    8000    *Forbidden*
+    Verify response for unauthenticated request with    8001    *This server must now self-install the initial databases and application servers. Click OK to continue.*
+    Verify response for unauthenticated request with    8002    *Forbidden*
+    Verify response for authenticated request with    8000    *Forbidden*
+    Verify response for authenticated request with    8001    *This server must now self-install the initial databases and application servers. Click OK to continue.*
+    Verify response for authenticated request with    8002    *Forbidden*
+    [Teardown]    Delete container
+
 Initialized MarkLogic container
     Create container with    -e    MARKLOGIC_INIT=true
     ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}

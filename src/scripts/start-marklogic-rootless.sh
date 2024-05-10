@@ -478,7 +478,7 @@ do
         touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         break
-    elif [[ "${MARKLOGIC_INIT}" == "false" ]] && [[ "${error_message}" =~ "SEC-DEFAULTUSERDNE" ]]; then
+    elif [[ "${MARKLOGIC_INIT}" != "true" ]] && [[ "${error_message}" =~ "SEC-DEFAULTUSERDNE" ]]; then
         touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         rm -f host_health.xml

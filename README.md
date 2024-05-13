@@ -818,7 +818,7 @@ Use the following two commands to stop the MarkLogic server and update the owner
 ```
 $ docker exec -it -u root container_id /etc/init.d/MarkLogic stop
 
-$ docker exec -it -u root container_id chown -R 100:100 /opt/MarkLogic
+$ docker exec -it -u root container_id chown -R 100:1000 /opt/MarkLogic
 ```
 2. Stop the MarkLogic Docker container.
 Use following command to stop the container:

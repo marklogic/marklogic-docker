@@ -825,7 +825,7 @@ Use following command to stop the container:
 ```
 $ docker stop container_id
 ```
-3. Now, run a MarkLogic Docker container using the latest release of the Docker image. Use the same volume, mounted to the container that was running the older release. Container name should change to avoid conflicts with the older container.
+3. To upgrade MarkLogic, create a new container with the latest Docker image while using the same volume mounted to the container that was running the older release. To prevent conflicts, you should either remove the old container or assign a distinct name to the new container. The following commands use a unique name for the new container with the existing volume.
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      --name MarkLogic_cont_2 \

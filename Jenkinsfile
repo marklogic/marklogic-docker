@@ -16,6 +16,7 @@ JIRA_ID = ''
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
+RPMversion = ''
 
 // Define local funtions
 void preBuildCheck() {
@@ -370,7 +371,7 @@ pipeline {
             }
             steps {
                 publishToInternalRegistry()
-                build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${marklogicVersion}")]
+                build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
             }
         }
     }

@@ -813,22 +813,28 @@ To upgrade MarkLogic Docker from release 10.x to the latest release, perform fol
 
 Note: In the below example, we are upgrading an initialized MarkLogic host to the latest MarkLogic version supported for Docker.
 
-1. Stop the MarkLogic Docker container.
-Use following command to stop the container:
+1. If you are upgrading to a rootless image, you need to update the ownership of all files and directories under /opt/MarkLogic in the container. Otherwise skip to step 2.
+Use the following two commands to stop the MarkLogic server and update the ownership of the files and directories:
+```
+$ docker exec -it -u root container_id /etc/init.d/MarkLogic stop
 
+$ docker exec -it -u root container_id chown -R 1000:100 /opt/MarkLogic
+```
+2. Stop the MarkLogic Docker container.
+Use following command to stop the container:
 ```
 $ docker stop container_id
 ```
-2. Now, run a MarkLogic Docker container using the latest release of the Docker image. Use the same volume, mounted to the container that was running the older release.
+3. To upgrade MarkLogic, create a new container with the latest Docker image while using the same volume mounted to the container that was running the older release. To prevent conflicts, you should either remove the old container or assign a distinct name to the new container. The following commands use a unique name for the new container with the existing volume.
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      --name MarkLogic_cont_2 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
     marklogicdb/marklogic-db
 ```
-3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
-4. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
-5. Once the upgrade is complete, the Admin interface will reload with the new MarkLogic release. 
+4. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
+5. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
+6. Once the upgrade is complete, the Admin interface will reload with the new MarkLogic release. 
 
 # Backing Up and Restoring a Database
 

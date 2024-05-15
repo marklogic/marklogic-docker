@@ -29,13 +29,6 @@ WORKDIR /
 COPY ${ML_CONVERTERS} /tmp/converters.rpm
 RUN chown ${ML_USER}:users /tmp/converters.rpm
 
-###############################################################
-# Create directory and set authorisations for converters
-###############################################################
-RUN mkdir -p /opt/MarkLogic \
-    && chown -R ${ML_USER}:users /opt/MarkLogic \
-    && chmod 766 -R /opt/MarkLogic
-
 ####################################################
 # inject init, start and clustering scripts and set permission
 ###############################################################
@@ -53,6 +46,12 @@ RUN rpm -i /tmp/marklogic-server.rpm \
     && microdnf -y clean all \
     && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
     && rm -rf ./opt/MarkLogic/mlcmd/ext/*
+
+###############################################################
+# set /opt/MarkLogic authorisation
+###############################################################
+RUN chown -R ${ML_USER}:users /opt/MarkLogic \
+    && chmod 766 -R /opt/MarkLogic
 
 ###############################################################
 # set marklogic.conf authorisation

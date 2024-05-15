@@ -99,7 +99,7 @@ if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
     else
         info "INSTALL_CONVERTERS is true, installing converters."
         CONVERTERS_PATH="/converters.rpm"
-        sudo yum localinstall -y $CONVERTERS_PATH
+        sudo rpm -iv $CONVERTERS_PATH
     fi
 elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" == "false" ]]; then
     info "INSTALL_CONVERTERS is false, not installing converters."

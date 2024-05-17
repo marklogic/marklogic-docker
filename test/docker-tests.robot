@@ -387,11 +387,8 @@ Initialized MarkLogic container with ML converters
     ...                                        -e    INSTALL_CONVERTERS=true
     Docker log should contain    *INSTALL_CONVERTERS is true, installing converters.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
-    ${container name}=    Remove spaces from    ${TEST NAME}
-    ${output}=    Run    docker exec ${container name} ls /opt/MarkLogic/
-    Should Contain    ${output}    Converters
-    ${output}=    Run    docker exec ${container name} cat /var/opt/MarkLogic/Logs/ErrorLog.txt
-    Should Match Regexp    ${output}   .*Info: MarkLogic Converters.*found
+    MarkLogic Error log should contain    .*Info: MarkLogic Converters.*found
+    Verify converter package installation
     [Teardown]    Delete container
 
 

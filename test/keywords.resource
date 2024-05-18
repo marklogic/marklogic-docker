@@ -156,6 +156,25 @@ Get container log message
     ${docker log}=    Get File    test_results/stdout-${container name}.txt
     Should Match    ${docker log}    ${string pattern}    msg=Did not find ${string pattern} in ${container name} container log
 
+MarkLogic Error log should contain
+    [Arguments]    ${string pattern}
+    [Documentation]    Wrapper keyword that reties Get container log message
+    Wait Until Keyword Succeeds    ${DOCKER TIMEOUT}    10s    Get marklogic error log message    ${string pattern}
+
+Get marklogic error log message
+    [Arguments]    ${string pattern}
+    [Documentation]    Get MarkLogic logs for a current image and find a matching string based on input pattern.
+    ${container name}=    Remove spaces from    ${TEST NAME}
+    ${marklogic log}=    Run    docker exec ${container name} cat /var/opt/MarkLogic/Logs/ErrorLog.txt
+    Should Match Regexp    ${marklogic log}    ${string pattern}    msg=Did not find ${string pattern} in ${container name} container log
+
+Verify converter package installation
+    [Documentation]    Verify that the converters package is installed in the MarkLogic container.
+    ...                This is done by checking the /opt/MarkLogic directory for the presence of the Converters directory.
+    ${container name}=    Remove spaces from    ${TEST NAME}
+    ${output}=    Run    docker exec ${container name} ls /opt/MarkLogic/
+    Should Contain    ${output}    Converters
+    
 Compose logs should contain
     [Arguments]    ${compose path}    ${string pattern}
     [Documentation]    Wrapper keywork that retries Get compose log message

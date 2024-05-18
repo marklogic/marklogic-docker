@@ -415,3 +415,14 @@ Initialized MarkLogic Server with wallet password and realm
     Verify response for authenticated request with    8001/security-admin.xqy?section=security    *public*
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
     [Teardown]    Delete container
+
+Initialized MarkLogic container with ML converters
+    Create container with    -e    MARKLOGIC_INIT=true
+    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                                        -e    INSTALL_CONVERTERS=true
+    Docker log should contain    *INSTALL_CONVERTERS is true, installing converters.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    MarkLogic Error log should contain    .*Info: MarkLogic Converters.*found
+    Verify converter package installation
+    [Teardown]    Delete container

@@ -473,7 +473,6 @@ ML_HOST_PROTOCOL=$(get_host_protocol "localhost" "7997")
 while true
 do
     HOST_RESP_CODE=$(curl "${ML_HOST_PROTOCOL}"://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n" --cacert "${ML_CACERT_FILE}")
-    [[ -f host_health.xml ]] && error_message=$(< host_health.xml grep "SEC-DEFAULTUSERDNE")
     if [[ "${MARKLOGIC_INIT}" == "true" ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
         touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."

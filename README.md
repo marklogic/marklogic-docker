@@ -1039,5 +1039,6 @@ It will pull the latest image and can cross patch, minor or major release number
 - glibc (CVE-2019-1010022) for which RedHat does not consider to be a vulnerability.
 - kernel-headers (CVE-2023-6546).
 - pip (GHSA-gpvv-69j7-gwj8) and setuptools (GHSA-r9hx-vwmv-q579).
+- less (CVE-2024-32487).
 
 These libraries are included in the RedHat UBI 8 base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.

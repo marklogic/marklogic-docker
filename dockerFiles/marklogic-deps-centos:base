@@ -8,14 +8,10 @@ FROM centos:centos7
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
-# install networking, base deps and ntp/tzdata for timezone
+# install networking, base deps and tzdata for timezone
 ###############################################################
 
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && yum -y update \
     && yum -y install gdb.x86_64 glibc.i686 libstdc++.i686 libgcc.i686 initscripts redhat-lsb-core.x86_64 tzdata xz-0:5.2.2-2.el7_9.x86_64 \
     && yum clean all 
-
-###############################################################
-# platform configurations
-###############################################################

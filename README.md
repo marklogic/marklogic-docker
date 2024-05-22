@@ -36,7 +36,7 @@ Note: In order to use the MarkLogic Image you need to request the Developer Lice
 
 # Supported tags
 
-Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}-{ML Docker release version}`
+Note: MarkLogic Server Docker images follow a specific tagging format: `{ML release version}-{platform}`
 
 All Supported Tags: [https://hub.docker.com/r/marklogicdb/marklogic-db/tags](https://hub.docker.com/r/marklogicdb/marklogic-db/tags)
 
@@ -46,7 +46,7 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: CentOS
+Base OS: UBI, UBI-rootless and CentOS
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/marklogicdb/marklogic-db
 
@@ -239,9 +239,9 @@ The credentials for the admin user are configured using Docker secrets, and are 
 ## Single node MarkLogic Server on a single VM
 Single node configurations are used primarily on a development machine with a single user.
 
-Create these files on your host machine: `marklogic-centos.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
+Create these files on your host machine: `marklogic-single-node.yaml`, `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt`. Run the example Docker commands from the same directory that the files were created.
 
-**marklogic-centos.yaml**
+**marklogic-single-node.yaml**
 
 ```
 #Docker compose file sample to setup single node cluster
@@ -310,7 +310,7 @@ volumes:
 Once the files are ready, run this command to start the MarkLogic Server container.
 
 ```
-$ docker-compose -f marklogic-centos.yaml up -d
+$ docker-compose -f marklogic-single-node.yaml up -d
 ```
 The previous command starts a container running MarkLogic Server named "bootstrap".
 
@@ -324,9 +324,9 @@ After the container is initialized, you can access the MarkLogic Query Console o
 
 ## Three node cluster on a single VM
 
-The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-cluster-centos.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
+The following is an example of a three-node MarkLogic server cluster created using Docker compose. Create these files on your host machine:  `marklogic-multi-node.yaml`, `mldb_admin_username.txt`, and `mldb_admin_password.txt`. Run example Docker commands from the same directory where the files created.
 
-**marklogic-cluster-centos.yaml**
+**marklogic-multi-node.yaml**
 
 ```
 #Docker compose file sample to setup a three node cluster
@@ -430,7 +430,7 @@ volumes:
 Once the files have been created, run the following command to start the MarkLogic Server container:
 
 ```
-$ docker-compose -f marklogic-cluster-centos.yaml up -d
+$ docker-compose -f marklogic-multi-node.yaml up -d
 ```
 
 This command will start three Docker containers running MarkLogic Server, named "bootstrap_3n", "node2" and, "node3".
@@ -469,7 +469,7 @@ Using Docker secrets, username and password information are secured when transmi
 ```
   $docker secret create mldb_wallet_password_v1 mldb_wallet_password_v1.txt
 ```
-3. Create marklogic-multi-centos.yaml using below:
+3. Create marklogic-multi-node.yaml using below:
 ```
 version: '3.6'
 services:
@@ -570,7 +570,7 @@ volumes:
 ```
 4. Use the Docker stack command to deploy the cluster:
 ```
-  $docker stack deploy -c marklogic-multi-centos.yaml mlstack
+  $docker stack deploy -c marklogic-multi-node.yaml mlstack
 ```
 All the cluster nodes will now be up and running.
 Now that the nodes have been initialized, we rotate the secrets files to overwrite the initial secrets files.
@@ -814,22 +814,28 @@ To upgrade MarkLogic Docker from release 10.x to the latest release, perform fol
 
 Note: In the below example, we are upgrading an initialized MarkLogic host to the latest MarkLogic version supported for Docker.
 
-1. Stop the MarkLogic Docker container.
-Use following command to stop the container:
+1. If you are upgrading to a rootless image, you need to update the ownership of all files and directories under /opt/MarkLogic in the container. Otherwise skip to step 2.
+Use the following two commands to stop the MarkLogic server and update the ownership of the files and directories:
+```
+$ docker exec -it -u root container_id /etc/init.d/MarkLogic stop
 
+$ docker exec -it -u root container_id chown -R 1000:100 /opt/MarkLogic
+```
+2. Stop the MarkLogic Docker container.
+Use following command to stop the container:
 ```
 $ docker stop container_id
 ```
-2. Now, run a MarkLogic Docker container using the latest release of the Docker image. Use the same volume, mounted to the container that was running the older release.
+3. To upgrade MarkLogic, create a new container with the latest Docker image while using the same volume mounted to the container that was running the older release. To prevent conflicts, you should either remove the old container or assign a distinct name to the new container. The following commands use a unique name for the new container with the existing volume.
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      --name MarkLogic_cont_2 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
     marklogicdb/marklogic-db
 ```
-3. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
-4. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
-5. Once the upgrade is complete, the Admin interface will reload with the new MarkLogic release. 
+4. In a browser, open the MarkLogic Admin Interface for the container (http://<vm_ip>:8001/).
+5. When prompted by the Admin Interface to upgrade the databases and configuration files, click the Ok button to confirm the upgrade.
+6. Once the upgrade is complete, the Admin interface will reload with the new MarkLogic release. 
 
 # Backing Up and Restoring a Database
 
@@ -944,7 +950,7 @@ This section describes the teardown process for clusters set up on a single VM u
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
 ```
-$ docker-compose -f marklogic-centos.yaml down
+$ docker-compose -f marklogic-single-node.yaml down
 ```
 
 ### Remove volumes
@@ -976,15 +982,17 @@ If the process is successful, a message saying the node has left the swarm will 
 
 The `marklogic` image tags allow the user to pin their applications to images for a specific release, a specific minor release, a specific major release, or the latest release of MarkLogic Server
 
-## `{ML release version}-{platform}-{ML Docker release version}`
+## `{ML release version}-{platform}`
 
-This tag points to the exact version of MarkLogic Server, the base OS, and the supporting scripts version. This allows an application to pin to a very specific version of the image. The image will not be updated without incrementing either the MarkLogic Sever version or the version of the supporting scripts.
+This tag points to the exact version of MarkLogic Server and the base OS. This allows an application to pin to a very specific version of the image and base OS (platform).
 
-e.g. `11.0.3-centos-1.0.2` is the MarkLogic Server 11.0.3 release, CentOS, version 1.0.2 of the docker scripts.
+Platform can be `centos`, `ubi` (RedHat Universal Base Image) or `ubi-rootless` (RedHat Universal Base Image for rootless containers). When `latest` tag is used, the platform will default to `ubi-rootless`.
+
+e.g. `11.2.0-centos` is the MarkLogic Server 11.2.0 release and CentOS base OS.
 
 ## `latest-xx.x`
 
-This tag points to the latest patch release of a specific minor version of MarkLogic Server on CentOS. The image will contain the latest docker supporting scripts and OS patches.
+This tag points to the latest patch release of a specific minor version of MarkLogic Server on UBI-rootless.
 
 e.g. `latest-11.0` is the latest patch release of MarkLogic Server 11.0 (11.0.0, 11.0.1, etc.).
 
@@ -992,7 +1000,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest-xx`
 
-This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on UBI-rootless.
 
 e.g. `latest-11` is the latest patch release of the latest minor release of MarkLogic Server 11 (11.0.0, 11.0.1, 11.1.0, 11.1.1, etc.)
 
@@ -1000,7 +1008,7 @@ For MarkLogic 10, because the numbering scheme was changed, the maintenance rele
 
 ## `latest`
 
-This tag points to the latest minor, patch, and major release of MarkLogic Server on CentOS. The image will contain the latest supporting scripts and OS patches.
+This tag points to the latest minor, patch, and major release of MarkLogic Server on UBI-rootless.
 
 It will pull the latest image and can cross patch, minor or major release numbers (11.0.0, 11.0.1, 11.1.0, 11.1.1, 12.0.0, etc.)
 
@@ -1037,8 +1045,24 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 
 # Known Issues and Limitations
 
+## CentOS base docker image
+
 1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.
 5. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 (CVE-2015-8387, CVE-2015-8390, CVE-2015-8394), glibc (CVE-2019-1010022), pcre (CVE-2015-8380, CVE-2015-8387, CVE-2015-8390, CVE-2015-8393, CVE-2015-8394), SQLite (CVE-2019-5827), nss (CVE-2014-3566), and bind-license (CVE-2023-6516, CVE-2023-5679, CVE-2023-5517, CVE-2023-50868, CVE-2023-50387, CVE-2023-4408). These libraries are included in the CentOS base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+
+## RedHat UBI base docker image
+
+1. The image must be run in privileged mode. If the image isn't run as privileged, the calls that use `sudo` in the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions. To run in non-privileged mode, use one of the “rootless” image options.
+2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
+3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
+4. MarkLogic Server will default to the UTC timezone.
+5. The latest released version of RedHat UBI 8 has known security vulnerabilities :
+- glibc (CVE-2019-1010022) for which RedHat does not consider to be a vulnerability.
+- kernel-headers (CVE-2023-6546).
+- pip (GHSA-gpvv-69j7-gwj8) and setuptools (GHSA-r9hx-vwmv-q579).
+- less (CVE-2024-32487).
+
+These libraries are included in the RedHat UBI 8 base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.

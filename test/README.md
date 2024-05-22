@@ -34,7 +34,10 @@ In order to run all tests you can use make from root folder with
 or by running Robot in test directly with 
 `robot ./docker-tests.robot`
 
+*Note*
 QA_LICENSE_KEY environment variable needs to be set to a valid license key for license test to pass.
+If UBI rootless image is used, specify image type for individual tests:
+`robot --variable TEST_IMAGE:marklogic/marklogic-server-ubi-rootless:internal --variable IMAGE_TYPE:ubi-rootless --test 'Initialized MarkLogic container with config overrides' docker-tests.robot`
 
 For a quick start guide for Robot framework see https://robotframework.org/#getting-started
 Full user guide is available at https://robotframework.org/robotframework/#user-guide

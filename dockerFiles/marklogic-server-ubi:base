@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-ARG BASE_IMAGE=marklogic-centos/marklogic-deps-centos:10-internal
+ARG BASE_IMAGE=marklogic-ubi/marklogic-deps-ubi:11-internal
 FROM ${BASE_IMAGE} as builder
 
 ###############################################################
@@ -25,10 +25,10 @@ COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
 # install MarkLogic server, sudo, and remove mlcmd packages
 ###############################################################
 COPY ${ML_RPM} /tmp/marklogic-server.rpm
-RUN yum localinstall -y /tmp/marklogic-server.rpm \
+RUN rpm -i /tmp/marklogic-server.rpm \
     && rm /tmp/marklogic-server.rpm \
-    && yum -y install sudo \
-    && yum -y clean all \
+    && microdnf -y install sudo \
+    && microdnf -y clean all \
     && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
     && rm -rf ./opt/MarkLogic/mlcmd/ext/*
 
@@ -61,7 +61,6 @@ ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
 ARG ML_DOCKER_VERSION=local
 ARG BUILD_BRANCH=local
-
 ###############################################################
 # define docker labels
 ###############################################################
@@ -99,6 +98,11 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     BUILD_BRANCH=${BUILD_BRANCH} \
     MARKLOGIC_JOIN_TLS_ENABLED=false
     
+################################################################
+# Set Timezone
+################################################################
+
+RUN microdnf -y reinstall tzdata
 
 ###############################################################
 # expose MarkLogic server ports
@@ -111,6 +115,13 @@ EXPOSE 25 7997-8010
 ###############################################################
 
 USER ${ML_USER}
+
+####################################################
+# Set Linux Language Settings
+###############################################################
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=C.UTF-8
 
 ###############################################################
 # define volume for persistent MarkLogic server data

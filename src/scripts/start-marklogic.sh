@@ -35,12 +35,12 @@ log () {
 ###############################################################
 # removing MarkLogic ready file and create it when 8001 is accessible on node
 ###############################################################
-rm -f /var/opt/MarkLogic/ready
+sudo rm -f /var/opt/MarkLogic/ready
 
 ###############################################################
 # Prepare script
 ###############################################################
-info "Starting MarkLogic container with $MARKLOGIC_VERSION from $BUILD_BRANCH"
+info "Starting container with MarkLogic $MARKLOGIC_VERSION and Docker script version $MARKLOGIC_DOCKER_VERSION built from $BUILD_BRANCH branch."
 cd ~ || exit
 # Convert booleans to lowercase
 for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER MARKLOGIC_JOIN_TLS_ENABLED; do
@@ -99,7 +99,7 @@ if [[ "${INSTALL_CONVERTERS}" == "true" ]]; then
     else
         info "INSTALL_CONVERTERS is true, installing converters."
         CONVERTERS_PATH="/converters.rpm"
-        sudo yum localinstall -y $CONVERTERS_PATH
+        sudo rpm -iv $CONVERTERS_PATH
     fi
 elif [[ -z "${INSTALL_CONVERTERS}" ]] || [[ "${INSTALL_CONVERTERS}" == "false" ]]; then
     info "INSTALL_CONVERTERS is false, not installing converters."
@@ -307,7 +307,7 @@ if [[ "${MARKLOGIC_DEV_BUILD}" == "true" ]]; then
     info "MARKLOGIC_DEV_BUILD is true, starting build using ${MARKLOGIC_INSTALL_DIR}/MarkLogic"
     sudo "${MARKLOGIC_INSTALL_DIR}/MarkLogic" -i . -d "${MARKLOGIC_DATA_DIR}" -p "${MARKLOGIC_PID_FILE}" &
 elif [[ -z "${MARKLOGIC_DEV_BUILD}" ]] || [[ "${MARKLOGIC_DEV_BUILD}" == "false" ]]; then
-    sudo service MarkLogic start
+    sudo /etc/init.d/MarkLogic start
 else
     error "MARKLOGIC_DEV_BUILD must be true or false." exit
 fi
@@ -498,15 +498,18 @@ ML_HOST_PROTOCOL=$(get_host_protocol "localhost" "7997")
 while true
 do
     HOST_RESP_CODE=$(curl "${ML_HOST_PROTOCOL}"://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n" --cacert "${ML_CACERT_FILE}")
-    [[ -f host_health.xml ]] && error_message=$(< host_health.xml grep "SEC-DEFAULTUSERDNE")
     if [[ "${MARKLOGIC_INIT}" == "true" ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
         sudo touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         break
-    elif [[ "${MARKLOGIC_INIT}" == "false" ]] && [[ "${error_message}" =~ "SEC-DEFAULTUSERDNE" ]]; then
+    elif [[ "${MARKLOGIC_INIT}" != "true" ]]; then
         sudo touch /var/opt/MarkLogic/ready
         info "Cluster config complete, marking this container as ready."
         rm -f host_health.xml
+        break
+    elif [[ -f /var/opt/MarkLogic/DOCKER_INIT ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
+        sudo touch /var/opt/MarkLogic/ready
+        info "Cluster config complete, marking this container as ready."
         break
     else
         info "MarkLogic not ready yet, retrying."

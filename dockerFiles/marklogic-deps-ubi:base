@@ -22,5 +22,5 @@ RUN microdnf install -y wget \
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install gdb.x86_64 glibc-2.28-251.el8.i686 libstdc++.i686 libgcc.i686 initscripts redhat-lsb-core.x86_64 tzdata \
+    && microdnf -y install gdb.x86_64 libstdc++.i686 libgcc.i686 initscripts redhat-lsb-core.x86_64 tzdata \
     && microdnf clean all

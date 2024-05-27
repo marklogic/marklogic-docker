@@ -7,7 +7,6 @@ Thank you for your interest in contributing to this project! We welcome contribu
 - [Getting Started](#getting-started)
 - [Issue Tracker](#issue-tracker)
 - [PR management](#pr-management)
-- [Code Style](#code-style)
 
 ## Found an Issue?
 
@@ -43,9 +42,5 @@ Created PR will not be merge as is.
 The MarkLogic docker team will use the PRs for "inspiration" but not merge the changes in directly. They may rewrite the code as they like, incorporating the submitted changes into their own code.
 
 **Important:** Please open an issue in the [Issue Tracker][] and get your proposed changes pre-approved by at least one of the project maintainers before you start coding. Nothing is more frustrating than seeing your hard work go to waste because your vision does not align with that of the project maintainers.
-
-## Code Style
-
-Please follow the established code style guidelines when making changes to the codebase. This ensures consistency and makes it easier for others to review and maintain the code.
 
 [Issue Tracker]: https://github.com/marklogic/marklogic-docker/issues

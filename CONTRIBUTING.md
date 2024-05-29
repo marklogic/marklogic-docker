@@ -5,7 +5,6 @@ Thank you for your interest in contributing to this project! We welcome contribu
 - [Found an Issue](#found-an-issue)
 - [Want a Feature](#want-a-feature)
 - [Getting Started](#getting-started)
-- [Issue Tracker](#issue-tracker)
 - [PR management](#pr-management)
 
 ## Found an Issue?
@@ -31,10 +30,6 @@ To get started with contributing, please follow these steps:
 4. Make your desired changes to the codebase.
 5. Test your changes thoroughly.
 6. Tests can be done using the test framework. See [README](./test/README.md)
-
-## Issue Tracker
-
-If you encounter any issues or have suggestions for improvements, please open an issue in the issue tracker. Be sure to provide as much detail as possible, including steps to reproduce the issue if applicable.
 
 ## PR management
 

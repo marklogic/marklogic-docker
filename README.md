@@ -813,12 +813,12 @@ To upgrade MarkLogic Docker from release 10.x to the latest release, perform fol
 
 Note: In the below example, we are upgrading an initialized MarkLogic host to the latest MarkLogic version supported for Docker.
 
-1. If you are upgrading to a rootless image, you need to update the ownership of all files and directories under /opt/MarkLogic in the container. Otherwise skip to step 2.
+1. If you are upgrading to a rootless image, you need to update the ownership of all files and directories under /var/opt/MarkLogic in the container. Otherwise skip to step 2.
 Use the following two commands to stop the MarkLogic server and update the ownership of the files and directories:
 ```
 $ docker exec -it -u root container_id /etc/init.d/MarkLogic stop
 
-$ docker exec -it -u root container_id chown -R 1000:100 /opt/MarkLogic
+$ docker exec -it -u root container_id chown -R 1000:100 /var/opt/MarkLogic
 ```
 2. Stop the MarkLogic Docker container.
 Use following command to stop the container:

@@ -60,3 +60,6 @@ fileExistenceTests:
   path: '/opt/MarkLogic/bin/MarkLogic'
   isExecutableBy: 'any'
   shouldExist: true
+- name: 'MarkLogic notice file'
+  path: '/home/marklogic_user/NOTICE.txt'
+  shouldExist: true

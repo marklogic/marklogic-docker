@@ -2,7 +2,7 @@
 version: '3.6'
 services:
     bootstrap:
-      image: marklogicdb/marklogic-db
+      image: progressofficial/marklogic-db
       hostname: bootstrap
       container_name: bootstrap
       dns_search: ""

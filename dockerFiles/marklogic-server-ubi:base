@@ -76,7 +76,7 @@ LABEL "com.marklogic.license"="MarkLogic EULA"
 LABEL "com.marklogic.license.description"="By subscribing to this product, you agree to the terms and conditions outlined in MarkLogic's End User License Agreement (EULA) here https://developer.marklogic.com/eula "
 LABEL "com.marklogic.license.url"="https://developer.marklogic.com/eula"
 LABEL "com.marklogic.description"="MarkLogic is the only Enterprise NoSQL database. It is a new generation database built with a flexible data model to store, manage, and search JSON, XML, RDF, and more - without sacrificing enterprise features such as ACID transactions, certified security, backup, and recovery. With these capabilities, MarkLogic is ideally suited for making heterogeneous data integration simpler and faster, and for delivering dynamic content at massive scale. The current release of the MarkLogic Server Developer Docker image includes all features and is limited to developer use."
-LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> --mount src=MarkLogic,dst=/var/opt/MarkLogic marklogicdb/marklogic-db:${ML_VERSION}"
+LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -e MARKLOGIC_ADMIN_USERNAME=<INSERT USERNAME> -e MARKLOGIC_ADMIN_PASSWORD=<INSERT PASSWORD> --mount src=MarkLogic,dst=/var/opt/MarkLogic progressofficial/marklogic-db:${ML_VERSION}"
 
 
 ###############################################################

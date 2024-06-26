@@ -12,6 +12,7 @@ current_image?=${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}
 # build docker image
 #***************************************************************************
 build:
+	cp NOTICE.txt src/NOTICE.txt
 #ubi-rootless uses the same dependencies as ubi image
 ifeq ($(docker_image_type),ubi-rootless)
 	cp dockerFiles/marklogic-deps-ubi\:base dockerFiles/marklogic-deps-ubi-rootless\:base

@@ -1,7 +1,7 @@
 version: '3.6'
 services:
     node3:
-      image: marklogicdb/marklogic-db
+      image: progressofficial/marklogic-db
       container_name: node3
       hostname: node3
       dns_search: ""

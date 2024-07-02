@@ -280,13 +280,10 @@ pipeline {
         skipStagesAfterUnstable()
     }
     triggers {
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=11;dockerImageType=centos
-                                                             00 02 * * * % marklogicVersion=11;dockerImageType=ubi
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=11;dockerImageType=ubi
                                                              00 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless
-                                                             30 02 * * * % marklogicVersion=10;dockerImageType=centos
                                                              30 02 * * * % marklogicVersion=10;dockerImageType=ubi
                                                              30 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=centos
                                                              00 03 * * * % marklogicVersion=12;dockerImageType=ubi
                                                              00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless''' : '')
     }

@@ -12,6 +12,7 @@
  * [Debugging](#Debugging)
  * [Clean up](#Clean-up)
  * [Image Tag](#Image-Tag)
+ * [Container Runtime Detection](#container-runtime-detection)
  * [Known Issues and Limitations](#Known-Issues-and-Limitations)
 
 # Introduction
@@ -1014,10 +1015,33 @@ It will pull the latest image and can cross patch, minor or major release number
 
 **Note: The 'latest' images should not be used in production**
 
+# Container Runtime Detection
 
+Starting with version 11.2, MarkLogic is able to detect which container runtime the container is running in.
 
+## Docker Engine
 
+When running on Docker Engine the following entry will show up in the ErrorLogs.txt:
 
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Docker runtime. A maximum of <x> huge pages will be used if available.`
+
+Where is calculated as described in the [Configuring HugePages](https://github.com/marklogic/marklogic-docker/pull/configuring-hugepages) section.
+
+## Containerd Engine
+
+When running on Containerd Engine the following entry will show up in the ErrorLogs.txt:
+
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using Containerd runtime. A maximum of <x> huge pages will be used if available.`
+
+Where is calculated as described in the [Configuring HugePages](https://github.com/marklogic/marklogic-docker/pull/configuring-hugepages) section.
+
+## CRI-O Engine
+
+When running on CRI-O Engine the following entry will show up in the ErrorLogs.txt:
+
+`2024-03-15 08:27:36.136 Info: MarkLogic Server is running in a container using CRI-O runtime. A maximum of <x> huge pages will be used if available.`
+
+Where is calculated as described in the [Configuring HugePages](https://github.com/marklogic/marklogic-docker/pull/configuring-hugepages) section.
 
 # Known Issues and Limitations
 

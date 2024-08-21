@@ -377,11 +377,11 @@ pipeline {
         always {
             sh '''
                 cd src
-                rm -rf *.rpm
-                docker rm -f $(docker ps -a -q) || true
-                docker system prune --force --filter "until=720h"
-                docker volume prune --force
-                docker image prune --force --all
+                rm -rf *.rpm NOTICE.txt
+                docker stop $(docker ps -a -q) || true
+                docker system prune --force --all
+                docker volume prune --force --all
+                docker system df
             '''
             publishTestResults()
         }

@@ -48,7 +48,7 @@ Initialized MarkLogic container
     [Teardown]    Delete container
 
 Upgrade MarkLogic container
-    Skip If  '${IMAGE_TYPE}' == 'ubi-rootless'  msg = Skipping Upgrade MarkLogic test for ubi-rootless image
+    Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
     Create test container with    -e    MARKLOGIC_INIT=true
     ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
     ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
@@ -140,7 +140,7 @@ Initialized MarkLogic container with config overrides
     ...                                        -e    TZ=America/Los_Angeles
     ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
     ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    IF    '${IMAGE_TYPE}' != 'ubi-rootless'
+    IF    'rootless' not in '${IMAGE_TYPE}'
         Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
         Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
     END
@@ -166,7 +166,7 @@ Single node compose example
     Verify response for authenticated request with    8001    *No license key has been entered*
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
     Host count on port 8002 should be 1
-    IF    '${IMAGE_TYPE}' != 'ubi-rootless'
+    IF    'rootless' not in '${IMAGE_TYPE}'
         Compose logs should contain    ${compose test file}    *TZ is defined, setting timezone to Europe/Prague.*
     END
     Verify container timezone    Europe/Prague
@@ -308,7 +308,7 @@ Single node compose example with bootstrap node joining trying to itself
     Verify response for authenticated request with    7100    *Query Console*
     Verify response for authenticated request with    7101    *No license key has been entered*
     Verify response for authenticated request with    7102    *Monitoring Dashboard*
-    IF    '${IMAGE_TYPE}' != 'ubi-rootless'
+    IF    'rootless' not in '${IMAGE_TYPE}'
         Compose logs should contain    ${compose test file}    *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
     END
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
@@ -328,13 +328,13 @@ Two node compose example with incorrect bootstrap host name
     Verify response for authenticated request with    7100    *Query Console*
     Verify response for authenticated request with    7101    *No license key has been entered*
     Verify response for authenticated request with    7102    *Monitoring Dashboard*
-    IF    '${IMAGE_TYPE}' != 'ubi-rootless'
+    IF    'rootless' not in '${IMAGE_TYPE}'
         Compose logs should contain    ${compose test file}    *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
     END
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
-    IF    '${IMAGE_TYPE}' != 'ubi-rootless'
+    IF    'rootless' not in '${IMAGE_TYPE}'
         Compose logs should contain    ${compose test file}    *node2*TZ is defined, setting timezone to America/Los_Angeles.*
     END
     Compose logs should contain    ${compose test file}    *node2*MARKLOGIC_ADMIN_PASSWORD is set, using ENV for admin password.*
@@ -368,7 +368,7 @@ Two node compose with credentials in env and verify restart logic
     Compose logs should contain    ${compose test file}    *bootstrap*MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Verify container timezone    America/Los_Angeles    port=7100
     Verify container timezone    America/Los_Angeles    port=7200
-    IF    '${IMAGE_TYPE}' != 'ubi-rootless'
+    IF    'rootless' not in '${IMAGE_TYPE}'
         Compose logs should contain    ${compose test file}    *bootstrap*TZ is defined, setting timezone to America/Los_Angeles.*
         Compose logs should contain    ${compose test file}    *node2*TZ is defined, setting timezone to America/Los_Angeles.*
     END

@@ -168,7 +168,7 @@ void buildDockerImage() {
 }
 
 void pullUpgradeDockerImage() {
-    if (dockerImageType == "ubi-rootless" ) {
+    if (dockerImageType == "ubi-rootless" && params.DOCKER_TESTS != "true") {
         sh """
             echo 'dockerImageType is set to ubi-rootless, skipping this stage and Docker upgrade test.'
         """
@@ -265,7 +265,18 @@ void publishToInternalRegistry() {
 
 void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
-    publishHTML allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''
+    if (params.DOCKER_TESTS == "true") {
+        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: "${env.BUILD_NUMBER}"
+    }
+    if (params.SCAP_SCAN == "true") {
+        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'scap', reportFiles: 'scap_scan_report.html', reportName: 'Open SCAP Report', reportTitles: "${env.BUILD_NUMBER}"
+    }
+}
+
+void scapScan() {
+    sh """
+        make scap-scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+    """
 }
 
 pipeline {
@@ -282,10 +293,13 @@ pipeline {
     triggers {
         parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=11;dockerImageType=ubi
                                                              00 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless
+                                                             00 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless-hardened;SCAP_SCAN=true
                                                              30 02 * * * % marklogicVersion=10;dockerImageType=ubi
                                                              30 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless
+                                                             30 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless-hardened;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=12;dockerImageType=ubi
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless''' : '')
+                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless
+                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless-hardened;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -294,7 +308,7 @@ pipeline {
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '2.0.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
-        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\ncentos', description: 'Platform type for Docker image. Will be made part of the docker image tag')
+        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi-rootless-hardened\ncentos', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
@@ -302,6 +316,7 @@ pipeline {
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
+        booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
     }
 
     stages {
@@ -341,6 +356,15 @@ pipeline {
             }
         }
 
+        stage('SCAP-Scan') {
+            when {
+                    expression { return params.SCAP_SCAN }
+            }
+            steps {
+                scapScan()
+            }
+        }
+
         stage('Structure-Tests') {
             when {
                 expression { return params.TEST_STRUCTURE }
@@ -371,6 +395,7 @@ pipeline {
                 build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
             }
         }
+
     }
 
     post {

@@ -265,11 +265,13 @@ void publishToInternalRegistry() {
 
 void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
-    if (params.DOCKER_TESTS == "true") {
-        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: "${env.BUILD_NUMBER}"
+        if (params.DOCKER_TESTS) {
+        echo 'Publishing Docker results..'
+        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: "Build ${env.BUILD_NUMBER}"
     }
-    if (params.SCAP_SCAN == "true") {
-        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'scap', reportFiles: 'scap_scan_report.html', reportName: 'Open SCAP Report', reportTitles: "${env.BUILD_NUMBER}"
+    if (params.SCAP_SCAN) {
+        echo 'Publishing SCAP scan results..'
+        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'scap', reportFiles: 'scap_scan_report.html', reportName: 'Open SCAP Report', reportTitles: "Build ${env.BUILD_NUMBER}"
     }
 }
 

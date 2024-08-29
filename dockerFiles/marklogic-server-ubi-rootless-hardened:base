@@ -23,13 +23,6 @@ ARG ML_CONVERTERS=marklogic.converters
 RUN adduser --gid users --uid 1000 ${ML_USER} \
     && chmod 750 -R /home/${ML_USER}
 
-###############################################################
-# Copy converters package 
-###############################################################
-WORKDIR /
-COPY ${ML_CONVERTERS} /tmp/converters.rpm
-RUN chown ${ML_USER}:users /tmp/converters.rpm
-
 ####################################################
 # inject init, start and clustering scripts and set permission
 ###############################################################
@@ -81,6 +74,7 @@ ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
 ARG ML_DOCKER_VERSION=local
 ARG BUILD_BRANCH=local
+ARG ML_CONVERTERS=marklogic.converters
 
 ###############################################################
 # define docker labels
@@ -147,6 +141,13 @@ RUN mkdir -p ${MARKLOGIC_DATA_DIR} \
 COPY rhel8-script-cis.sh /tmp/rhel8-script-cis.sh
 RUN chmod +x /tmp/rhel8-script-cis.sh \
     && /tmp/rhel8-script-cis.sh
+
+###############################################################
+# Copy converters package 
+###############################################################
+WORKDIR /
+COPY ${ML_CONVERTERS} /tmp/converters.rpm
+RUN chown ${ML_USER}:users /tmp/converters.rpm
 
 ###############################################################
 # expose MarkLogic server ports

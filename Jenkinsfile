@@ -104,17 +104,38 @@ void resultNotification(message) {
     } else {
         emailList = params.emailList
     }
-    jira_link = "https://progresssoftware.atlassian.net/browse/${JIRA_ID}"
-    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b><pre><code>${LINT_OUTPUT}</code></pre><br><b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre> <br><b>Image Size:  <br></b>${IMAGE_SIZE} <br><pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br><br><b>Build URL: </b><br><a href='${env.BUILD_URL}'>${env.BUILD_URL}</a>"
-    jira_email_body = "${email_body} <br><br><b>Jira URL: </b><br><a href='${jira_link}'>${jira_link}</a>"
-
-    if (JIRA_ID) {
-        def comment = [ body: "Jenkins pipeline build result: ${message}" ]
-        jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${JIRA_ID}"
-    } else {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+    
+    email_body = "<b>Build URL: </b><a href='${env.BUILD_URL}'>${env.BUILD_URL}</a><br/>" +
+                 "<b>Image type: </b>${env.dockerImageType}<br/><br/>" +
+                 "<b>Lint Output: </b><br/>" +
+                 "<pre><code>${LINT_OUTPUT}</code></pre><br/>" +
+                 "<b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre><br/>" +
+                 "<b>Image Size:  <br/></b>${IMAGE_SIZE} <br/>" +
+                 "<pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br/><br/>"
+    if (params.DOCKER_TESTS) {
+        email_body = "${email_body} <b><a href='${env.BUILD_URL}Docker_20Tests_20Report'>Docker Tests Report</a></b><br/>"
     }
+    if (params.SCAP_SCAN) {
+        email_body = "${email_body} <b><a href='${env.BUILD_URL}Open_20SCAP_20Report'>SCAP Scan Report</a></b><br/>"
+        if ( BRANCH_NAME == 'develop' ) {
+            emailList = emailList+','+emailSecList
+        }
+    }
+ 
+    // If Jira ID is available, add comment to the ticket and add link to email.
+    if (JIRA_ID) {
+        def jira_link = "https://progresssoftware.atlassian.net/browse/${JIRA_ID}"
+        def comment = [ body: "Jenkins pipeline build result: ${message}" ]
+        jiraAddComment site: 'JIRA',
+            input: comment,
+            idOrKey: JIRA_ID,
+            failOnError: false
+        email_body = "${email_body} <br/><br/><b>Jira URL: </b><br/><a href='${jira_link}'>${jira_link}</a>"
+    }
+    mail to: "${emailList}",
+        body: "${email_body}",
+        subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        charset: 'UTF-8', mimeType: 'text/html'
 }
 
 void copyRPMs() {
@@ -223,7 +244,7 @@ void vulnerabilityScan() {
 
     SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
     if (SCAN_OUTPUT.size()) {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
     sh '''rm -f scan-server-image.txt'''
@@ -267,11 +288,24 @@ void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
         if (params.DOCKER_TESTS) {
         echo 'Publishing Docker results..'
-        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: "Build ${env.BUILD_NUMBER}"
+        publishHTML allowMissing: false, 
+            alwaysLinkToLastBuild: true, 
+            keepAll: true, 
+            reportDir: 'test/test_results', 
+            reportFiles: 'report.html', 
+            reportName: 'Docker Tests Report', 
+            reportTitles: "Build ${env.BUILD_NUMBER}"
+        //https://ml-clt-jenkins.progress.com/job/MarkLogic-Docker-Kubernetes/job/docker/job/Docker_CI/job/develop/1662/Docker_20Tests_20Report/
+        //https://ml-clt-jenkins.progress.com/job/MarkLogic-Docker-Kubernetes/job/docker/job/Docker_CI/view/change-requests/job/PR-304/40/Open_20SCAP_20Report/
     }
     if (params.SCAP_SCAN) {
         echo 'Publishing SCAP scan results..'
-        publishHTML allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'scap', reportFiles: 'scap_scan_report.html', reportName: 'Open SCAP Report', reportTitles: "Build ${env.BUILD_NUMBER}"
+        publishHTML allowMissing: false, 
+            alwaysLinkToLastBuild: true, 
+            keepAll: true, reportDir: 'scap', 
+            reportFiles: 'scap_scan_report.html', 
+            reportName: 'Open SCAP Report', 
+            reportTitles: "Build ${env.BUILD_NUMBER}"
     }
 }
 

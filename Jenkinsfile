@@ -6,7 +6,7 @@
 import groovy.json.JsonSlurperClassic
 
 // email list for scheduled builds (includes security vulnerability)
-emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Fayez.Saliba@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
+emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
 // email list for security vulnerabilities only
 emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
@@ -114,12 +114,16 @@ void resultNotification(message) {
                  "<pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br/><br/>"
     if (params.DOCKER_TESTS) {
         email_body = "${email_body} <b><a href='${env.BUILD_URL}Docker_20Tests_20Report'>Docker Tests Report</a></b><br/>"
+    } else {
+        email_body = "${email_body} <b>Docker Tests Skipped</b><br/>"
     }
     if (params.SCAP_SCAN) {
         email_body = "${email_body} <b><a href='${env.BUILD_URL}Open_20SCAP_20Report'>SCAP Scan Report</a></b><br/>"
         if ( BRANCH_NAME == 'develop' ) {
             emailList = emailList+','+emailSecList
         }
+    } else {
+        email_body = "${email_body} <b>SCAP Scan Skipped</b><br/>"
     }
  
     // If Jira ID is available, add comment to the ticket and add link to email.

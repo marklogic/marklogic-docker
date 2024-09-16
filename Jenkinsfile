@@ -253,10 +253,10 @@ void lint() {
 void vulnerabilityScan() {
     sh """
         make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
-        grep \'High\\|Critical\' scan-server-image.txt
     """
 
-    SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
+    SCAN_OUTPUT = sh(returnStdout: true, script: 'grep --invert-match \' Unknown\\| Low\\| Medium\' scan-server-image.txt')
+    sh 'echo "SCAN_OUTPUT: ${SCAN_OUTPUT}"'
     if (SCAN_OUTPUT.size()) {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }

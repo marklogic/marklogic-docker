@@ -138,9 +138,9 @@ RUN mkdir -p ${MARKLOGIC_DATA_DIR} \
 # run open scap hardening script
 ###############################################################
 
-COPY rhel8-script-cis.sh /tmp/rhel8-script-cis.sh
-RUN chmod +x /tmp/rhel8-script-cis.sh \
-    && /tmp/rhel8-script-cis.sh
+COPY rhel-script-cis.sh /tmp/rhel-script-cis.sh
+RUN chmod +x /tmp/rhel-script-cis.sh \
+    && /tmp/rhel-script-cis.sh
 
 ###############################################################
 # Copy converters package 

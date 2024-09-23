@@ -149,12 +149,22 @@ void copyRPMs() {
         RPMversion = "10.0"
     }
     else if (marklogicVersion == "11") {
-        RPMsuffix = ".nightly-rhel"
+        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
+        if (dockerImageType.contains("ubi9")) {
+            RPMsuffix = ".nightly-rhel9"
+        } else {
+            RPMsuffix = ".nightly-rhel"
+        }
         RPMbranch = "b11"
         RPMversion = "11.4"
     }
     else if (marklogicVersion == "12") {
-        RPMsuffix = ".nightly-rhel"
+        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
+        if (dockerImageType.contains("ubi9")) {
+            RPMsuffix = ".nightly-rhel9"
+        } else {
+            RPMsuffix = ".nightly-rhel"
+        }
         RPMbranch = "b12"
         RPMversion = "12.0"
     }
@@ -243,10 +253,10 @@ void lint() {
 void vulnerabilityScan() {
     sh """
         make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
-        grep \'High\\|Critical\' scan-server-image.txt
     """
 
-    SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
+    SCAN_OUTPUT = sh(returnStdout: true, script: 'grep --invert-match \' Unknown\\| Low\\| Medium\' scan-server-image.txt; echo \'------------- end of scan -------------\' | tee -a scan-server-image.txt')
+    sh 'echo "SCAN_OUTPUT: ${SCAN_OUTPUT}"'
     if (SCAN_OUTPUT.size()) {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
@@ -339,7 +349,10 @@ pipeline {
                                                              30 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless-hardened;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=12;dockerImageType=ubi
                                                              00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless-hardened;SCAP_SCAN=true''' : '')
+                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless-hardened;SCAP_SCAN=true
+                                                             30 03 * * * % marklogicVersion=11;dockerImageType=ubi9
+                                                             30 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless
+                                                             30 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-hardened;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -348,7 +361,7 @@ pipeline {
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '2.0.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
-        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi-rootless-hardened\ncentos', description: 'Platform type for Docker image. Will be made part of the docker image tag')
+        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi-rootless-hardened\nubi9-rootless\nubi9\nubi9-rootless-hardened\ncentos', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)

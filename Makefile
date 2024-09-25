@@ -123,7 +123,7 @@ endif
 	docker run -itd --name scap-scan -v $(PWD)/scap:/scap ${current_image}
 	docker exec -u root scap-scan /bin/bash -c "microdnf install -y openscap-scanner"
 	# ensure the file is owned by root in order to avoid permission issues
-	docker exec -u root scap-scan /bin/bash -c "chown root:root /scap/ssg-rhel8-ds.xml"
+	docker exec -u root scap-scan /bin/bash -c "chown root:root /scap/ssg-rhel-ds.xml"
 	docker exec -u root scap-scan /bin/bash -c "oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_cis --results /scap/scap_scan_results.xml --report /scap/scap_scan_report.html /scap/ssg-rhel-ds.xml > /scap/command-output.txt 2>&1" || true
 	docker rm -f scap-scan
 

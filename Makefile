@@ -23,17 +23,36 @@ endif
 ifeq ($(docker_image_type),ubi-rootless-hardened)
 	cp dockerFiles/marklogic-deps-ubi\:base dockerFiles/marklogic-deps-ubi-rootless-hardened\:base
 endif
+ifeq ($(docker_image_type),ubi9)
+	cp dockerFiles/marklogic-server-ubi\:base dockerFiles/marklogic-server-ubi9\:base
+endif
+ifeq ($(docker_image_type),ubi9-rootless)
+	cp dockerFiles/marklogic-deps-ubi9\:base dockerFiles/marklogic-deps-ubi9-rootless\:base
+	cp dockerFiles/marklogic-server-ubi-rootless\:base dockerFiles/marklogic-server-ubi9-rootless\:base
+endif
+ifeq ($(docker_image_type),ubi9-rootless-hardened)
+	cp dockerFiles/marklogic-deps-ubi9\:base dockerFiles/marklogic-deps-ubi9-rootless-hardened\:base
+	cp dockerFiles/marklogic-server-ubi-rootless-hardened\:base dockerFiles/marklogic-server-ubi9-rootless-hardened\:base
+endif
 
 # retrieve and copy open scap hardening script
-ifeq ($(docker_image_type),ubi-rootless-hardened)
+ifeq ($(findstring hardened,$(docker_image_type)),hardened)
 	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lo scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
-	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/bash/rhel8-script-cis.sh > src/rhel8-script-cis.sh
+#UBI9 needs a different version of the remediation script
+ifeq ($(findstring ubi9,$(docker_image_type)),ubi9)
+	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/bash/rhel9-script-cis.sh > src/rhel-script-cis.sh
+else
+	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/bash/rhel8-script-cis.sh > src/rhel-script-cis.sh
 endif
+endif
+
 
 # build the image
 	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag}" -f ../dockerFiles/marklogic-deps-${docker_image_type}:base .
 	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}" --build-arg BASE_IMAGE=${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_DOCKER_VERSION=${dockerVersion} --build-arg ML_VERSION=${marklogicVersion} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../dockerFiles/marklogic-server-${docker_image_type}:base .
-	rm -f dockerFiles/marklogic-deps-ubi-rootless\:base dockerFiles/marklogic-deps-ubi-rootless-hardened\:base
+
+# remove temporary files
+	rm -f dockerFiles/marklogic-deps-ubi-rootless\:base dockerFiles/marklogic-deps-ubi-rootless-hardened\:base dockerFiles/marklogic-deps-ubi9-rootless\:base dockerFiles/marklogic-deps-ubi9-rootless-hardened\:base dockerFiles/marklogic-server-ubi9-rootless-hardened\:base src/NOTICE.txt src/rhel-script-cis.sh
 
 #***************************************************************************
 # strcture test docker images
@@ -95,13 +114,17 @@ scan:
 scap-scan:
 	mkdir -p scap
 	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lo scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
-	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel8-ds.xml > scap/ssg-rhel8-ds.xml
+#UBI9 needs a different version of the evaluation profile
+ifeq ($(findstring ubi9,$(current_image)),ubi9)
+	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel9-ds.xml > scap/ssg-rhel-ds.xml
+else
+	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel8-ds.xml > scap/ssg-rhel-ds.xml
+endif
 	docker run -itd --name scap-scan -v $(PWD)/scap:/scap ${current_image}
 	docker exec -u root scap-scan /bin/bash -c "microdnf install -y openscap-scanner"
 	# ensure the file is owned by root in order to avoid permission issues
 	docker exec -u root scap-scan /bin/bash -c "chown root:root /scap/ssg-rhel8-ds.xml"
-	# UBI-minimal images do not have the authselect package installed so we skip xccdf_org.ssgproject.content_rule_enable_authselect rule to avoid false positive
-	docker exec -u root scap-scan /bin/bash -c "oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_cis --results /scap/scap_scan_results.xml --report /scap/scap_scan_report.html /scap/ssg-rhel8-ds.xml > /scap/command-output.txt 2>&1" || true
+	docker exec -u root scap-scan /bin/bash -c "oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_cis --results /scap/scap_scan_results.xml --report /scap/scap_scan_report.html /scap/ssg-rhel-ds.xml > /scap/command-output.txt 2>&1" || true
 	docker rm -f scap-scan
 
 #***************************************************************************

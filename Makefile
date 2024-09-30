@@ -105,9 +105,20 @@ lint:
 #***************************************************************************
 # security scan docker images
 #***************************************************************************
+.PHONY: scan
 scan:
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${current_image} $(if $(Jenkins), > scan-server-image.txt,)
-
+ifeq ($(Jenkins),true)
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}/scan:/scan anchore/grype:latest --output json --file /scan/report.json ${current_image}
+	echo "Grype scan summary\n------------------" > scan/report.txt
+	jq '.matches[].vulnerability.severity' scan/report.json | sort | uniq -c >> scan/report.txt
+	echo "\nGrype vulnerability list sorted by severity" >> scan/report.txt
+	echo "PACKAGE\tVERSION\tCVE\tSEVERITY" >> scan/report.tmp
+	jq -r '[(.matches[] | [.artifact.name, .artifact.version, .vulnerability.id, .vulnerability.severity])] | .[] | @tsv' scan/report.json | sort -k4 >> scan/report.tmp
+	cat scan/report.tmp | column -t >> scan/report.txt
+	rm scan/report.tmp
+else
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${current_image}
+endif
 #***************************************************************************
 # security scan docker images
 #***************************************************************************

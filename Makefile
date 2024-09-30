@@ -109,6 +109,7 @@ lint:
 scan:
 ifeq ($(Jenkins),true)
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}/scan:/scan anchore/grype:latest --output json --file /scan/report.json ${current_image}
+	sudo chown -R builder.ml-eng scan
 	echo "Grype scan summary\n------------------" > scan/report.txt
 	jq '.matches[].vulnerability.severity' scan/report.json | sort | uniq -c >> scan/report.txt
 	echo "\nGrype vulnerability list sorted by severity" >> scan/report.txt

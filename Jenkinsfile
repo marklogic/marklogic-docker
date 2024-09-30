@@ -110,6 +110,7 @@ void resultNotification(message) {
                  "<b>Lint Output: </b><br/>" +
                  "<pre><code>${LINT_OUTPUT}</code></pre><br/>" +
                  "<b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre><br/>" +
+                 "<b><a href='${env.BUILD_URL}artifact/scan/report.json'>Full scan report.</a></b><br/>" +
                  "<b>Image Size:  <br/></b>${IMAGE_SIZE} <br/>" +
                  "<pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br/><br/>"
     if (params.DOCKER_TESTS) {

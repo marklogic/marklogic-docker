@@ -110,6 +110,7 @@ void resultNotification(message) {
                  "<b>Lint Output: </b><br/>" +
                  "<pre><code>${LINT_OUTPUT}</code></pre><br/>" +
                  "<b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre><br/>" +
+                 "<b><a href='${env.BUILD_URL}artifact/scan/report.json'>Full scan report.</a></b><br/>" +
                  "<b>Image Size:  <br/></b>${IMAGE_SIZE} <br/>" +
                  "<pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br/><br/>"
     if (params.DOCKER_TESTS) {
@@ -254,14 +255,12 @@ void vulnerabilityScan() {
     sh """
         make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
     """
-
-    SCAN_OUTPUT = sh(returnStdout: true, script: 'grep --invert-match \' Unknown\\| Low\\| Medium\' scan-server-image.txt; echo \'------------- end of scan -------------\' | tee -a scan-server-image.txt')
+    SCAN_OUTPUT = sh(returnStdout: true, script: 'cat scan/report.txt')
     sh 'echo "SCAN_OUTPUT: ${SCAN_OUTPUT}"'
     if (SCAN_OUTPUT.size()) {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
-
-    sh '''rm -f scan-server-image.txt'''
+    archiveArtifacts artifacts: 'scan/report.txt,scan/report.json', onlyIfSuccessful: true
 }
 
 void publishToInternalRegistry() {
@@ -309,8 +308,6 @@ void publishTestResults() {
             reportFiles: 'report.html', 
             reportName: 'Docker Tests Report', 
             reportTitles: "Build ${env.BUILD_NUMBER}"
-        //https://ml-clt-jenkins.progress.com/job/MarkLogic-Docker-Kubernetes/job/docker/job/Docker_CI/job/develop/1662/Docker_20Tests_20Report/
-        //https://ml-clt-jenkins.progress.com/job/MarkLogic-Docker-Kubernetes/job/docker/job/Docker_CI/view/change-requests/job/PR-304/40/Open_20SCAP_20Report/
     }
     if (params.SCAP_SCAN) {
         echo 'Publishing SCAP scan results..'

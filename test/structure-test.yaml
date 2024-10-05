@@ -63,3 +63,5 @@ fileExistenceTests:
 - name: 'MarkLogic notice file'
   path: '/home/marklogic_user/NOTICE.txt'
   shouldExist: true
+  uid: 1000
+  gid: 100

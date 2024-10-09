@@ -96,7 +96,7 @@ LABEL docker.cmd="docker run -it -p 7997-8010:7997-8010 -e MARKLOGIC_INIT=true -
 ###############################################################
 # copy notice file
 ###############################################################
-COPY NOTICE.txt /home/${ML_USER}/NOTICE.txt
+COPY --chown=${ML_USER}:users NOTICE.txt /home/${ML_USER}/NOTICE.txt
 
 ###############################################################
 # set env vars

@@ -23,3 +23,9 @@ RUN microdnf -y update \
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && microdnf -y install gdb nss libtool-ltdl cpio tzdata \
     && microdnf clean all
+
+
+###############################################################
+# Enable FIPS Mode
+###############################################################
+RUN update-crypto-policies --set FIPS

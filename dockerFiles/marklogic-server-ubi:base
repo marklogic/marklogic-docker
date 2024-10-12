@@ -27,7 +27,7 @@ COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
 COPY ${ML_RPM} /tmp/marklogic-server.rpm
 RUN rpm -i /tmp/marklogic-server.rpm \
     && rm /tmp/marklogic-server.rpm \
-    && microdnf -y install sudo \
+    && microdnf -y install --setopt install_weak_deps=0 sudo \
     && microdnf -y clean all \
     && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
     && rm -rf ./opt/MarkLogic/mlcmd/ext/*
@@ -107,6 +107,13 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
 ################################################################
 
 RUN microdnf -y reinstall tzdata
+
+###############################################################
+# Remove optional packages that have known vulnerabilities
+###############################################################
+RUN for package in vim-minimal cups-client cups-libs tar python3-pip-wheel platform-python python3-libs platform-python-setuptools avahi-libs binutils expat libarchive; \
+    do rpm -e --nodeps $package || true; \
+    done;
 
 ###############################################################
 # expose MarkLogic server ports

@@ -108,15 +108,18 @@ lint:
 .PHONY: scan
 scan:
 ifeq ($(Jenkins),true)
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}/scan:/scan anchore/grype:latest --output json --file /scan/report.json ${current_image}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}/scan:/scan anchore/grype:latest --output json --file /scan/report-${docker_image_type}.json ${current_image}
 	sudo chown -R builder.ml-eng scan
-	echo -e "Grype scan summary\n------------------" > scan/report.txt
-	jq '.matches[].vulnerability.severity' scan/report.json | sort | uniq -c >> scan/report.txt
-	echo -e "\nGrype vulnerability list sorted by severity" >> scan/report.txt
-	echo -e "PACKAGE\tVERSION\tCVE\tSEVERITY" >> scan/report.tmp
-	jq -r '[(.matches[] | [.artifact.name, .artifact.version, .vulnerability.id, .vulnerability.severity])] | .[] | @tsv' scan/report.json | sort -k4 >> scan/report.tmp
-	cat scan/report.tmp | column -t >> scan/report.txt
-	rm scan/report.tmp
+	echo -e "Grype scan summary\n------------------" > scan/report-${docker_image_type}.txt
+	jq '.matches[].vulnerability.severity' scan/report-${docker_image_type}.json | sort | uniq -c >> scan/report-${docker_image_type}.txt
+	echo -e "\nGrype vulnerability list sorted by severity.\n" >> scan/report-${docker_image_type}.txt
+	echo -e "PACKAGE\tVERSION\tCVE\tSEVERITY" >> scan/report-${docker_image_type}.tmp
+# generate txt file
+	jq -r '[(.matches[] | [.artifact.name, .artifact.version, .vulnerability.id, .vulnerability.severity])] | .[] | @tsv' scan/report-${docker_image_type}.json | sort -k4 >> scan/report-${docker_image_type}.tmp
+	cat scan/report-${docker_image_type}.tmp | column -t >> scan/report-${docker_image_type}.txt
+	rm scan/report-${docker_image_type}.tmp
+# generate csv file
+	jq -r '["ID", "Severity", "CVSS Base Score", "Link", "Package"], (.matches[] | [.vulnerability.id, .vulnerability.severity, (.vulnerability.cvss[0].metrics.baseScore // "N/A"), (.relatedVulnerabilities[]?.dataSource // .vulnerability.dataSource), .artifact.name]) | @csv' scan/report-${docker_image_type}.json > scan/report-${docker_image_type}.csv
 else
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest ${current_image}
 endif
@@ -133,7 +136,7 @@ else
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel8-ds.xml > scap/ssg-rhel-ds.xml
 endif
 	docker run -itd --name scap-scan -v $(PWD)/scap:/scap ${current_image}
-	docker exec -u root scap-scan /bin/bash -c "microdnf install -y openscap-scanner"
+	docker exec -u root scap-scan /bin/bash -c "microdnf update -y; microdnf install -y openscap-scanner"
 	# ensure the file is owned by root in order to avoid permission issues
 	docker exec -u root scap-scan /bin/bash -c "chown root:root /scap/ssg-rhel-ds.xml"
 	docker exec -u root scap-scan /bin/bash -c "oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_cis --results /scap/scap_scan_results.xml --report /scap/scap_scan_report.html /scap/ssg-rhel-ds.xml > /scap/command-output.txt 2>&1" || true

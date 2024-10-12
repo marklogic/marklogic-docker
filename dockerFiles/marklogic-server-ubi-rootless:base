@@ -131,6 +131,13 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
 
 RUN microdnf -y reinstall tzdata
 
+###############################################################
+# Remove optional packages that have known vulnerabilities
+###############################################################
+RUN for package in vim-minimal cups-client cups-libs tar python3-pip-wheel platform-python python3-libs platform-python-setuptools avahi-libs binutils expat libarchive; \
+    do rpm -e --nodeps $package || true; \
+    done;
+
 ################################################################
 # Set appropriate authorisation to MARKLOGIC_DATA_DIR 
 ################################################################

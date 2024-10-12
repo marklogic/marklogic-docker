@@ -150,6 +150,13 @@ COPY ${ML_CONVERTERS} /tmp/converters.rpm
 RUN chown ${ML_USER}:users /tmp/converters.rpm
 
 ###############################################################
+# Remove optional packages that have known vulnerabilities
+###############################################################
+RUN for package in vim-minimal cups-client cups-libs tar python3-pip-wheel platform-python python3-libs platform-python-setuptools avahi-libs binutils expat libarchive; \
+    do rpm -e --nodeps $package || true; \
+    done;
+
+###############################################################
 # expose MarkLogic server ports
 ###############################################################
 

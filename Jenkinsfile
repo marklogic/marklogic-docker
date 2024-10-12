@@ -110,7 +110,7 @@ void resultNotification(message) {
                  "<b>Lint Output: </b><br/>" +
                  "<pre><code>${LINT_OUTPUT}</code></pre><br/>" +
                  "<b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre><br/>" +
-                 "<b><a href='${env.BUILD_URL}artifact/scan/report.json'>Full scan report.</a></b><br/>" +
+                 "<b><a href='${env.BUILD_URL}artifact/scan/report-${env.dockerImageType}.json'>Full scan report.</a></b><br/>" +
                  "<b>Image Size:  <br/></b>${IMAGE_SIZE} <br/>" +
                  "<pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br/><br/>"
     if (params.DOCKER_TESTS) {
@@ -253,14 +253,14 @@ void lint() {
 
 void vulnerabilityScan() {
     sh """
-        make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
+        make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} docker_image_type=${dockerImageType} Jenkins=true
     """
-    SCAN_OUTPUT = sh(returnStdout: true, script: 'cat scan/report.txt')
+    SCAN_OUTPUT = sh(returnStdout: true, script: "cat scan/report-${env.dockerImageType}.txt")
     sh 'echo "SCAN_OUTPUT: ${SCAN_OUTPUT}"'
     if (SCAN_OUTPUT.size()) {
         mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
-    archiveArtifacts artifacts: 'scan/report.txt,scan/report.json', onlyIfSuccessful: true
+    archiveArtifacts artifacts: 'scan/*', onlyIfSuccessful: true
 }
 
 void publishToInternalRegistry() {

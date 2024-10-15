@@ -139,7 +139,8 @@ RUN mkdir -p ${MARKLOGIC_DATA_DIR} \
 ###############################################################
 
 COPY rhel-script-cis.sh /tmp/rhel-script-cis.sh
-RUN chmod +x /tmp/rhel-script-cis.sh \
+RUN touch /.dockerenv \
+    && chmod +x /tmp/rhel-script-cis.sh \
     && /tmp/rhel-script-cis.sh
 
 ###############################################################

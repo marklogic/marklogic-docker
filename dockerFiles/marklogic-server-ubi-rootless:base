@@ -134,7 +134,7 @@ RUN microdnf -y reinstall tzdata
 ###############################################################
 # Remove optional packages that have known vulnerabilities
 ###############################################################
-RUN for package in vim-minimal cups-client cups-libs tar python3-pip-wheel platform-python python3-libs platform-python-setuptools avahi-libs binutils expat libarchive; \
+RUN for package in vim-minimal cups-client cups-libs tar python3-pip-wheel platform-python python3-libs platform-python-setuptools avahi-libs binutils expat libarchive python3 python3-libs python-unversioned-command; \
     do rpm -e --nodeps $package || true; \
     done;
 

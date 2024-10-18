@@ -17,26 +17,17 @@ build:
 	cp NOTICE.txt src/NOTICE.txt
 
 # rootless images use the same dependencies as ubi image so we copy the file
-ifeq ($(docker_image_type),ubi-rootless)
-	cp dockerFiles/marklogic-deps-ubi\:base dockerFiles/marklogic-deps-ubi-rootless\:base
-endif
-ifeq ($(docker_image_type),ubi-rootless-hardened)
-	cp dockerFiles/marklogic-deps-ubi\:base dockerFiles/marklogic-deps-ubi-rootless-hardened\:base
-endif
 ifeq ($(docker_image_type),ubi9)
 	cp dockerFiles/marklogic-server-ubi\:base dockerFiles/marklogic-server-ubi9\:base
 endif
-ifeq ($(docker_image_type),ubi9-rootless)
+ifeq ($(findstring rootless,$(docker_image_type)),rootless)
+	cp dockerFiles/marklogic-deps-ubi\:base dockerFiles/marklogic-deps-ubi-rootless\:base
 	cp dockerFiles/marklogic-deps-ubi9\:base dockerFiles/marklogic-deps-ubi9-rootless\:base
 	cp dockerFiles/marklogic-server-ubi-rootless\:base dockerFiles/marklogic-server-ubi9-rootless\:base
 endif
-ifeq ($(docker_image_type),ubi9-rootless-hardened)
-	cp dockerFiles/marklogic-deps-ubi9\:base dockerFiles/marklogic-deps-ubi9-rootless-hardened\:base
-	cp dockerFiles/marklogic-server-ubi-rootless-hardened\:base dockerFiles/marklogic-server-ubi9-rootless-hardened\:base
-endif
 
 # retrieve and copy open scap hardening script
-ifeq ($(findstring hardened,$(docker_image_type)),hardened)
+ifeq ($(findstring rootless,$(docker_image_type)),rootless)
 	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lo scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
 #UBI9 needs a different version of the remediation script
 ifeq ($(findstring ubi9,$(docker_image_type)),ubi9)
@@ -49,10 +40,10 @@ endif
 
 # build the image
 	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag}" -f ../dockerFiles/marklogic-deps-${docker_image_type}:base .
-	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}" --build-arg BASE_IMAGE=${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_DOCKER_VERSION=${dockerVersion} --build-arg ML_VERSION=${marklogicVersion} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} -f ../dockerFiles/marklogic-server-${docker_image_type}:base .
+	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}" --build-arg BASE_IMAGE=${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_DOCKER_VERSION=${dockerVersion} --build-arg ML_VERSION=${marklogicVersion} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} --build-arg ML_DOCKER_TYPE=${docker_image_type} -f ../dockerFiles/marklogic-server-${docker_image_type}:base .
 
 # remove temporary files
-	rm -f dockerFiles/marklogic-deps-ubi-rootless\:base dockerFiles/marklogic-deps-ubi-rootless-hardened\:base dockerFiles/marklogic-deps-ubi9-rootless\:base dockerFiles/marklogic-deps-ubi9-rootless-hardened\:base dockerFiles/marklogic-server-ubi9-rootless-hardened\:base src/NOTICE.txt src/rhel-script-cis.sh
+	rm -f dockerFiles/marklogic-deps-ubi-rootless\:base dockerFiles/marklogic-deps-ubi9-rootless\:base dockerFiles/marklogic-server-ubi9-rootless\:base dockerFiles/marklogic-server-ubi9\:base src/NOTICE.txt src/rhel-script-cis.sh
 
 #***************************************************************************
 # strcture test docker images

@@ -5,7 +5,7 @@
 ###############################################################
 
 ARG BASE_IMAGE=marklogic-ubi/marklogic-deps-ubi:11-internal
-FROM ${BASE_IMAGE} as builder
+FROM ${BASE_IMAGE} AS builder
 
 ###############################################################
 # set build args
@@ -13,7 +13,7 @@ FROM ${BASE_IMAGE} as builder
 
 ARG ML_RPM=marklogic.rpm
 ARG ML_USER="marklogic_user"
-ARG ML_VERSION=10-internal
+ARG ML_VERSION=11-internal
 ARG ML_CONVERTERS=marklogic.converters
 ####################################################
 # inject init, start and clustering scripts
@@ -35,7 +35,7 @@ RUN rpm -i /tmp/marklogic-server.rpm \
 ###############################################################
 # Add TINI to serve as PID 1 process
 ###############################################################
-ENV TINI_VERSION v0.19.0
+ENV TINI_VERSION=v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
@@ -48,7 +48,8 @@ COPY ${ML_CONVERTERS} converters.rpm
 # create system user
 ###############################################################
 
-RUN adduser --gid users --uid 1000 ${ML_USER} && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN adduser --gid users --uid 1000 ${ML_USER} \
+    && echo ${ML_USER}" ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 ###############################################################
 # second stage for flattening layers
@@ -61,6 +62,7 @@ ARG ML_USER="marklogic_user"
 ARG ML_VERSION=10-internal
 ARG ML_DOCKER_VERSION=local
 ARG BUILD_BRANCH=local
+ARG ML_DOCKER_TYPE=ubi
 ###############################################################
 # define docker labels
 ###############################################################
@@ -95,6 +97,7 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH:/opt/MarkLogic/lib \
     MARKLOGIC_VERSION="${ML_VERSION}" \
     MARKLOGIC_DOCKER_VERSION="${ML_DOCKER_VERSION}" \
+    MARKLOGIC_IMAGE_TYPE="$ML_DOCKER_TYPE" \
     MARKLOGIC_BOOTSTRAP_HOST=bootstrap \
     MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_user \
     MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_password_user \

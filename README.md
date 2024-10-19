@@ -46,7 +46,7 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: UBI and UBI9 with rootless variants.
+Base OS: UBI8 and UBI9 with rootless variants.
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/progressofficial/marklogic-db
 

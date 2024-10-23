@@ -1044,8 +1044,6 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 
 # Known Issues and Limitations
 
-## RedHat UBI base docker image
-
 1. The image must be run in privileged mode. If the image isn't run as privileged, the calls that use `sudo` in the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions. To run in non-privileged mode, use one of the “rootless” image options.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
@@ -1053,5 +1051,7 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 5. The latest released version of RedHat UBI images have known security vulnerabilities.
     - UBI8: CVE-2024-6602, CVE-2024-34397, CVE-2024-2236, CVE-2023-7207, CVE-2023-51764, CVE-2023-37920, CVE-2023-32636, CVE-2023-29499, CVE-2023-2650, CVE-2022-4899, CVE-2021-42694, CVE-2021-3997, CVE-2020-35512, CVE-2020-15945, CVE-2019-9937, CVE-2019-9936, CVE-2019-9705, CVE-2019-19244, CVE-2019-17543, CVE-2019-12904, CVE-2019-12900, CVE-2018-20839
     - UBI9: CVE-2024-6602, CVE-2024-6119, CVE-2024-26462, CVE-2024-2236, CVE-2023-7207, CVE-2023-37920, CVE-2023-2953, CVE-2022-4899, CVE-2021-3997
-  These libraries are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+
+These libraries are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+
 6. As part of the hardening process, the following packages are removed from the image: `vim-minimal`, `cups-client`, `cups-libs`, `tar`, `python3-pip-wheel`, `platform-python`, `python3-libs`, `platform-python-setuptools`, `avahi-libs`, `binutils`, `expat`, `libarchive`, `python3`, `python3-libs`, `python-unversioned-command`. These packages are not required for the operation of MarkLogic Server and are removed to reduce the attack surface of the image. If you require any of these packages, you can install them in your own Dockerfile.

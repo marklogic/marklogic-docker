@@ -46,7 +46,7 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: UBI, UBI-rootless and CentOS
+Base OS: UBI8 and UBI9 with rootless variants.
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/progressofficial/marklogic-db
 
@@ -204,8 +204,6 @@ The following environment variables are only useful when building and extending 
 | CLASSPATH      | /var/opt/class/path                        | no| n/a       | set the java env class path                          |
 | MARKLOGIC_PID_FILE      | /var/run/MarkLogic.pid                        | no| n/a       | The process ID file                         |
 | MARKLOGIC_UMASK      | 022                        | no | n/a       | The permissions granted to MarkLogic through umask                          |
-
-**IMPORTANT:** The use of [Docker secrets](https://docs.docker.com/engine/swarm/secrets/) is supported in the MarkLogic Docker image progressofficial/marklogic-db:10.0-7.3-centos-1.0.0-ea onwards and will not work with older versions of the Docker EA image. The Docker compose examples that follow use secrets. If you want to use these examples with an older version of the image, you need to update the examples to use environment variables instead of secrets.
 
 ## Configuring swap space
 
@@ -986,9 +984,10 @@ The `marklogic` image tags allow the user to pin their applications to images fo
 
 This tag points to the exact version of MarkLogic Server and the base OS. This allows an application to pin to a very specific version of the image and base OS (platform).
 
-Platform can be `centos`, `ubi` (RedHat Universal Base Image) or `ubi-rootless` (RedHat Universal Base Image for rootless containers). When `latest` tag is used, the platform will default to `ubi-rootless`.
+Platform can be `ubi`/`ubi9` (RedHat Universal Base Image) or `ubi-rootless`/`ubi9-rootless` (RedHat Universal Base Image for rootless containers). When `latest` tag is used, the platform will default to `ubi-rootless`.
 
-e.g. `11.2.0-centos` is the MarkLogic Server 11.2.0 release and CentOS base OS.
+
+e.g. `11.2.0-ubi9` is the MarkLogic Server 11.2.0 release and UBI9 base OS.
 
 ## `latest-xx.x`
 
@@ -1045,24 +1044,14 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 
 # Known Issues and Limitations
 
-## CentOS base docker image
-
-1. The image must be run in privileged mode. At the moment if the image isn't run as privileged many calls that use `sudo` during the supporting script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions.
-2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
-3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
-4. MarkLogic Server will default to the UTC timezone.
-5. The latest released version of CentOS 7 has known security vulnerabilities with respect to glib2 (CVE-2015-8387, CVE-2015-8390, CVE-2015-8394), glibc (CVE-2019-1010022), pcre (CVE-2015-8380, CVE-2015-8387, CVE-2015-8390, CVE-2015-8393, CVE-2015-8394), SQLite (CVE-2019-5827), nss (CVE-2014-3566), and bind-license (CVE-2023-6516, CVE-2023-5679, CVE-2023-5517, CVE-2023-50868, CVE-2023-50387, CVE-2023-4408). These libraries are included in the CentOS base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
-
 ## RedHat UBI base docker image
 
 1. The image must be run in privileged mode. If the image isn't run as privileged, the calls that use `sudo` in the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions. To run in non-privileged mode, use one of the “rootless” image options.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.
-5. The latest released version of RedHat UBI 8 has known security vulnerabilities :
-- glibc (CVE-2019-1010022) for which RedHat does not consider to be a vulnerability.
-- kernel-headers (CVE-2023-6546).
-- pip (GHSA-gpvv-69j7-gwj8) and setuptools (GHSA-r9hx-vwmv-q579).
-- less (CVE-2024-32487).
-
-These libraries are included in the RedHat UBI 8 base image but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+5. The latest released version of RedHat UBI images have known security vulnerabilities.
+    - UBI8: CVE-2024-6602, CVE-2024-34397, CVE-2024-2236, CVE-2023-7207, CVE-2023-51764, CVE-2023-37920, CVE-2023-32636, CVE-2023-29499, CVE-2023-2650, CVE-2022-4899, CVE-2021-42694, CVE-2021-3997, CVE-2020-35512, CVE-2020-15945, CVE-2019-9937, CVE-2019-9936, CVE-2019-9705, CVE-2019-19244, CVE-2019-17543, CVE-2019-12904, CVE-2019-12900, CVE-2018-20839
+    - UBI9: CVE-2024-6602, CVE-2024-6119, CVE-2024-26462, CVE-2024-2236, CVE-2023-7207, CVE-2023-37920, CVE-2023-2953, CVE-2022-4899, CVE-2021-3997
+  These libraries are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+6. As part of the hardening process, the following packages are removed from the image: `vim-minimal`, `cups-client`, `cups-libs`, `tar`, `python3-pip-wheel`, `platform-python`, `python3-libs`, `platform-python-setuptools`, `avahi-libs`, `binutils`, `expat`, `libarchive`, `python3`, `python3-libs`, `python-unversioned-command`. These packages are not required for the operation of MarkLogic Server and are removed to reduce the attack surface of the image. If you require any of these packages, you can install them in your own Dockerfile.

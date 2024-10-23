@@ -40,7 +40,8 @@ sudo rm -f /var/opt/MarkLogic/ready
 ###############################################################
 # Prepare script
 ###############################################################
-info "Starting container with MarkLogic $MARKLOGIC_VERSION and Docker script version $MARKLOGIC_DOCKER_VERSION built from $BUILD_BRANCH branch."
+info "Starting container with MarkLogic Server."
+info "| server ver: $MARKLOGIC_VERSION | scripts ver: $MARKLOGIC_DOCKER_VERSION | image type: $MARKLOGIC_IMAGE_TYPE | branch: $BUILD_BRANCH |"
 cd ~ || exit
 # Convert booleans to lowercase
 for var in OVERWRITE_ML_CONF INSTALL_CONVERTERS MARKLOGIC_DEV_BUILD MARKLOGIC_INIT MARKLOGIC_JOIN_CLUSTER MARKLOGIC_JOIN_TLS_ENABLED; do

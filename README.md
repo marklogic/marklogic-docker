@@ -1049,8 +1049,7 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.
 5. The latest released version of RedHat UBI images have known security vulnerabilities.
-    - UBI8: CVE-2024-6602, CVE-2024-34397, CVE-2024-2236, CVE-2023-7207, CVE-2023-51764, CVE-2023-37920, CVE-2023-32636, CVE-2023-29499, CVE-2023-2650, CVE-2022-4899, CVE-2021-42694, CVE-2021-3997, CVE-2020-35512, CVE-2020-15945, CVE-2019-9937, CVE-2019-9936, CVE-2019-9705, CVE-2019-19244, CVE-2019-17543, CVE-2019-12904, CVE-2019-12900, CVE-2018-20839
-    - UBI9: CVE-2024-6602, CVE-2024-6119, CVE-2024-26462, CVE-2024-2236, CVE-2023-7207, CVE-2023-37920, CVE-2023-2953, CVE-2022-4899, CVE-2021-3997
+    - CVE-2024-6602, CVE-2024-34397, CVE-2024-2236, CVE-2023-7207, CVE-2023-51764, CVE-2023-37920, CVE-2023-32636, CVE-2023-29499, CVE-2023-2650, CVE-2022-4899, CVE-2021-42694, CVE-2021-3997, CVE-2020-35512, CVE-2020-15945, CVE-2019-9937, CVE-2019-9936, CVE-2019-9705, CVE-2019-19244, CVE-2019-17543, CVE-2019-12904, CVE-2019-12900, CVE-2018-20839, CVE-2024-6602, CVE-2024-6119, CVE-2024-26462, CVE-2024-2236, CVE-2023-7207, CVE-2023-37920, CVE-2023-2953, CVE-2022-4899, CVE-2021-3997, CVE-2024-10041
 
 These libraries are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
 

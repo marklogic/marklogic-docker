@@ -6,7 +6,7 @@
 import groovy.json.JsonSlurperClassic
 
 // email list for scheduled builds (includes security vulnerability)
-emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Fayez.Saliba@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com'
+emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
 // email list for security vulnerabilities only
 emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
@@ -104,17 +104,43 @@ void resultNotification(message) {
     } else {
         emailList = params.emailList
     }
-    jira_link = "https://progresssoftware.atlassian.net/browse/${JIRA_ID}"
-    email_body = "<b>Jenkins pipeline for</b> ${env.JOB_NAME} <br><b>Build Number: </b>${env.BUILD_NUMBER} <b><br><br>Lint Output: <br></b><pre><code>${LINT_OUTPUT}</code></pre><br><b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre> <br><b>Image Size:  <br></b>${IMAGE_SIZE} <br><pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br><br><b>Build URL: </b><br><a href='${env.BUILD_URL}'>${env.BUILD_URL}</a>"
-    jira_email_body = "${email_body} <br><br><b>Jira URL: </b><br><a href='${jira_link}'>${jira_link}</a>"
-
-    if (JIRA_ID) {
-        def comment = [ body: "Jenkins pipeline build result: ${message}" ]
-        jiraAddComment site: 'JIRA', idOrKey: JIRA_ID, failOnError: false, input: comment
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${jira_email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${JIRA_ID}"
+    
+    email_body = "<b>Build URL: </b><a href='${env.BUILD_URL}'>${env.BUILD_URL}</a><br/>" +
+                 "<b>Image type: </b>${env.dockerImageType}<br/><br/>" +
+                 "<b>Lint Output: </b><br/>" +
+                 "<pre><code>${LINT_OUTPUT}</code></pre><br/>" +
+                 "<b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre><br/>" +
+                 "<b><a href='${env.BUILD_URL}artifact/scan/report-${env.dockerImageType}.json'>Full scan report.</a></b><br/>" +
+                 "<b>Image Size:  <br/></b>${IMAGE_SIZE} <br/>" +
+                 "<pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br/><br/>"
+    if (params.DOCKER_TESTS) {
+        email_body = "${email_body} <b><a href='${env.BUILD_URL}Docker_20Tests_20Report'>Docker Tests Report</a></b><br/>"
     } else {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailList}", body: "${email_body}", subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        email_body = "${email_body} <b>Docker Tests Skipped</b><br/>"
     }
+    if (params.SCAP_SCAN) {
+        email_body = "${email_body} <b><a href='${env.BUILD_URL}Open_20SCAP_20Report'>SCAP Scan Report</a></b><br/>"
+        if ( BRANCH_NAME == 'develop' ) {
+            emailList = emailList+','+emailSecList
+        }
+    } else {
+        email_body = "${email_body} <b>SCAP Scan Skipped</b><br/>"
+    }
+ 
+    // If Jira ID is available, add comment to the ticket and add link to email.
+    if (JIRA_ID) {
+        def jira_link = "https://progresssoftware.atlassian.net/browse/${JIRA_ID}"
+        def comment = [ body: "Jenkins pipeline build result: ${message}" ]
+        jiraAddComment site: 'JIRA',
+            input: comment,
+            idOrKey: JIRA_ID,
+            failOnError: false
+        email_body = "${email_body} <br/><br/><b>Jira URL: </b><br/><a href='${jira_link}'>${jira_link}</a>"
+    }
+    mail to: "${emailList}",
+        body: "${email_body}",
+        subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        charset: 'UTF-8', mimeType: 'text/html'
 }
 
 void copyRPMs() {
@@ -124,12 +150,22 @@ void copyRPMs() {
         RPMversion = "10.0"
     }
     else if (marklogicVersion == "11") {
-        RPMsuffix = ".nightly-rhel"
+        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
+        if (dockerImageType.contains("ubi9")) {
+            RPMsuffix = ".nightly-rhel9"
+        } else {
+            RPMsuffix = ".nightly-rhel"
+        }
         RPMbranch = "b11"
         RPMversion = "11.3"
     }
     else if (marklogicVersion == "12") {
-        RPMsuffix = ".nightly-rhel"
+        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
+        if (dockerImageType.contains("ubi9")) {
+            RPMsuffix = ".nightly-rhel9"
+        } else {
+            RPMsuffix = ".nightly-rhel"
+        }
         RPMbranch = "b12"
         RPMversion = "12.0"
     }
@@ -168,7 +204,7 @@ void buildDockerImage() {
 }
 
 void pullUpgradeDockerImage() {
-    if (dockerImageType == "ubi-rootless" ) {
+    if (dockerImageType == "ubi-rootless" && params.DOCKER_TESTS != "true") {
         sh """
             echo 'dockerImageType is set to ubi-rootless, skipping this stage and Docker upgrade test.'
         """
@@ -217,16 +253,14 @@ void lint() {
 
 void vulnerabilityScan() {
     sh """
-        make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} Jenkins=true
-        grep \'High\\|Critical\' scan-server-image.txt
+        make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} docker_image_type=${dockerImageType} Jenkins=true
     """
-
-    SCAN_OUTPUT = sh(returnStdout: true, script: 'grep \'High\\|Critical\' scan-server-image.txt')
+    SCAN_OUTPUT = sh(returnStdout: true, script: "cat scan/report-${env.dockerImageType}.txt")
+    sh 'echo "SCAN_OUTPUT: ${SCAN_OUTPUT}"'
     if (SCAN_OUTPUT.size()) {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br>Jenkins pipeline for ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
-
-    sh '''rm -f scan-server-image.txt'''
+    archiveArtifacts artifacts: 'scan/*', onlyIfSuccessful: true
 }
 
 void publishToInternalRegistry() {
@@ -265,7 +299,31 @@ void publishToInternalRegistry() {
 
 void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
-    publishHTML allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'test/test_results', reportFiles: 'report.html', reportName: 'Docker Tests Report', reportTitles: ''
+        if (params.DOCKER_TESTS) {
+        echo 'Publishing Docker results..'
+        publishHTML allowMissing: false, 
+            alwaysLinkToLastBuild: true, 
+            keepAll: true, 
+            reportDir: 'test/test_results', 
+            reportFiles: 'report.html', 
+            reportName: 'Docker Tests Report', 
+            reportTitles: "Build ${env.BUILD_NUMBER}"
+    }
+    if (params.SCAP_SCAN) {
+        echo 'Publishing SCAP scan results..'
+        publishHTML allowMissing: false, 
+            alwaysLinkToLastBuild: true, 
+            keepAll: true, reportDir: 'scap', 
+            reportFiles: 'scap_scan_report.html', 
+            reportName: 'Open SCAP Report', 
+            reportTitles: "Build ${env.BUILD_NUMBER}"
+    }
+}
+
+void scapScan() {
+    sh """
+        make scap-scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+    """
 }
 
 pipeline {
@@ -280,15 +338,16 @@ pipeline {
         skipStagesAfterUnstable()
     }
     triggers {
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=11;dockerImageType=centos
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=10;dockerImageType=ubi
+                                                             00 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 02 * * * % marklogicVersion=11;dockerImageType=ubi
-                                                             00 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless
-                                                             30 02 * * * % marklogicVersion=10;dockerImageType=centos
-                                                             30 02 * * * % marklogicVersion=10;dockerImageType=ubi
-                                                             30 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=centos
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi-rootless''' : '')
+                                                             30 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi
+                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
+                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -296,8 +355,8 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '2.0.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
-        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\ncentos', description: 'Platform type for Docker image. Will be made part of the docker image tag')
+        string(name: 'dockerVersion', defaultValue: '2.1.0', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
@@ -305,6 +364,7 @@ pipeline {
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
+        booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
     }
 
     stages {
@@ -344,6 +404,15 @@ pipeline {
             }
         }
 
+        stage('SCAP-Scan') {
+            when {
+                    expression { return params.SCAP_SCAN }
+            }
+            steps {
+                scapScan()
+            }
+        }
+
         stage('Structure-Tests') {
             when {
                 expression { return params.TEST_STRUCTURE }
@@ -374,17 +443,18 @@ pipeline {
                 build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
             }
         }
+
     }
 
     post {
         always {
             sh '''
                 cd src
-                rm -rf *.rpm
-                docker rm -f $(docker ps -a -q) || true
-                docker system prune --force --filter "until=720h"
-                docker volume prune --force
-                docker image prune --force --all
+                rm -rf *.rpm NOTICE.txt
+                docker stop $(docker ps -a -q) || true
+                docker system prune --force --all
+                docker volume prune --force --all
+                docker system df
             '''
             publishTestResults()
         }

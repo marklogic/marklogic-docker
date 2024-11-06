@@ -1,4 +1,4 @@
-MarkLogic® Docker Container Image v2.0
+MarkLogic® Docker Container Image v2.1.0
 
 Copyright © 2022-2024 MarkLogic Corporation. MarkLogic and MarkLogic logo are trademarks or registered trademarks of MarkLogic Corporation in the United States and other countries.  All other trademarks are the property of their respective owners.
  
@@ -10,9 +10,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 To the extent required by the applicable open-source license, a complete machine-readable copy of the source code corresponding to such code is available upon request. This offer is valid to anyone in receipt of this information and shall expire three years following the date of the final distribution of this product version by MarkLogic Corporation. To obtain such source code, send an email to Legal-thirdpartyreview@progress.com. Please specify the product and version for which you are requesting source code.
 
-MarkLogic® - Docker Container Image.  If Licensee selects the option to download the Product in the Docker container image, then the Product will be provided in a Docker container image that in a separate layer also contains third-party software, RedHat UBI Docker Base Image 8 and its components (collectively, “RedHat UBI”), licensed under the RedHat EULA found here (https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf), together with the third-party licenses applicable to each component. 
+MarkLogic® - Docker Container Image.  If Licensee selects the option to download the Product in the Docker container image, then the Product will be provided in a Docker container image that in a separate layer also contains third-party software, RedHat UBI Docker Base Image 8 and its components and RedHat UBI Docker Base Image 9 and its components   (collectively, “RedHat UBI”), licensed under the RedHat EULA found here (https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf) and , together with the third-party licenses applicable to each component. 
 
-Notwithstanding anything to the contrary in the MarkLogic end user license agreement, MarkLogic makes no representations or warranties and assumes no indemnification obligations in regard to RedHat UBI, its operation, or its security. User modifications to the version of RedHat UBI provided by MarkLogic in the Docker Image, while permitted under The RedHat EULA, may result in errors or instability in performance of the Product, which are not covered by MarkLogic under warranty or maintenance terms. The source code for RedHat UBI Docker Base Image 8 may be obtained at http://iue.progress.com/3dpartysoftwares/Pages/default.aspx, and source code for any of its third-party components covered by a license requiring that source code be made available may be obtained at https://catalog.redhat.com/software/containers/ubi8/5c647760bed8bd28d0e38f9f?architecture=amd64&image=6643ab9ff6bc4ca6c09fb093&container-tabs=packages.
+Notwithstanding anything to the contrary in the MarkLogic end user license agreement, MarkLogic makes no representations or warranties and assumes no indemnification obligations in regard to RedHat UBI, its operation, or its security. User modifications to the version of RedHat UBI provided by MarkLogic in the Docker Image, while permitted under The RedHat EULA, may result in errors or instability in performance of the Product, which are not covered by MarkLogic under warranty or maintenance terms. The source code for RedHat UBI Docker Base Image 8 may be obtained at http://iue.progress.com/3dpartysoftwares/Pages/default.aspx, and source code for any of its third-party components covered by a license requiring that source code be made available may be obtained at https://catalog.redhat.com/software/containers/ubi8/5c647760bed8bd28d0e38f9f?architecture=amd64&image=6643ab9ff6bc4ca6c09fb093&container-tabs=packages (for UBI Docker Base Image 8) and https://catalog.redhat.com/software/containers/ubi9/ubi/615bcf606feffc5384e8452e?container-tabs=packages (for UBI Docker Base Image 9).
 
 Licensee is responsible for obtaining, at its own expense, any required licenses from Docker to deploy the Docker container image that contains the Product and RedHat UBI and any such deployment of the Product must comply with the terms and conditions of this Agreement.
  
@@ -21,10 +21,11 @@ Licensee is responsible for obtaining, at its own expense, any required licenses
 Third Party Components
 
        RedHat UBI Docker Base Image 8 (Commercial)
-       robotframework 7.0 (Apache-2.0)
-       robotframework-requests 0.9.7 (MIT)
-       test (MIT)
-       Tini 0.19.0 (MIT)
+RedHat UBI Docker Base Image 9 (Commercial)
+robotframework 7.0 (Apache-2.0)
+  	robotframework-requests 0.9.7 (MIT)
+   	test (MIT)
+   	Tini 0.19.0 (MIT)
 
 Common Licenses
 
@@ -34,12 +35,18 @@ Apache License, Version 2.0, January 2004 (Apache-2.0)
 
 Third-Party Components
 
-The following is a list of third-party components used by MarkLogic Docker Container Image v2.0 (last updated June 14, 2024):
+The following is a list of third-party components used by MarkLogic Docker Container Image v2.1.0 (last updated October 18, 2024):
 
 RedHat UBI Docker Base Image 8 
 https://catalog.redhat.com/software/containers/ubi8/5c647760bed8bd28d0e38f9f?architecture=amd64&image=6643ab9ff6bc4ca6c09fb093&container-tabs=gti
 
 https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf
+
+RedHat UBI Docker Base Image 9 
+https://catalog.redhat.com/software/containers/ubi9/ubi/615bcf606feffc5384e8452e?container-tabs=packages
+
+https://www.redhat.com/licenses/EULA_Red_Hat_Universal_Base_Image_English_20190422.pdf
+
 
 robotframework 7.0 (Apache-2.0)
 https://pypi.org/pypi/robotframework

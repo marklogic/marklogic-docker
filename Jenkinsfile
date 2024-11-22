@@ -266,6 +266,7 @@ void vulnerabilityScan() {
 void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
+            docker logout ${dockerRegistry}
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
@@ -452,8 +453,7 @@ pipeline {
                 cd src
                 rm -rf *.rpm NOTICE.txt
                 docker stop $(docker ps -a -q) || true
-                docker system prune --force --all
-                docker volume prune --force --all
+                docker system prune --force --all --volumes
                 docker system df
             '''
             publishTestResults()

@@ -346,9 +346,7 @@ pipeline {
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

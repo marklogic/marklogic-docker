@@ -266,6 +266,7 @@ void vulnerabilityScan() {
 void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
+            docker logout ${dockerRegistry}
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
@@ -345,9 +346,7 @@ pipeline {
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -355,7 +354,7 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '2.1.0', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '2.1.1', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
@@ -452,8 +451,7 @@ pipeline {
                 cd src
                 rm -rf *.rpm NOTICE.txt
                 docker stop $(docker ps -a -q) || true
-                docker system prune --force --all
-                docker volume prune --force --all
+                docker system prune --force --all --volumes
                 docker system df
             '''
             publishTestResults()

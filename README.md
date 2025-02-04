@@ -46,9 +46,20 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: UBI8 and UBI9 with rootless variants.
+Base OS: UBI8 and UBI9 with `rootless` variants.
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/progressofficial/marklogic-db
+
+## Docker image hardening
+
+Docker images with `rootless` variants are hardened using Openscap (<https://github.com/OpenSCAP/openscap>).
+
+Scoring : 96.67%
+See [Known Issues and Limitations](#known-issues-and-limitations)
+
+## FIPS Enabled
+
+Only Docker images under Base OS UBI8 with `rootless` variants are FIPS enabled following RedHat (<https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/security_hardening/switching-rhel-to-fips-mode_security-hardening#enabling-fips-mode-in-a-container_using-the-system-wide-cryptographic-policies>)
 
 # MarkLogic
 
@@ -1054,3 +1065,8 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 These libraries are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
 
 6. As part of the hardening process, the following packages are removed from the image: `vim-minimal`, `cups-client`, `cups-libs`, `tar`, `python3-pip-wheel`, `platform-python`, `python3-libs`, `platform-python-setuptools`, `avahi-libs`, `binutils`, `expat`, `libarchive`, `python3`, `python3-libs`, `python-unversioned-command`. These packages are not required for the operation of MarkLogic Server and are removed to reduce the attack surface of the image. If you require any of these packages, you can install them in your own Dockerfile.
+
+7. The scoring of the hardening process is 96.67% that because `authselect is not used but files from the 'pam' package have been altered, so the authselect configuration won't be forced.`
+
+It is a medium severity and not applicable in container environment there is not authentication required when login into a container.
+8. The cryptographic modules of RHEL 9 are not yet certified for the FIPS 140-3 requirements.

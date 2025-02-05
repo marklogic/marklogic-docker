@@ -1,6 +1,6 @@
 ###############################################################
 #
-#   Copyright (c) 2023 MarkLogic Corporation
+#   Copyright © 2018-2024 MarkLogic Corporation
 #
 ###############################################################
 
@@ -71,7 +71,7 @@ FROM ${BASE_IMAGE}
 COPY --from=builder / /
 
 ARG ML_USER="marklogic_user"
-ARG ML_VERSION=10-internal
+ARG ML_VERSION=11-internal
 ARG ML_DOCKER_VERSION=local
 ARG BUILD_BRANCH=local
 ARG ML_DOCKER_TYPE=ubi

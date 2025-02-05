@@ -864,6 +864,14 @@ The /space mounted on the Docker volume can now be used as backup directory for 
 
 # Debugging
 
+## Platform warnings on Apple Silicon
+
+When running the MarkLogic Docker image on Apple Silicon, you may see the following warning message:
+`WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested`
+
+Add the `--platform linux/amd64` flag to the `docker run` command to avoid this warning message.
+
+
 ## View MarkLogic Server Startup Status
 To check the MarkLogic Server startup status, run the below command to tail the MarkLogic log file
 ```
@@ -912,7 +920,7 @@ $ docker exec -it f484a784d998 /bin/bash
 4. To verify that MarkLogic is running, use this command:
 
 ```
-$ sudo service MarkLogic status
+$ service MarkLogic status
 ```
 
 Example output:  
@@ -926,7 +934,7 @@ MarkLogic (pid  34) is running...
 For example, you can list the 8001 error logs, and view them with a single command:
 
 ```
-$ sudo cd /var/opt/MarkLogic/Logs && ls && vi ./8001_ErrorLog.txt
+$ cd /var/opt/MarkLogic/Logs && ls && cat ./8001_ErrorLog.txt
 ```
 
 6. To exit the container when you are through debugging, use the exit command:

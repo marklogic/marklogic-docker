@@ -912,7 +912,7 @@ $ docker exec -it f484a784d998 /bin/bash
 4. To verify that MarkLogic is running, use this command:
 
 ```
-$ sudo service MarkLogic status
+$ service MarkLogic status
 ```
 
 Example output:  
@@ -926,7 +926,7 @@ MarkLogic (pid  34) is running...
 For example, you can list the 8001 error logs, and view them with a single command:
 
 ```
-$ sudo cd /var/opt/MarkLogic/Logs && ls && vi ./8001_ErrorLog.txt
+$ cd /var/opt/MarkLogic/Logs && ls && cat ./8001_ErrorLog.txt
 ```
 
 6. To exit the container when you are through debugging, use the exit command:

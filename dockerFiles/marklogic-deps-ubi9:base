@@ -21,7 +21,7 @@ RUN microdnf -y update \
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install --setopt install_weak_deps=0 gdb nss libtool-ltdl cpio tzdata util-linux \
+    && microdnf -y install --setopt install_weak_deps=0 gdb nss libtool-ltdl cpio tzdata util-linux hostname \
     && microdnf clean all
 
 

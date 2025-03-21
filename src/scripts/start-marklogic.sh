@@ -33,11 +33,6 @@ log () {
 }
 
 ###############################################################
-# removing MarkLogic ready file and create it when 8001 is accessible on node
-###############################################################
-sudo rm -f /var/opt/MarkLogic/ready
-
-###############################################################
 # Prepare script
 ###############################################################
 info "Starting container with MarkLogic Server."
@@ -111,13 +106,12 @@ fi
 ################################################################
 # Setup timezone
 ################################################################
-if [ -n "${TZ}" ]; then
+if [[ -n "${TZ}" ]]; then
     info "TZ is defined, setting timezone to ${TZ}."
     sudo ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime
     echo "${TZ}" | sudo tee /etc/timezone
 fi
 
-# Values taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
 N_RETRY=5
 RETRY_INTERVAL=10
 
@@ -137,7 +131,7 @@ function restart_check {
     local retry_count LAST_START
     LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
-        if [ "$2" == "${LAST_START}" ] || [ -z "${LAST_START}" ]; then
+        if [[ "$2" == "${LAST_START}" ]] || [[ -z "${LAST_START}" ]]; then
             sleep ${RETRY_INTERVAL}
             LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
         else
@@ -198,7 +192,7 @@ function validate_cert {
     local curl_output
     curl_output=$(curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
     return_code=$?
-    if [ $return_code -ne 0 ]; then
+    if [[ $return_code != "0" ]]; then
         info "$curl_output"
         error "MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down." exit
     fi
@@ -238,10 +232,10 @@ function curl_retry_validate {
         
         sleep ${RETRY_INTERVAL}
     done
-    if [[ "${return_error}" = "false" ]] ; then
+    if [[ "${return_error}" == "false" ]] ; then
         return "${response_code}"
     fi
-    [ -f "start-marklogic_curl_retry_validate.log" ] && cat start-marklogic_curl_retry_validate.log
+    [[ -f "start-marklogic_curl_retry_validate.log" ]] && cat start-marklogic_curl_retry_validate.log
     error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
 }
 
@@ -486,7 +480,7 @@ elif [[ "${MARKLOGIC_JOIN_CLUSTER}" == "true" ]]; then
 elif [[ -z "${MARKLOGIC_JOIN_CLUSTER}" ]] || [[ "${MARKLOGIC_JOIN_CLUSTER}" == "false" ]]; then
     info "MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster."
 else
-    error "MARKLOGIC_JOIN_CLUSTER must be true or false." exit
+        error "MARKLOGIC_JOIN_CLUSTER must be true or false." exit
 fi
 
 ################################################################
@@ -496,31 +490,29 @@ fi
 # use latest health check only for version 11 and up
 if [[ "${MARKLOGIC_VERSION}" =~ "10" ]] || [[ "${MARKLOGIC_VERSION}" =~ "9" ]]; then
     HEALTH_CHECK="7997"
-else 
+else
      HEALTH_CHECK="7997/LATEST/healthcheck"
+     OLD_HEALTH_CHECK="7997"
 fi
 ML_HOST_PROTOCOL=$(get_host_protocol "localhost" "7997")
 
 while true
 do
     HOST_RESP_CODE=$(curl "${ML_HOST_PROTOCOL}"://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n" --cacert "${ML_CACERT_FILE}")
-    if [[ "${MARKLOGIC_INIT}" == "true" ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
-        sudo touch /var/opt/MarkLogic/ready
+    if [[ "${HOST_RESP_CODE}" == "200" ]] || [[ "${MARKLOGIC_INIT}" != "true" ]]; then
         info "Cluster config complete, marking this container as ready."
         break
-    elif [[ "${MARKLOGIC_INIT}" != "true" ]]; then
-        sudo touch /var/opt/MarkLogic/ready
-        info "Cluster config complete, marking this container as ready."
-        rm -f host_health.xml
-        break
-    elif [[ -f /var/opt/MarkLogic/DOCKER_INIT ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
-        sudo touch /var/opt/MarkLogic/ready
-        info "Cluster config complete, marking this container as ready."
-        break
+    elif [[ "${HOST_RESP_CODE}" == "404" ]]; then
+        # check old healthcheck in case of upgrade
+        HOST_RESP_CODE=$(curl "${ML_HOST_PROTOCOL}"://"${HOSTNAME}":"${OLD_HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n" --cacert "${ML_CACERT_FILE}")
+        if [[ "${HOST_RESP_CODE}" == "200" ]]; then
+            info "Cluster config complete, marking this container as ready."
+            break
+        fi
     else
         info "MarkLogic not ready yet, retrying."
-        sleep 5
     fi
+    sleep 5
 done
 
 ################################################################

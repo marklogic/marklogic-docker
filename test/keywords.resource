@@ -7,20 +7,21 @@ Library    Collections
 Library    DateTime
 
 *** Variables ***
-@{DOCKER DEFAULTS}    -it    -d    -p    8000:8000    -p    8001:8001    -p    8002:8002    -p7997:7997
+@{DOCKER DEFAULTS}    -it    -d    -p    8000:8000    -p    8001:8001    -p    8002:8002    -p7997:7997    --platform    linux/amd64
 ${DEFAULT ADMIN USER}    test_admin
 ${DEFAULT ADMIN PASS}    test_admin_pass
 ${SPEC CHARS ADMIN PASS}    Admin@2$s%^&*!
-${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=marklogic/marklogic-server-ubi:internal}
-${UPGRADE_TEST_IMAGE}    marklogic/marklogic-server-ubi:internal
+${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.1-ubi-rootless-2.1.1}
+${UPGRADE_TEST_IMAGE}    progressofficial/marklogic-db:11.3.1-ubi-rootless-2.1.1
 ${DOCKER TIMEOUT}    240s
 ${LICENSE KEY}    %{QA_LICENSE_KEY=none}
 ${LICENSEE}    MarkLogic - Version 9 QA Test License
-${MARKLOGIC_VERSION}    internal
-${BUILD_BRANCH}    local
-${IMAGE_TYPE}    ubi
+${MARKLOGIC_VERSION}    11.3.1
+${BUILD_BRANCH}    release_2.1.1
+${IMAGE_TYPE}    ubi-rootless
 ${VOL_NAME}    MarkLogic_vol_1
 ${VOL_INFO}    src=${VOL_NAME},dst=/var/opt/MarkLogic
+${MARKLOGIC_DOCKER_VERSION}    2.1.1
 
 *** Keywords ***
 Create container with

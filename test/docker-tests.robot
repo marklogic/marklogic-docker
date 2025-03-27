@@ -36,8 +36,8 @@ Uninitialized MarkLogic container no parameters
 
 Initialized MarkLogic container
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *Starting container with MarkLogic Server.*
@@ -53,8 +53,8 @@ Initialized MarkLogic container
 Upgrade MarkLogic container
     Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
     Create test container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *Starting container with MarkLogic Server.*
@@ -74,10 +74,60 @@ Upgrade MarkLogic container
     [Teardown]    Run Keywords    Delete container    True
     ...           AND             Delete Volume
 
+Upgrade MarkLogic container with init parameter
+    Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Create test container with    -e    MARKLOGIC_INIT=true
+...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    Docker log should contain    *Starting container with MarkLogic Server.*
+    Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Verify response for unauthenticated request with    8000    *Unauthorized*
+    Verify response for unauthenticated request with    8001    *Unauthorized*
+    Verify response for unauthenticated request with    8002    *Unauthorized*
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    Stop container
+    Create upgrade container with    -e    MARKLOGIC_INIT=true
+    Docker log should contain    *Cluster config complete, marking this container as ready.*    True
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    [Teardown]    Run Keywords    Delete container    True
+    ...           AND             Delete Volume
+
+Upgrade MarkLogic container with init and credential parameters
+    Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Create test container with    -e    MARKLOGIC_INIT=true
+...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    Docker log should contain    *Starting container with MarkLogic Server.*
+    Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Verify response for unauthenticated request with    8000    *Unauthorized*
+    Verify response for unauthenticated request with    8001    *Unauthorized*
+    Verify response for unauthenticated request with    8002    *Unauthorized*
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    Stop container
+    Create upgrade container with    -e    MARKLOGIC_INIT=true
+    ...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    Docker log should contain    *Cluster config complete, marking this container as ready.*    True
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    [Teardown]    Run Keywords    Delete container    True
+    ...           AND             Delete Volume
+
 Initialized MarkLogic container with admin password containing special characters
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${SPEC CHARS ADMIN PASS}
+...                          -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                          -e    MARKLOGIC_ADMIN_PASSWORD=${SPEC CHARS ADMIN PASS}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
@@ -91,10 +141,10 @@ Initialized MarkLogic container with admin password containing special character
 
 Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE
     Create container with    -e    MARKLOGIC_INIT=TRUE
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    LICENSEE=${LICENSEE}
-    ...                                        -e    LICENSE_KEY=${LICENSE KEY}
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    LICENSEE=${LICENSEE}
+    ...                      -e    LICENSE_KEY=${LICENSE KEY}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Verify response for unauthenticated request with    8000    *Unauthorized*
@@ -114,9 +164,9 @@ Initialized MarkLogic container without credentials
 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
     [Tags]    negative
     Create failing container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    MARKLOGIC_JOIN_CLUSTER=invalid
+    ...                              -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                              -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                              -e    MARKLOGIC_JOIN_CLUSTER=invalid
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *Error: MARKLOGIC_JOIN_CLUSTER must be true or false.*
     [Teardown]    Delete container
@@ -124,26 +174,26 @@ Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
 Invalid value for INIT
     [Tags]    negative
     Create failing container with    -e    MARKLOGIC_INIT=invalid
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                              -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                              -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *Error: MARKLOGIC_INIT must be true or false.*
     [Teardown]    Delete container
 
 Invalid value for HOSTNAME
     [Tags]    negative
     Create failing container with    -e    HOSTNAME=invalid_hostname
-    ...                                        -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                              -e    MARKLOGIC_INIT=true
+    ...                              -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                              -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *Error: Failed to restart invalid_hostname*
     [Teardown]    Delete container
 
 Initialized MarkLogic container with config overrides
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    OVERWRITE_ML_CONF=true
-    ...                                        -e    TZ=America/Los_Angeles
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    OVERWRITE_ML_CONF=true
+    ...                      -e    TZ=America/Los_Angeles
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     IF    'rootless' not in '${IMAGE_TYPE}'
         Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
         Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
@@ -408,10 +458,10 @@ Two node compose with second node uninitialized
 
 Initialized MarkLogic Server with wallet password and realm
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    MARKLOGIC_WALLET_PASSWORD=test_wallet_pass
-    ...                                        -e    REALM=public
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    MARKLOGIC_WALLET_PASSWORD=test_wallet_pass
+    ...                      -e    REALM=public
     Verify response for unauthenticated request with    8000    *Unauthorized*
     Verify response for unauthenticated request with    8001    *Unauthorized*
     Verify response for unauthenticated request with    8002    *Unauthorized*
@@ -422,9 +472,9 @@ Initialized MarkLogic Server with wallet password and realm
 
 Initialized MarkLogic container with ML converters
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    INSTALL_CONVERTERS=true
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    INSTALL_CONVERTERS=true
     Docker log should contain    *INSTALL_CONVERTERS is true, installing converters.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     MarkLogic Error log should contain    .*Info: MarkLogic Converters.*found

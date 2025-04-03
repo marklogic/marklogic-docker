@@ -480,3 +480,46 @@ Initialized MarkLogic container with ML converters
     MarkLogic Error log should contain    .*Info: MarkLogic Converters.*found
     Verify converter package installation
     [Teardown]    Delete container
+ 
+Dynamic Host Cluster Test
+    [Tags]    dynamic-hosts
+    ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
+    Skip If    ${major_version} < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
+    Start compose from    compose-test-16.yaml
+    # give it some time to prepare the large cluster
+    Sleep    60s
+    ${group}=    set Variable    dynamic
+    Set up dynamic host group ${group}
+    Dynamic Host Join Successful on ${group} with 7401
+    Dynamic Host Join Failure on dynamic with 7501 with wrong token
+    Dynamic Host Join Failure on dynamic with 7501 when feature disabled
+    Dynamic Host Join Failure on ${group} with 7501 when not using the Admin app server
+    Dynamic Host Remove Successful When Host is down
+    Dynamic Host Join Successful on ${group} with 7601
+    Dynamic Host Remove Successful When All Node is up
+    Dynamic Host Added When Some Host is down 7701
+    Dynamic Host Join Successful on dynamic with 7801
+    Dynamic Host Returns All Id dynamic4
+    Verify Full Cluster Restart Removes Dynamic Host Configuration dynamic
+    Enable dynamic host feature on 7102 for group Default
+    Dynamic Host Join Successful with d-node on Default with 7901
+    Disable dynamic host feature on 7102 for group Default
+    Verify Dynamic Host Count on port 7102 for group Default equals 1
+    Enable dynamic host feature on 7102 for group Default
+    Dynamic Host Join Fails When Token Expires ${group}
+    Dynamic Host Join Fails After Token Revoked ${group}
+    Verify Dynamic Host Can Execute Query Default 7902
+    [Teardown]    Delete compose from    compose-test-16.yaml
+
+Dynamic Host Cluster Concurrecy Join Test
+    [Tags]    dynamic-hosts
+    ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
+    Skip If    ${major_version} < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
+    Start compose from    compose-test-16.yaml
+    # give it some time to prepare the large cluster
+    Sleep    60s
+    ${group}=    set Variable    dynamic
+    Set up dynamic host group ${group}
+    Concurrent Dynamic Host Join Test
+
+    [Teardown]    Delete compose from    compose-test-16.yaml

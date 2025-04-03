@@ -334,3 +334,274 @@ Verify container timezone
     ${offset}=    Get Regexp Matches    ${response.text}    -?PT[HM0-9]+
     ${expected}=    Convert timezone to MarkLogic offset    ${timezone}
     Should Be Equal    ${expected}    ${offset[0]}
+
+Create dynamic host token for group ${group} on host ${host} and port ${port} using docker port ${dockerport} with duration ${duration} and comment ${comment}
+    [Documentation]    This generate a dynamic host token that can be used for join purpose.
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Content-type=application/json
+    ${port_num}=    Convert To Integer    ${port}
+    ${token_details}=    Create Dictionary    group=${group}    host=${host}    port=${port_num}    duration=${duration}    comment=${comment}
+    ${token_body}=    Create Dictionary    dynamic-host-token=${token_details}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${dockerport}    headers=${headers}    auth=${auth}
+    ${response}=    POST On Session    RestSession    url=/manage/v2/clusters/Default/dynamic-host-token    json=${token_body}    headers=${header}
+    ${token_xml}=    Set Variable    ${response.text}
+    ${token_content}=    Get Regexp Matches    ${token_xml}    <dynamic-host-token[^>]*>(.*)</dynamic-host-token>    1
+    ${token}=    Set Variable    ${token_content[0]}
+    [Return]    ${token}
+
+Enable dynamic host feature on ${dockerport} for group ${group}
+    [Documentation]    This enables the dynamic host feature for the specified group.
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Content-type=application/json    Accept=application/json
+    # Create JSON payload to enable dynamic hosts
+    ${json_body}=    Create Dictionary    group-name=${group}    allow-dynamic-hosts=${TRUE}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${dockerport}    headers=${headers}    auth=${auth}
+    ${response}=    PUT On Session    RestSession    url=/manage/v2/groups/${group}/properties?format=json    json=${json_body}    headers=${header}
+    [Return]    ${response}
+
+Disable dynamic host feature on ${dockerport} for group ${group}
+    [Documentation]    This enables the dynamic host feature for the specified group.
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Content-type=application/json    Accept=application/json
+    # Create JSON payload to enable dynamic hosts
+    ${json_body}=    Create Dictionary    group-name=${group}    allow-dynamic-hosts=${FALSE}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${dockerport}    headers=${headers}    auth=${auth}
+    ${response}=    PUT On Session    RestSession    url=/manage/v2/groups/${group}/properties?format=json    json=${json_body}    headers=${header}
+    [Return]    ${response}
+
+Init dynamic host ${dockerport} with token ${token}
+    [Documentation]    This initializes the dynamic host with the specified token (no auth needed)
+    ${header}=    Create Dictionary    Content-type=application/xml
+    # Create XML payload with the token
+    ${xml_body}=    Set Variable    <init xmlns="http://marklogic.com/manage"><dynamic-host-token>${token}</dynamic-host-token></init>
+    
+    # Use standard session without authentication
+    Create Session    RestSession    url=http://localhost:${dockerport}
+    ${response}=    POST On Session    RestSession    url=/admin/v1/init    data=${xml_body}    headers=${header}
+
+Create group ${group} on port ${port}
+    [Documentation]    Creates a new group in MarkLogic using the Management API
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Content-type=application/json    Accept=application/json
+    ${json_body}=    Create Dictionary    group-name=${group}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    POST On Session    RestSession    url=/manage/v2/groups    json=${json_body}    headers=${header}
+
+Set up dynamic host group ${group}
+    Create group ${group} on port 7102
+    # TODO: the enabling of the option on the Default group should be removed once the bug is fixed.
+    Enable dynamic host feature on 7102 for group Default
+    Enable dynamic host feature on 7102 for group ${group}
+
+Get MarkLogic Host ID on port ${port} with hostname ${hostname}
+    [Documentation]    Returns the host ID of a MarkLogic server with the specified hostname
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Accept=application/json
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    GET On Session    RestSession    url=/manage/v2/hosts?format=json    headers=${header}
+    ${hosts}=    Set Variable    ${response.json()["host-default-list"]["list-items"]["list-item"]}
+    ${host_id}=    Set Variable    ${EMPTY}
+    FOR    ${host}    IN    @{hosts}
+        IF    '${host["nameref"]}' == '${hostname}'
+            ${host_id}=    Set Variable    ${host["idref"]}
+            Exit For Loop
+        END
+    END
+    
+    Should Not Be Empty    ${host_id}    Host ${hostname} not found in the host list
+    [Return]    ${host_id}
+
+Get All Dynamic Host IDs on port ${port} for group ${group}
+    [Documentation]    Gets all dynamic host IDs from the MarkLogic cluster
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Accept=application/json
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    GET On Session    RestSession    url=/manage/v2/clusters/${group}/dynamic-hosts?format=json    headers=${header}
+    ${has_hosts}=    Run Keyword And Return Status    Dictionary Should Contain Key    ${response.json()}    dynamic-hosts
+    @{host_ids}=    Create List
+    IF    ${has_hosts}
+        ${hosts}=    Set Variable    ${response.json()["dynamic-hosts"]}
+        ${host_ids}=    Set Variable    ${hosts}
+    END
+    [Return]    ${host_ids}
+
+Remove All Dynamic Hosts on port ${port} for group ${group}
+    [Documentation]    Removes all dynamic hosts from the MarkLogic cluster for a specific group
+    @{host_ids}=    Get All Dynamic Host IDs on port ${port} for group ${group}
+    ${host_count}=    Get Length    ${host_ids}
+    IF    ${host_count} > 0
+        ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+        ${header}=    Create Dictionary    Content-type=application/json    Accept=application/json
+        ${dynamic_host_dict}=    Create Dictionary    dynamic-host=${host_ids}
+        ${json_body}=    Create Dictionary    dynamic-hosts=${dynamic_host_dict}
+        # Create session and send DELETE request
+        ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+        ${response}=    DELETE On Session    RestSession
+        ...            url=/manage/v2/clusters/${group}/dynamic-hosts
+        ...            json=${json_body}
+        ...            headers=${header}
+        Log    Removed ${host_count} dynamic hosts from group ${group}
+    ELSE
+        Log    No dynamic hosts to remove from group ${group}
+    END
+
+Dynamic Host Join Successful on ${group} with ${port}
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT10M and comment no
+    Init dynamic host ${port} with token ${token}
+
+Dynamic Host Join Successful with d-node on ${group} with ${port}
+    ${token}=    Create dynamic host token for group ${group} on host node2 and port 8001 using docker port 7102 with duration PT10M and comment no
+    Init dynamic host ${port} with token ${token}
+
+Dynamic Host Join Failure on ${group} with ${port} with wrong token
+    [Documentation]    Tests that joining fails when token is corrupted
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT10M and comment no
+    ${corrupted_token}=    Set Variable    ${token}XYZ123InvalidTokenSuffix
+    ${status}=    Run Keyword And Return Status    Init dynamic host ${port} with token ${corrupted_token}
+    Should Be Equal    ${status}    ${FALSE}    Join with corrupted token should have failed but succeeded
+
+Dynamic Host Join Failure on ${group} with ${port} when feature disabled
+    Disable dynamic host feature on 7102 for group ${group}
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT10M and comment no
+    ${status}=    Run Keyword And Return Status    Init dynamic host ${port} with token ${token}
+    Should Be Equal    ${status}    ${FALSE}    Join should fail when this feature is disabled
+    Enable dynamic host feature on 7102 for group ${group}
+
+Dynamic Host Join Failure on ${group} with ${port} when not using the Admin app server
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8002 using docker port 7102 with duration PT10M and comment no
+    ${status}=    Run Keyword And Return Status    Init dynamic host ${port} with token ${token}
+    Should Be Equal    ${status}    ${FALSE}    Join should fail when this feature is disabled
+
+Wait Until Container Is Stopped
+    Sleep    50s
+
+Wait Until Container Is Running
+    Sleep    10s
+
+Dynamic Host Remove Successful When Host is down
+    Run Process    docker    kill    node2
+    Wait Until Container Is Stopped
+    Remove All Dynamic Hosts on port 7102 for group dynamic
+    Run Process    docker    start    node2
+    Wait Until Container Is Running
+    @{host_ids}=    Get All Dynamic Host IDs on port 7202 for group dynamic
+    Should Be Empty    ${host_ids}    Dynamic hosts were found when none were expected
+
+Dynamic Host Remove Successful When All Node is up
+    # sleep to make sure the host joins successfully
+    Sleep    5s
+    Remove All Dynamic Hosts on port 7102 for group dynamic
+    @{host_ids}=    Get All Dynamic Host IDs on port 7102 for group dynamic
+    Should Be Empty    ${host_ids}    Dynamic hosts were found when none were expected
+
+Dynamic Host Added When Some Host is down ${port}
+    Run Process    docker    kill    node2
+    Wait Until Container Is Stopped
+    Dynamic Host Join Successful on dynamic with ${port}
+    Run Process    docker    start    node2
+    Wait Until Container Is Running
+    @{host_ids}=    Get All Dynamic Host IDs on port 7202 for group dynamic
+    Should Not Be Empty    ${host_ids}    No dynamic hosts were found when some were expected
+
+Dynamic Host Returns All Id ${container_name}
+    Run Process    docker    kill    ${container_name}
+    Wait Until Container Is Stopped
+    @{host_ids}=    Get All Dynamic Host IDs on port 7202 for group dynamic
+    ${host_count}=    Get Length    ${host_ids}
+    Should Be Equal As Integers    ${host_count}    2    Expected exactly 2 dynamic hosts but found ${host_count}
+    Run Process    docker    start    ${container_name}
+    Wait Until Container Is Running
+
+Verify Full Cluster Restart Removes Dynamic Host Configuration ${group}
+    [Documentation]    Tests that restarting the entire cluster removes all dynamic host information
+
+    @{host_ids}=    Get All Dynamic Host IDs on port 7102 for group dynamic
+    ${host_count}=    Get Length    ${host_ids}
+    Should Be Equal As Integers    ${host_count}    2    Expected 2 dynamic hosts but found ${host_count}
+    
+    # Restart the entire cluster
+    Restart compose from    compose-test-16.yaml
+    Sleep    30s
+
+    # Verify dynamic host information is removed
+    @{host_ids_after_restart}=    Get All Dynamic Host IDs on port 7102 for group dynamic
+    Should Be Empty    ${host_ids_after_restart}    Dynamic hosts still exist after full cluster restart
+
+Verify Dynamic Host Count on port ${port} for group ${group} equals ${expected_count}
+    [Documentation]    Verifies that the number of dynamic hosts matches the expected count
+    @{host_ids}=    Get All Dynamic Host IDs on port ${port} for group ${group}
+    ${actual_count}=    Get Length    ${host_ids}
+    ${expected_count}=    Convert To Integer    ${expected_count}
+    Should Be Equal As Integers    ${actual_count}    ${expected_count}    
+    ...    Expected ${expected_count} dynamic hosts but found ${actual_count}
+
+    IF    ${actual_count} > 0
+        Log    Found dynamic hosts: @{host_ids}
+    END
+    [Return]    ${host_ids}
+
+Dynamic Host Join Fails When Token Expires ${group}
+    [Documentation]    Tests that a token cannot be reused after it expires
+
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT5S and comment "short-lived token"
+    Init dynamic host 8001 with token ${token}
+    Sleep    10s    # Wait longer than the PT5S token duration
+    ${status}=    Run Keyword And Return Status    Init dynamic host 8101 with token ${token}
+    Should Be Equal    ${status}    ${FALSE}    Join succeeded with expired token when it should have failed
+    Verify Dynamic Host Count on port 7102 for group ${group} equals 2
+
+Dynamic Host Join Fails After Token Revoked ${group}
+    [Documentation]    Tests that authentication fails after the token is revoked by the admin.
+
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT10M and comment "revoked token test"
+
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Content-Type=application/xml
+    ${xml_body}=    Set Variable    <dynamic-host-tokens><token>${token}</token></dynamic-host-tokens>
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:8002    headers=${headers}    auth=${auth}
+    ${response}=    DELETE On Session    RestSession    url=/manage/v2/clusters/Default/dynamic-host-token    data=${xml_body}    headers=${header}
+
+    ${status}=    Run Keyword And Return Status    Init dynamic host 8201 with token ${token}
+    Should Be Equal    ${status}    ${FALSE}    Join succeeded with revoked token when it should have failed
+
+Verify Dynamic Host Can Execute Query ${group} ${port}
+    [Documentation]    Verifies that a dynamic host can execute a query using the REST API.
+
+    # Execute a query to verify the dynamic host is functional
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Content-type=application/x-www-form-urlencoded
+    ${query}=    Set Variable    xquery=xdmp:host-name(xdmp:host())
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    POST On Session    RestSession    url=/v1/eval    data=${query}    headers=${header}
+
+    # Extract the host name from the response body
+    ${host_name}=    Get Regexp Matches    ${response.text}    X-Primitive: string\r?\n\r?\n([^\r\n]+)    1
+    Should Not Be Empty    ${host_name}    Query execution failed or returned an empty result
+    Log    Dynamic host executed query successfully: ${host_name[0]}
+
+Concurrent Dynamic Host Join Test
+    [Documentation]    Tests joining multiple dynamic hosts concurrently and verifies all hosts were added
+    [Arguments]    ${group}=dynamic    ${start_port}=7401    ${end_port}=8401
+    
+    
+    # Create a list to store all tokens for concurrent joining
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT10M and comment "concurrent-test"
+    
+    FOR    ${port}    IN RANGE    ${start_port}    ${end_port}+100    100
+        Init dynamic host ${port} with token ${token}
+    END
+    
+    # Give some time for all operations to complete
+    Sleep    10s
+    
+    # Verify the hosts were added - count how many were successful
+    ${hosts}=    Get All Dynamic Host IDs on port 7102 for group ${group}
+    ${host_count}=    Get Length    ${hosts}
+    ${expected_count}=    Evaluate    (${end_port} - ${start_port}) / 100 + 1
+    ${expected_count}=    Convert To Integer    ${expected_count}
+    
+    # Log the details
+    Log    Found ${host_count} dynamic hosts from concurrent join
+    Log    Expected approximately ${expected_count} dynamic hosts
+    
+    Should Be True    ${host_count} == ${expected_count}

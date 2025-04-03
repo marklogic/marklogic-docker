@@ -483,6 +483,8 @@ Initialized MarkLogic container with ML converters
  
 Dynamic Host Cluster Test
     [Tags]    dynamic-hosts
+    ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
+    Skip If    ${major_version} < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
     Start compose from    compose-test-16.yaml
     # give it some time to prepare the large cluster
     Sleep    60s
@@ -511,10 +513,13 @@ Dynamic Host Cluster Test
 
 Dynamic Host Cluster Concurrecy Join Test
     [Tags]    dynamic-hosts
+    ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
+    Skip If    ${major_version} < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
     Start compose from    compose-test-16.yaml
     # give it some time to prepare the large cluster
     Sleep    60s
     ${group}=    set Variable    dynamic
     Set up dynamic host group ${group}
     Concurrent Dynamic Host Join Test
+
     [Teardown]    Delete compose from    compose-test-16.yaml

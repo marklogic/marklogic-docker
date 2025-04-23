@@ -298,6 +298,11 @@ void publishToInternalRegistry() {
     currentBuild.description = "Published"
 }
 
+void scanWithBlackDuck() {
+    // Run BlackDuck scan
+    build job: 'securityscans/Blackduck/cloud/docker', wait: false, parameters: [ string(name: 'branch', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}") ]
+}
+
 void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
         if (params.DOCKER_TESTS) {
@@ -440,6 +445,15 @@ pipeline {
             steps {
                 publishToInternalRegistry()
                 build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+            }
+        }
+
+        stage('BlackDuck-Scan') {
+            when {
+                expression { return params.PUBLISH_IMAGE }
+            }
+            steps {
+                scanWithBlackDuck()
             }
         }
 

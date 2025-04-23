@@ -8,7 +8,7 @@ import groovy.json.JsonSlurperClassic
 // email list for scheduled builds (includes security vulnerability)
 emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
 // email list for security vulnerabilities only
-emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
+emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/

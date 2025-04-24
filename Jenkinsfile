@@ -450,7 +450,10 @@ pipeline {
 
         stage('BlackDuck-Scan') {
             when {
-                expression { return params.PUBLISH_IMAGE }
+                anyOf {
+                        branch 'develop'
+                        expression { return params.PUBLISH_IMAGE }
+                    }
             }
             steps {
                 scanWithBlackDuck()

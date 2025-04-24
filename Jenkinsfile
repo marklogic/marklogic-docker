@@ -8,7 +8,7 @@ import groovy.json.JsonSlurperClassic
 // email list for scheduled builds (includes security vulnerability)
 emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
 // email list for security vulnerabilities only
-emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
+emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
@@ -95,7 +95,7 @@ def getReviewState() {
     return reviewState
 }
 
-void resultNotification(message) {
+void resultNotification(status) {
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
@@ -130,7 +130,7 @@ void resultNotification(message) {
     // If Jira ID is available, add comment to the ticket and add link to email.
     if (JIRA_ID) {
         def jira_link = "https://progresssoftware.atlassian.net/browse/${JIRA_ID}"
-        def comment = [ body: "Jenkins pipeline build result: ${message}" ]
+        def comment = [ body: "Jenkins pipeline build result: ${status}" ]
         jiraAddComment site: 'JIRA',
             input: comment,
             idOrKey: JIRA_ID,
@@ -139,7 +139,7 @@ void resultNotification(message) {
     }
     mail to: "${emailList}",
         body: "${email_body}",
-        subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        subject: "🥷 ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
         charset: 'UTF-8', mimeType: 'text/html'
 }
 
@@ -298,6 +298,11 @@ void publishToInternalRegistry() {
     currentBuild.description = "Published"
 }
 
+void scanWithBlackDuck() {
+    // Run BlackDuck scan
+    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'branch', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}") ]
+}
+
 void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
         if (params.DOCKER_TESTS) {
@@ -439,7 +444,16 @@ pipeline {
             }
             steps {
                 publishToInternalRegistry()
-                build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+                build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+            }
+        }
+
+        stage('BlackDuck-Scan') {
+            when {
+                expression { return params.PUBLISH_IMAGE }
+            }
+            steps {
+                scanWithBlackDuck()
             }
         }
 
@@ -457,13 +471,16 @@ pipeline {
             publishTestResults()
         }
         success {
-            resultNotification('BUILD SUCCESS ✅')
+            resultNotification('✅ Success')
         }
         failure {
-            resultNotification('BUILD ERROR ❌')
+            resultNotification('❌ Failure')
         }
         unstable {
-            resultNotification('BUILD UNSTABLE ❌')
+            resultNotification('⚠️ Unstable')
+        }
+        aborted {
+            resultNotification('🚫 Aborted')
         }
     }
 }

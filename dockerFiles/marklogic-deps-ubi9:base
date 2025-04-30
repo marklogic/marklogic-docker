@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5-1741850109
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5-1745855087
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
@@ -12,7 +12,7 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 ###############################################################
 
 RUN microdnf -y update \
-    && curl -Lso libnsl.rpm https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-release-tierpoint/devdependencies/libnsl-2.34-125.el9_5.3.x86_64.rpm \
+    && curl -Lso libnsl.rpm https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-release-tierpoint/devdependencies/libnsl-2.34-125.el9_5.8.x86_64.rpm \
     && rpm -i libnsl.rpm \
     && rm -f libnsl.rpm
 

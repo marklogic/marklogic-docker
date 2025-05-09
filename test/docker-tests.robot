@@ -3,6 +3,7 @@ Resource         keywords.resource
 Documentation    Test all initialization options using Docker run and Docker Compose.
 ...              Each test case creates and then tears down one or more Docker containers.
 ...              Verification is done using REST calls to MarkLogic server and Docker logs.
+Suite Setup      Ensure Test Results Directory Exists
 
 *** Test Cases ***
 
@@ -198,6 +199,7 @@ Initialized MarkLogic container with config overrides
         Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
         Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
     END
+    Verify That marklogic.conf contains    TZ=America/Los_Angeles
     Docker log should contain    *INSTALL_CONVERTERS is false, not installing converters.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Verify response for unauthenticated request with    8000    *Unauthorized*
@@ -523,3 +525,23 @@ Dynamic Host Cluster Concurrecy Join Test
     Concurrent Dynamic Host Join Test
 
     [Teardown]    Delete compose from    compose-test-16.yaml
+
+Verify parameter overrides
+    Create container with    -e    OVERWRITE_ML_CONF=true
+    ...                      -e    TZ=America/Los_Angeles
+    ...                      -e    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test
+    ...                      -e    MARKLOGIC_UMASK=022
+    ...                      -e    ML_HUGEPAGES_TOTAL=0
+    ...                      -e    MARKLOGIC_DISABLE_JVM=true
+    ...                      -e    MARKLOGIC_USER=marklogic_user
+    ...                      -e    JAVA_HOME=fakejava
+    ...                      -e    CLASSPATH=fakeclasspath
+    ...                      -e    MARKLOGIC_EC2_HOST=false
+    ...                      -e    MARKLOGIC_HOSTNAME=marklogic
+
+    IF    'rootless' not in '${IMAGE_TYPE}'
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+        Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
+    END
+    Verify That marklogic.conf contains    TZ=America/Los_Angeles    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test    MARKLOGIC_UMASK=022    ML_HUGEPAGES_TOTAL=0    MARKLOGIC_DISABLE_JVM=true    MARKLOGIC_USER=marklogic_user    JAVA_HOME=fakejava    CLASSPATH=fakeclasspath    MARKLOGIC_EC2_HOST=false    MARKLOGIC_HOSTNAME=marklogic
+    [Teardown]    Delete container

@@ -49,7 +49,8 @@ done
 HOST_FQDN="${HOSTNAME}"
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
-    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee /etc/marklogic.conf
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | sudo tee -a /etc/marklogic.conf
+    sudo chmod 777 /etc/marklogic.conf
 fi
 
 ################################################################
@@ -65,18 +66,12 @@ if [[ "${OVERWRITE_ML_CONF}" == "true" ]]; then
     [[ "${MARKLOGIC_PID_FILE}" ]] && echo "export MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_UMASK}" ]] && echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >>/etc/marklogic.conf
     [[ "${TZ}" ]] && echo "export TZ=$TZ " >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_ADMIN_USERNAME}" ]] && echo "export MARKLOGIC_ADMIN_USERNAME=$MARKLOGIC_ADMIN_USERNAME" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_ADMIN_PASSWORD}" ]] && echo "export MARKLOGIC_ADMIN_PASSWORD=$MARKLOGIC_ADMIN_PASSWORD" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_WALLET_PASSWORD}" ]] && echo "export MARKLOGIC_WALLET_PASSWORD=$MARKLOGIC_WALLET_PASSWORD" >>/etc/marklogic.conf
-    [[ "${REALM}" ]] && echo "export REALM=$REALM" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_LICENSEE}" ]] && echo "export MARKLOGIC_LICENSEE=$MARKLOGIC_LICENSEE" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_LICENSE_KEY}" ]] && echo "export MARKLOGIC_LICENSE_KEY=$MARKLOGIC_LICENSE_KEY" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_GROUP}" ]] && echo "export MARKLOGIC_GROUP=$MARKLOGIC_GROUP" >>/etc/marklogic.conf
     [[ "${ML_HUGEPAGES_TOTAL}" ]] && echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_DISABLE_JVM}" ]] && echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >>/etc/marklogic.conf
     [[ "${MARKLOGIC_USER}" ]] && echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >>/etc/marklogic.conf
     [[ "${JAVA_HOME}" ]] && echo "export JAVA_HOME=$JAVA_HOME" >>/etc/marklogic.conf
     [[ "${CLASSPATH}" ]] && echo "export CLASSPATH=$CLASSPATH" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_EC2_HOST}" ]] && echo "export MARKLOGIC_EC2_HOST=$MARKLOGIC_EC2_HOST" >>/etc/marklogic.conf
 
     sudo chmod 400 /etc/marklogic.conf
 

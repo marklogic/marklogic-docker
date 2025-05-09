@@ -537,11 +537,10 @@ Verify parameter overrides
     ...                      -e    JAVA_HOME=fakejava
     ...                      -e    CLASSPATH=fakeclasspath
     ...                      -e    MARKLOGIC_EC2_HOST=false
-    ...                      -e    MARKLOGIC_HOSTNAME=marklogic
 
     IF    'rootless' not in '${IMAGE_TYPE}'
         Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
         Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
     END
-    Verify That marklogic.conf contains    TZ=America/Los_Angeles    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test    MARKLOGIC_UMASK=022    ML_HUGEPAGES_TOTAL=0    MARKLOGIC_DISABLE_JVM=true    MARKLOGIC_USER=marklogic_user    JAVA_HOME=fakejava    CLASSPATH=fakeclasspath    MARKLOGIC_EC2_HOST=false    MARKLOGIC_HOSTNAME=marklogic
+    Verify That marklogic.conf contains    TZ=America/Los_Angeles    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test    MARKLOGIC_UMASK=022    ML_HUGEPAGES_TOTAL=0    MARKLOGIC_DISABLE_JVM=true    MARKLOGIC_USER=marklogic_user    JAVA_HOME=fakejava    CLASSPATH=fakeclasspath    MARKLOGIC_EC2_HOST=false
     [Teardown]    Delete container

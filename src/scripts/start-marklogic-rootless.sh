@@ -49,7 +49,7 @@ done
 HOST_FQDN="${HOSTNAME}"
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
-    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | tee /etc/marklogic.conf
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | tee -a /etc/marklogic.conf
 fi
 
 ################################################################
@@ -66,6 +66,7 @@ fi
     [[ "${MARKLOGIC_USER}" ]] && echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >>/etc/marklogic.conf
     [[ "${JAVA_HOME}" ]] && echo "export JAVA_HOME=$JAVA_HOME" >>/etc/marklogic.conf
     [[ "${CLASSPATH}" ]] && echo "export CLASSPATH=$CLASSPATH" >>/etc/marklogic.conf
+    [[ "${MARKLOGIC_EC2_HOST}" ]] && echo "export MARKLOGIC_EC2_HOST=$MARKLOGIC_EC2_HOST" >>/etc/marklogic.conf
 
 ################################################################
 # Install Converters if required

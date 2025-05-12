@@ -14,7 +14,6 @@ If you'd like to change the image being tested change the variables in the makef
 ## Docker Image Tests
 Docker image tests are implemented with Robot framework. The framework requires Python 3.6+ and pip. Framework requirements are listed in requirements file and can be installed with the following commands:
 `cd test`
-`mkdir test_results`
 `python3 -m venv python_env`
 `source ./python_env/bin/activate`
 `pip3 install -r requirements.txt`

@@ -22,6 +22,7 @@ ${IMAGE_TYPE}    ubi-rootless
 ${VOL_NAME}    MarkLogic_vol_1
 ${VOL_INFO}    src=${VOL_NAME},dst=/var/opt/MarkLogic
 ${MARKLOGIC_DOCKER_VERSION}    2.1.2
+${TEST_RESULTS_DIR}    test_results
 
 *** Keywords ***
 Create container with
@@ -347,7 +348,7 @@ Create dynamic host token for group ${group} on host ${host} and port ${port} us
     ${token_xml}=    Set Variable    ${response.text}
     ${token_content}=    Get Regexp Matches    ${token_xml}    <dynamic-host-token[^>]*>(.*)</dynamic-host-token>    1
     ${token}=    Set Variable    ${token_content[0]}
-    [Return]    ${token}
+    RETURN    ${token}
 
 Enable dynamic host feature on ${dockerport} for group ${group}
     [Documentation]    This enables the dynamic host feature for the specified group.
@@ -357,7 +358,7 @@ Enable dynamic host feature on ${dockerport} for group ${group}
     ${json_body}=    Create Dictionary    group-name=${group}    allow-dynamic-hosts=${TRUE}
     ${response}=    Create Digest Session    RestSession    url=http://localhost:${dockerport}    headers=${headers}    auth=${auth}
     ${response}=    PUT On Session    RestSession    url=/manage/v2/groups/${group}/properties?format=json    json=${json_body}    headers=${header}
-    [Return]    ${response}
+    RETURN    ${response}
 
 Disable dynamic host feature on ${dockerport} for group ${group}
     [Documentation]    This enables the dynamic host feature for the specified group.
@@ -367,7 +368,7 @@ Disable dynamic host feature on ${dockerport} for group ${group}
     ${json_body}=    Create Dictionary    group-name=${group}    allow-dynamic-hosts=${FALSE}
     ${response}=    Create Digest Session    RestSession    url=http://localhost:${dockerport}    headers=${headers}    auth=${auth}
     ${response}=    PUT On Session    RestSession    url=/manage/v2/groups/${group}/properties?format=json    json=${json_body}    headers=${header}
-    [Return]    ${response}
+    RETURN    ${response}
 
 Init dynamic host ${dockerport} with token ${token}
     [Documentation]    This initializes the dynamic host with the specified token (no auth needed)
@@ -409,7 +410,7 @@ Get MarkLogic Host ID on port ${port} with hostname ${hostname}
     END
     
     Should Not Be Empty    ${host_id}    Host ${hostname} not found in the host list
-    [Return]    ${host_id}
+    RETURN    ${host_id}
 
 Get All Dynamic Host IDs on port ${port} for group ${group}
     [Documentation]    Gets all dynamic host IDs from the MarkLogic cluster
@@ -423,7 +424,7 @@ Get All Dynamic Host IDs on port ${port} for group ${group}
         ${hosts}=    Set Variable    ${response.json()["dynamic-hosts"]}
         ${host_ids}=    Set Variable    ${hosts}
     END
-    [Return]    ${host_ids}
+    RETURN    ${host_ids}
 
 Remove All Dynamic Hosts on port ${port} for group ${group}
     [Documentation]    Removes all dynamic hosts from the MarkLogic cluster for a specific group
@@ -538,7 +539,7 @@ Verify Dynamic Host Count on port ${port} for group ${group} equals ${expected_c
     IF    ${actual_count} > 0
         Log    Found dynamic hosts: @{host_ids}
     END
-    [Return]    ${host_ids}
+    RETURN    ${host_ids}
 
 Dynamic Host Join Fails When Token Expires ${group}
     [Documentation]    Tests that a token cannot be reused after it expires
@@ -605,3 +606,22 @@ Concurrent Dynamic Host Join Test
     Log    Expected approximately ${expected_count} dynamic hosts
     
     Should Be True    ${host_count} == ${expected_count}
+
+Ensure Test Results Directory Exists
+    [Documentation]    Creates 'test_results' directory if needed.
+    OperatingSystem.Create Directory    ${TEST_RESULTS_DIR}
+
+Verify That marklogic.conf contains
+    [Arguments]    @{variables}
+    [Documentation]    Checks if a list of variables exists in /etc/marklogic.conf inside the container.
+    ${container name}=    Remove spaces from    ${TEST_NAME}
+    FOR    ${variable}    IN    @{variables}
+        IF    'rootless' not in '${IMAGE_TYPE}'
+            ${output}=    Run Process    docker    exec    ${container name}    sudo    grep    ${variable}    /etc/marklogic.conf
+        ELSE
+            ${output}=    Run Process    docker    exec    ${container name}    grep    ${variable}    /etc/marklogic.conf
+        END
+        Log    STDERR: ${output.stderr}
+        Log    STDOUT: ${output.stdout}
+        Should Not Be Empty    ${output.stdout}    Variable ${variable} not found in /etc/marklogic.conf
+    END

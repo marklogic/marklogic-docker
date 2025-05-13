@@ -1,3 +1,4 @@
+# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 *** Settings ***
 Library    Process
 Library    String
@@ -245,8 +246,6 @@ Check host count on port ${port} should be ${count}
     ${response}=    GET On Session    RestSession    url=http://localhost:${port}/manage/v2/hosts?view=status&format=json
     ${host count}=    Set Variable    ${response.json()['host-status-list']['status-list-summary']['total-hosts']['value']} 
     Should Be Equal    ${host count}    ${count}
-    #cluster hosts:
-    #${response.json()['host-status-list']['status-list-items']['status-list-item']}
 
 Host ${hostname} should be part of group ${group}
     [Documentation]    Wrapper keyword that retries Check host ${hostname} should be in group ${group}
@@ -623,5 +622,5 @@ Verify That marklogic.conf contains
         END
         Log    STDERR: ${output.stderr}
         Log    STDOUT: ${output.stdout}
-        Should Not Be Empty    ${output.stdout}    Variable ${variable} not found in /etc/marklogic.conf
+        Should Not Be Empty    ${output.stdout}    Variable ${variable} not found in /etc/marklogic.conf        
     END

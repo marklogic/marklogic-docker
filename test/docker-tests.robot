@@ -1,3 +1,4 @@
+# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 *** Settings ***
 Resource         keywords.resource
 Documentation    Test all initialization options using Docker run and Docker Compose.

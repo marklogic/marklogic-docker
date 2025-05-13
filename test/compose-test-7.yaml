@@ -1,3 +1,4 @@
+# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 #Docker compose file to setup and join node2 on cluster using MARKLOGIC_GROUP param
 version: '3.6'
 services:

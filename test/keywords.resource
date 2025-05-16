@@ -148,16 +148,25 @@ Docker log should contain
     [Documentation]    Wrapper keyword that reties Get container log message, set second argument to True get logs of second container.
     Wait Until Keyword Succeeds    ${DOCKER TIMEOUT}    10s    Get container log message    ${string pattern}    ${second container}
 
-Get container log message
+Docker log should NOT contain
     [Arguments]    ${string pattern}    ${second container}=False
-    [Documentation]    Get Docker logs for a current image and find a matching string based on input pattern, set second argument to True get logs of second container.
+    [Documentation]    Wrapper keyword that reties Get container log message with inversion, set second argument to True get logs of second container.
+    Wait Until Keyword Succeeds    ${DOCKER TIMEOUT}    10s    Get container log message    ${string pattern}    ${second container}    invert=True
+
+Get container log message
+    [Arguments]    ${string pattern}    ${second container}=False    ${invert}=False
+    [Documentation]    Get Docker logs for a current image and find a matching string based on input pattern, set second argument to True get logs of second container. If invert is True, asserts the pattern is NOT present.
     ${container name}=    Remove spaces from    ${TEST NAME}
     IF    ${second container} == True
          ${container name}=    Set Variable    ${container name}-2
     END
     Run Process    docker    logs    ${container name}    stdout=test_results/stdout-${container name}.txt    timeout=${DOCKER TIMEOUT}
     ${docker log}=    Get File    test_results/stdout-${container name}.txt
-    Should Match    ${docker log}    ${string pattern}    msg=Did not find ${string pattern} in ${container name} container log
+    IF    ${invert}
+        Should Not Match    ${docker log}    ${string pattern}    msg=Found unexpected pattern '${string pattern}' in ${container name} container log
+    ELSE
+        Should Match    ${docker log}    ${string pattern}    msg=Did not find ${string pattern} in ${container name} container log
+    END
 
 MarkLogic Error log should contain
     [Arguments]    ${string pattern}

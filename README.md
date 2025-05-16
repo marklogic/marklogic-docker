@@ -181,8 +181,8 @@ MarkLogic Server Docker containers are configured using a set of environment var
 | MARKLOGIC_GROUP           | dnode                     | no                                | n/a       | will join the host to the given MarkLogic group                  |
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
-|INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
-|OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
+| INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
+| OVERWRITE_ML_CONF   | true                            | no                                | true     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true. Always true in rootless image. | 
 
 Note: MARKLOGIC_JOIN_TLS_ENABLED and MARKLOGIC_JOIN_CACERT_FILE should be used only for nodes joining the cluster. These two parameters will be ignored for bootstrap host configurations.
 

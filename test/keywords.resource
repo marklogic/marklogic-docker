@@ -8,6 +8,8 @@ Library    Collections
 Library    DateTime
 
 *** Variables ***
+${DOCKER_PLATFORM}    %{DOCKER_PLATFORM=linux/amd64}
+@{DOCKER DEFAULTS}    -it    -d    -p    8000:8000    -p    8001:8001    -p    8002:8002    -p7997:7997    --platform    ${DOCKER_PLATFORM}
 @{DOCKER DEFAULTS}    -it    -d    -p    8000:8000    -p    8001:8001    -p    8002:8002    -p7997:7997    --platform    linux/amd64
 ${DEFAULT ADMIN USER}    test_admin
 ${DEFAULT ADMIN PASS}    test_admin_pass

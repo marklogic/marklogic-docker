@@ -2,13 +2,24 @@
 dockerTag?=internal
 package?=MarkLogic.rpm
 repo_dir=marklogic
-docker_build_options=--compress --platform linux/amd64
+docker_build_options=--compress
 build_branch?=local
 docker_image_type?=ubi
 upgrade_docker_image_type?=ubi
 upgrade_image?=${repo_dir}/marklogic-server-${upgrade_docker_image_type}:${dockerTag}
 current_image?=${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}
 open_scap_version?=0.1.74
+
+#***************************************************************************
+# set docker platform based on the docker image type
+#***************************************************************************
+ifeq ($(findstring arm,$(docker_image_type)),arm)
+	docker_build_options += --platform linux/arm64
+	export DOCKER_PLATFORM=linux/arm64
+else
+	docker_build_options += --platform linux/amd64
+	export DOCKER_PLATFORM=linux/amd64
+endif
 
 #***************************************************************************
 # build docker image
@@ -29,7 +40,7 @@ endif
 
 # retrieve and copy open scap hardening script
 ifeq ($(findstring rootless,$(docker_image_type)),rootless)
-	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lo scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
+	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
 #UBI9 needs a different version of the remediation script
 ifeq ($(findstring ubi9,$(docker_image_type)),ubi9)
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/bash/rhel9-script-cis.sh > src/rhel-script-cis.sh
@@ -120,7 +131,7 @@ endif
 #***************************************************************************
 scap-scan:
 	mkdir -p scap
-	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lo scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
+	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
 #UBI9 needs a different version of the evaluation profile
 ifeq ($(findstring ubi9,$(current_image)),ubi9)
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel9-ds.xml > scap/ssg-rhel-ds.xml

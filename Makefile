@@ -19,6 +19,7 @@ ifeq ($(findstring arm,$(docker_image_type)),arm)
 else
 	docker_build_options += --platform linux/amd64
 	export DOCKER_PLATFORM=linux/amd64
+	docker run --privileged --rm tonistiigi/binfmt --install arm64
 endif
 
 #***************************************************************************

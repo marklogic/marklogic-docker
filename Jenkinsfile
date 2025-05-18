@@ -413,7 +413,7 @@ void scapScan() {
 pipeline {
     agent {
         label {
-            label 'cld-docker'
+            label 'cld-docker-temp'
         }
     }
     options {

@@ -28,9 +28,9 @@ build:
 # NOTICE file need to be in the build context to be included in the built image
 	cp NOTICE.txt src/NOTICE.txt
 
-	ifeq ($(findstring arm,$(docker_image_type)),arm)
-		docker run --privileged --rm tonistiigi/binfmt --install arm64
-	endif
+ifeq ($(findstring arm,$(docker_image_type)),arm)
+	docker run --privileged --rm tonistiigi/binfmt --install arm64
+endif
 	
 # rootless images use the same dependencies as ubi image so we copy the file
 ifeq ($(docker_image_type),ubi9)

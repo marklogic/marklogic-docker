@@ -368,6 +368,15 @@ Enable dynamic host feature on ${dockerport} for group ${group}
     ${response}=    PUT On Session    RestSession    url=/manage/v2/groups/${group}/properties?format=json    json=${json_body}    headers=${header}
     RETURN    ${response}
 
+Enable API token authentication on ${dockerport} for group ${group}
+    [Documentation]    This enables the API token authentication for the specified group
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Content-type=application/json    Accept=application/json
+    ${json_body}=    Create Dictionary    API-token-authentication=${TRUE}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${dockerport}    headers=${headers}    auth=${auth}
+    ${response}=    PUT On Session    RestSession    url=/manage/v2/servers/Admin/properties?group-id=${group}    json=${json_body}    headers=${header}
+    RETURN    ${response}
+
 Disable dynamic host feature on ${dockerport} for group ${group}
     [Documentation]    This enables the dynamic host feature for the specified group.
     ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
@@ -398,8 +407,6 @@ Create group ${group} on port ${port}
 
 Set up dynamic host group ${group}
     Create group ${group} on port 7102
-    # TODO: the enabling of the option on the Default group should be removed once the bug is fixed.
-    Enable dynamic host feature on 7102 for group Default
     Enable dynamic host feature on 7102 for group ${group}
 
 Get MarkLogic Host ID on port ${port} with hostname ${hostname}

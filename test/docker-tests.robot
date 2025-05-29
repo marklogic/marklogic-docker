@@ -568,6 +568,7 @@ Dynamic Host Cluster Test
     Sleep    60s
     ${group}=    set Variable    dynamic
     Set up dynamic host group ${group}
+    Enable API token authentication on 7202 for group Default
     Dynamic Host Join Successful on ${group} with 7401
     Dynamic Host Join Failure on dynamic with 7501 with wrong token
     Dynamic Host Join Failure on dynamic with 7501 when feature disabled
@@ -598,6 +599,7 @@ Dynamic Host Cluster Concurrecy Join Test
     Sleep    60s
     ${group}=    set Variable    dynamic
     Set up dynamic host group ${group}
+    Enable API token authentication on 7202 for group Default
     Concurrent Dynamic Host Join Test
 
     [Teardown]    Delete compose from    compose-test-16.yaml

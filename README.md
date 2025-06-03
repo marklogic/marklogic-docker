@@ -1076,7 +1076,6 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
     - libdb-utils (CVE-2016-0682, CVE-2016-0689, CVE-2016-0692, CVE-2016-0694, CVE-2016-3418, CVE-2017-3604, CVE-2017-3605, CVE-2017-3606, CVE-2017-3607, CVE-2017-3608, CVE-2017-3609, CVE-2017-3610, CVE-2017-3611, CVE-2017-3612, CVE-2017-3613, CVE-2017-3614, CVE-2017-3615
 CVE-2017-3616, CVE-2017-3617)
     - nspr (CVE-2016-1951)
-    - zlib (CVE-2025-4638)
 
 These packages are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
 

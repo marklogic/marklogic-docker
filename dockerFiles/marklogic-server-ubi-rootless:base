@@ -119,9 +119,7 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     BUILD_BRANCH=${BUILD_BRANCH} \
     MARKLOGIC_JOIN_TLS_ENABLED=false \
     MARKLOGIC_EC2_HOST=0 \
-    TZ=UTC \
-    WITH_SYSTEM_ZLIB=FALSE
-    # set WITH_SYSTEM_ZLIB for CVE-2025-4638 workaround
+    TZ=UTC
 
 ################################################################
 # Set Timezone

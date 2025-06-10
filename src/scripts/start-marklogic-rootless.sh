@@ -1,7 +1,7 @@
 #! /bin/bash
 ###############################################################
 #
-#   Copyright © 2018-2025 MarkLogic Corporation.  All Rights Reserved.
+#   Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 #
 ###############################################################
 #   Initialise and start MarkLogic server
@@ -49,7 +49,7 @@ done
 HOST_FQDN="${HOSTNAME}"
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
-    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | tee /etc/marklogic.conf
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | tee -a /etc/marklogic.conf
 fi
 
 ################################################################
@@ -57,15 +57,28 @@ fi
 ################################################################
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
+info "/etc/marklogic.conf will be appended with provided environment variables."
 
-    [[ "${MARKLOGIC_PID_FILE}" ]] && echo "export MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_UMASK}" ]] && echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >>/etc/marklogic.conf
-    [[ "${TZ}" ]] && echo "export TZ=$TZ" >>/etc/marklogic.conf
-    [[ "${ML_HUGEPAGES_TOTAL}" ]] && echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_DISABLE_JVM}" ]] && echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_USER}" ]] && echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >>/etc/marklogic.conf
-    [[ "${JAVA_HOME}" ]] && echo "export JAVA_HOME=$JAVA_HOME" >>/etc/marklogic.conf
-    [[ "${CLASSPATH}" ]] && echo "export CLASSPATH=$CLASSPATH" >>/etc/marklogic.conf
+# List of environment variables to append to /etc/marklogic.conf if set
+ENV_VARS=(
+    "MARKLOGIC_PID_FILE"
+    "MARKLOGIC_UMASK"
+    "TZ"
+    "ML_HUGEPAGES_TOTAL"
+    "MARKLOGIC_DISABLE_JVM"
+    "MARKLOGIC_USER"
+    "JAVA_HOME"
+    "CLASSPATH"
+    "MARKLOGIC_EC2_HOST"
+)
+
+for var in "${ENV_VARS[@]}"; do
+    value="${!var}"
+    if [[ -n "$value" ]]; then
+        echo "export $var=$value" >> /etc/marklogic.conf
+        info "Appended $var to /etc/marklogic.conf"
+    fi
+done
 
 ################################################################
 # Install Converters if required

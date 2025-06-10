@@ -14,7 +14,6 @@ If you'd like to change the image being tested change the variables in the makef
 ## Docker Image Tests
 Docker image tests are implemented with Robot framework. The framework requires Python 3.6+ and pip. Framework requirements are listed in requirements file and can be installed with the following commands:
 `cd test`
-`mkdir test_results`
 `python3 -m venv python_env`
 `source ./python_env/bin/activate`
 `pip3 install -r requirements.txt`
@@ -28,7 +27,7 @@ For additional installation instruction see https://robotframework.org/robotfram
 In order to run Docker tests, you need to have MarkLogic Docker image available in your environment. The image can be passed as a parameter or set with DOCKER_TEST_IMAGE environment variable.
 
 In order to execute a single test case with a published Docker image, use
-`robot --test "Initialized MarkLogic container" ./docker-tests.robot`
+`robot --test "Smoke Test" ./docker-tests.robot`
 
 In order to run all tests you can use make from root folder with
 `make docker-tests test_image=progressofficial/marklogic-db`
@@ -38,7 +37,7 @@ or by running Robot in test directly with
 
 *Note*
 QA_LICENSE_KEY environment variable needs to be set to a valid license key for license test to pass.
-If UBI rootless image is used, specify image type for individual tests:
+Some tests expect certain variable to have valid values. For example, if UBI rootless image is used, specify image type for individual tests:
 `robot --variable TEST_IMAGE:marklogic/marklogic-server-ubi-rootless:internal --variable IMAGE_TYPE:ubi-rootless --test 'Initialized MarkLogic container with config overrides' docker-tests.robot`
 
 For a quick start guide for Robot framework see https://robotframework.org/#getting-started

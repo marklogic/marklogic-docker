@@ -1,5 +1,7 @@
-/* groovylint-disable CompileStatic, LineLength, VariableTypeRequired */
+// Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 // This Jenkinsfile defines internal MarkLogic build pipeline.
+// The pipeline builds, tests, scans, and optionally publishes MarkLogic Docker images.
+// It can be triggered manually, by pull requests, or on a schedule.
 
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
 @Library('shared-libraries@1.0-declarative')
@@ -8,7 +10,7 @@ import groovy.json.JsonSlurperClassic
 // email list for scheduled builds (includes security vulnerability)
 emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
 // email list for security vulnerabilities only
-emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
+emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
@@ -19,8 +21,15 @@ IMAGE_SIZE = 0
 RPMversion = ''
 
 // Define local funtions
+
+/**
+ * Performs pre-build checks:
+ * - Initializes parameters as environment variables.
+ * - Extracts Jira ID from branch name or PR title.
+ * - Checks if the PR is a draft or has requested changes (for PR builds).
+ */
 void preBuildCheck() {
-    // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
+    // Initialize parameters as env variables (workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929)
     evaluate """${ def script = ''; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
     JIRA_ID = extractJiraID()
@@ -42,6 +51,10 @@ void preBuildCheck() {
     }
 }
 
+/**
+ * Extracts a Jira ID (e.g., MLE-1234) from the PR title or branch name.
+ * @return The extracted Jira ID string, or an empty string if not found.
+ */
 @NonCPS
 def extractJiraID() {
     // Extract Jira ID from one of the environment variables
@@ -67,6 +80,11 @@ def extractJiraID() {
     }
 }
 
+/**
+ * Checks if the current Pull Request is marked as a draft via GitHub API.
+ * Requires CHANGE_ID and GIT_URL environment variables.
+ * @return true if the PR is a draft, false otherwise.
+ */
 def prDraftCheck() {
     withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
         PrObj = sh(returnStdout: true, script:'''
@@ -77,6 +95,11 @@ def prDraftCheck() {
     return jsonObj.draft
 }
 
+/**
+ * Gets the review state of the current Pull Request via GitHub API.
+ * Requires CHANGE_ID and GIT_URL environment variables.
+ * @return The review state string (e.g., 'APPROVED', 'CHANGES_REQUESTED').
+ */
 def getReviewState() {
     def reviewResponse
     def commitHash
@@ -95,7 +118,12 @@ def getReviewState() {
     return reviewState
 }
 
-void resultNotification(message) {
+/**
+ * Sends an email notification with the build status and summary.
+ * Includes links to build URL, test reports, scan reports, and Jira ticket (if found).
+ * @param status The build status string (e.g., 'Success', 'Failure').
+ */
+void resultNotification(status) {
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
@@ -130,7 +158,7 @@ void resultNotification(message) {
     // If Jira ID is available, add comment to the ticket and add link to email.
     if (JIRA_ID) {
         def jira_link = "https://progresssoftware.atlassian.net/browse/${JIRA_ID}"
-        def comment = [ body: "Jenkins pipeline build result: ${message}" ]
+        def comment = [ body: "Jenkins pipeline build result: ${status}" ]
         jiraAddComment site: 'JIRA',
             input: comment,
             idOrKey: JIRA_ID,
@@ -139,10 +167,16 @@ void resultNotification(message) {
     }
     mail to: "${emailList}",
         body: "${email_body}",
-        subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        subject: "🥷 ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
         charset: 'UTF-8', mimeType: 'text/html'
 }
 
+/**
+ * Copies the MarkLogic Server and Converters RPMs.
+ * Determines the correct RPM version/branch based on marklogicVersion parameter.
+ * Downloads nightly builds from Artifactory unless specific RPM URLs are provided via ML_RPM/ML_CONVERTERS parameters.
+ * Sets RPM, CONVERTERS, and marklogicVersion global variables.
+ */
 void copyRPMs() {
     if (marklogicVersion == "10") {
         RPMsuffix = "-nightly"
@@ -194,6 +228,11 @@ void copyRPMs() {
     }
 }
 
+/**
+ * Builds the Docker image using the 'make build' target.
+ * Sets various image tag variables (builtImage, publishImage, latestTag).
+ * Updates the Jenkins build display name.
+ */
 void buildDockerImage() {
     builtImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}"
     publishImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}"
@@ -203,6 +242,11 @@ void buildDockerImage() {
     currentBuild.displayName = "#${BUILD_NUMBER}: ${marklogicVersion}-${env.dockerImageType} (${env.dockerVersion})"
 }
 
+/**
+ * Pulls the Docker image required for upgrade testing.
+ * Uses the 'upgradeDockerImage' parameter or defaults to a corresponding 'ubi' image.
+ * Skips the pull if the target image is 'ubi-rootless' and DOCKER_TESTS is false.
+ */
 void pullUpgradeDockerImage() {
     if (dockerImageType == "ubi-rootless" && params.DOCKER_TESTS != "true") {
         sh """
@@ -224,6 +268,9 @@ void pullUpgradeDockerImage() {
     }
 }
 
+/**
+ * Runs container structure tests using the 'make structure-test' target.
+ */
 void structureTests() {
     sh """
         #install container-structure-test 1.16.0 binary
@@ -232,10 +279,18 @@ void structureTests() {
     """
 }
 
+/**
+ * Runs Docker functional tests using the 'make docker-tests' target.
+ */
 void dockerTests() {
     sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType}"
 }
 
+/**
+ * Lints the Dockerfile and startup scripts using hadolint and shellcheck via 'make lint'.
+ * Captures the lint output in the LINT_OUTPUT variable.
+ * Records the built image size in the IMAGE_SIZE variable.
+ */
 void lint() {
     IMAGE_SIZE = sh(returnStdout: true, script: "docker images marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} --format '{{.Repository}}:{{.Tag}}\t{{.Size}}'")
 
@@ -251,6 +306,12 @@ void lint() {
     """
 }
 
+/**
+ * Scans the built Docker image for vulnerabilities using Grype via 'make scan'.
+ * Captures the scan summary in the SCAN_OUTPUT variable.
+ * Archives the full JSON scan report.
+ * Sends an email notification if critical or high severity vulnerabilities are found.
+ */
 void vulnerabilityScan() {
     sh """
         make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} docker_image_type=${dockerImageType} Jenkins=true
@@ -263,6 +324,12 @@ void vulnerabilityScan() {
     archiveArtifacts artifacts: 'scan/*', onlyIfSuccessful: true
 }
 
+/**
+ * Publishes the built Docker image to the internal Artifactory registry.
+ * Also publishes ML11 images to a private AWS ECR repository.
+ * Tags the image with multiple tags (version-specific, branch-specific, latest).
+ * Requires Artifactory and AWS credentials.
+ */
 void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
@@ -298,6 +365,18 @@ void publishToInternalRegistry() {
     currentBuild.description = "Published"
 }
 
+/**
+ * Triggers a BlackDuck scan job for the published image.
+ * Runs asynchronously (wait: false).
+ */
+void scanWithBlackDuck() {
+    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'branch', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}") ]
+}
+
+/**
+ * Publishes JUnit XML test results from structure and Docker tests.
+ * Publishes HTML reports for Docker tests and SCAP scans if they were executed.
+ */
 void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
         if (params.DOCKER_TESTS) {
@@ -321,6 +400,10 @@ void publishTestResults() {
     }
 }
 
+/**
+ * Runs an OpenSCAP compliance scan on the rootless image using 'make scap-scan'.
+ * Generates an HTML report.
+ */
 void scapScan() {
     sh """
         make scap-scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
@@ -339,6 +422,9 @@ pipeline {
         skipStagesAfterUnstable()
     }
     triggers {
+        // Trigger nightly builds on the develop branch for every supported version of MarkLogic
+        // and for every supported image type.
+        // Include SCAP scan for rootless images
         parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=10;dockerImageType=ubi
                                                              00 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 02 * * * % marklogicVersion=11;dockerImageType=ubi
@@ -354,7 +440,7 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '2.1.2', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '2.1.3', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
@@ -367,42 +453,49 @@ pipeline {
     }
 
     stages {
+        // Stage: Perform initial checks (PR status, Jira ID)
         stage('Pre-Build-Check') {
             steps {
                 preBuildCheck()
             }
         }
 
+        // Stage: Download MarkLogic Server and Converters RPMs
         stage('Copy-RPMs') {
             steps {
                 copyRPMs()
             }
         }
 
+        // Stage: Build the Docker image
         stage('Build-Image') {
             steps {
                 buildDockerImage()
             }
         }
 
+        // Stage: Pull the base image needed for upgrade testing
         stage('Pull-Upgrade-Image') {
             steps {
                 pullUpgradeDockerImage()
             }
         }
 
+        // Stage: Lint Dockerfile and startup scripts
         stage('Lint') {
             steps {
                 lint()
             }
         }
 
+        // Stage: Scan the image for vulnerabilities
         stage('Scan') {
             steps {
                 vulnerabilityScan()
             }
         }
 
+        // Stage: Run OpenSCAP compliance scan (conditional)
         stage('SCAP-Scan') {
             when {
                     expression { return params.SCAP_SCAN }
@@ -412,6 +505,7 @@ pipeline {
             }
         }
 
+        // Stage: Run container structure tests (conditional)
         stage('Structure-Tests') {
             when {
                 expression { return params.TEST_STRUCTURE }
@@ -421,6 +515,7 @@ pipeline {
             }
         }
 
+        // Stage: Run Docker functional tests (conditional)
         stage('Docker-Run-Tests') {
             when {
                 expression { return params.DOCKER_TESTS }
@@ -430,6 +525,7 @@ pipeline {
             }
         }
 
+        // Stage: Publish image to internal registries (conditional)
         stage('Publish-Image') {
             when {
                     anyOf {
@@ -439,7 +535,21 @@ pipeline {
             }
             steps {
                 publishToInternalRegistry()
-                build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+                // Trigger downstream QA image build job
+                build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+            }
+        }
+
+        // Stage: Trigger BlackDuck security scan (conditional)
+        stage('BlackDuck-Scan') {
+            when {
+                anyOf {
+                        branch 'develop'
+                        expression { return params.PUBLISH_IMAGE }
+                    }
+            }
+            steps {
+                scanWithBlackDuck()
             }
         }
 
@@ -447,6 +557,7 @@ pipeline {
 
     post {
         always {
+            // Clean up the workspace and Docker resources
             sh '''
                 cd src
                 rm -rf *.rpm NOTICE.txt
@@ -457,13 +568,16 @@ pipeline {
             publishTestResults()
         }
         success {
-            resultNotification('BUILD SUCCESS ✅')
+            resultNotification('✅ Success')
         }
         failure {
-            resultNotification('BUILD ERROR ❌')
+            resultNotification('❌ Failure')
         }
         unstable {
-            resultNotification('BUILD UNSTABLE ❌')
+            resultNotification('⚠️ Unstable')
         }
-    }
+        aborted {
+            resultNotification('🚫 Aborted')
+        }
+            }
 }

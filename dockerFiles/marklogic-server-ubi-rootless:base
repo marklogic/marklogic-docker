@@ -1,6 +1,6 @@
 ###############################################################
 #
-#   Copyright © 2018-2025 MarkLogic Corporation
+#   Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 #
 ###############################################################
 
@@ -118,7 +118,6 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     MARKLOGIC_WALLET_PASSWORD_FILE=mldb_wallet_password \
     BUILD_BRANCH=${BUILD_BRANCH} \
     MARKLOGIC_JOIN_TLS_ENABLED=false \
-    OVERWRITE_ML_CONF=true \
     MARKLOGIC_EC2_HOST=0 \
     TZ=UTC
 

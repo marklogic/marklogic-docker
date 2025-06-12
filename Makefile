@@ -100,7 +100,7 @@ lint:
 .PHONY: scan
 scan:
 ifeq ($(Jenkins),true)
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}/scan:/scan anchore/grype:latest --output json --file /scan/report-${docker_image_type}.json ${current_image}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${PWD}/scan:/scan anchore/grype:latest --output json --file scan/report-${docker_image_type}.json ${current_image}
 	sudo chown -R builder.ml-eng scan
 	echo -e "Grype scan summary\n------------------" > scan/report-${docker_image_type}.txt
 	jq '.matches[].vulnerability.severity' scan/report-${docker_image_type}.json | sort | uniq -c >> scan/report-${docker_image_type}.txt

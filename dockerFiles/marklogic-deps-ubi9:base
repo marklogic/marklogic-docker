@@ -11,9 +11,8 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 # install libnsl rpm package
 ###############################################################
 
-# Disabled update to avoid issues with libnsl package version (MLE-21703)
-# RUN microdnf -y update \
-RUN curl -Lso libnsl.rpm https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-release-tierpoint/devdependencies/libnsl-2.34-125.el9_5.8.x86_64.rpm \
+RUN microdnf -y update; \
+    curl -Lso libnsl.rpm https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-release-tierpoint/devdependencies/libnsl-2.34-168.el9_6.19.x86_64.rpm \
     && rpm -i libnsl.rpm \
     && rm -f libnsl.rpm
 

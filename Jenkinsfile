@@ -410,59 +410,6 @@ void scapScan() {
     """
 }
 
-/**
- * Runs a comprehensive BlackDuck scan for master branch builds.
- * This is a more detailed scan than the regular scanWithBlackDuck() function.
- * The scan results are published to the BlackDuck dashboard and also archived as build artifacts.
- * An email notification is sent to security teams with scan details.
- */
-void masterBranchBlackDuckScan() {
-    // Create directory for scan results
-    sh "mkdir -p blackduck-scan-results"
-    
-    // Set environment variables for BlackDuck scan
-    withCredentials([string(credentialsId: 'blackduck-api-token', variable: 'BLACKDUCK_TOKEN')]) {
-        // Run the BlackDuck scan with detailed options
-        sh """
-            # Export the environment variables needed for the scan
-            export BLACKDUCK_URL='https://progresssoftware.app.blackduck.com'
-            export BLACKDUCK_API_TOKEN='${BLACKDUCK_TOKEN}'
-            
-            # Run detect script for Docker image scan
-            curl -s -L https://detect.synopsys.com/detect8.sh | bash -s -- \
-                --blackduck.trust.cert=true \
-                --detect.tools=DOCKER \
-                --detect.project.name='MarkLogic-Docker-Images' \
-                --detect.project.version.name='${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}' \
-                --detect.docker.image='${dockerRegistry}/${publishImage}' \
-                --detect.risk.report.pdf=true \
-                --detect.risk.report.pdf.path='blackduck-scan-results' \
-                --detect.timeout=3600 \
-                --detect.policy.check=true
-        """
-        
-        // Generate report summary
-        sh """
-            echo "BlackDuck Scan Summary for ${dockerRegistry}-${publishImage}" > blackduck-scan-results/summary.txt
-            echo "Scan completed at: $(date)" >> blackduck-scan-results/summary.txt
-            echo "Project: MarkLogic-Docker-Images" >> blackduck-scan-results/summary.txt
-            echo "Version: ${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}" >> blackduck-scan-results/summary.txt
-            echo "Details: https://progresssoftware.app.blackduck.com/api/projects/MarkLogic-Docker-Images/versions/${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}" >> blackduck-scan-results/summary.txt
-        """
-    }
-    
-    // Archive scan results
-    archiveArtifacts artifacts: 'blackduck-scan-results/*', onlyIfSuccessful: true
-    
-    // Send email notification about BlackDuck scan
-    def scanSummary = readFile('blackduck-scan-results/summary.txt').trim()
-    mail charset: 'UTF-8', 
-        mimeType: 'text/html', 
-        to: "${emailSecList},${emailList}", 
-        body: "<h2>BlackDuck Security Scan Results</h2><br/><p>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER}</p><pre>${scanSummary}</pre><p>Please check the <a href='${env.BUILD_URL}artifact/blackduck-scan-results/'>full scan results</a> for details.</p>", 
-        subject: "BlackDuck Scan Completed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-}
-
 pipeline {
     agent {
         label {
@@ -613,7 +560,7 @@ pipeline {
                 branch 'master'
             }
             steps {
-                masterBranchBlackDuckScan()
+                scanWithBlackDuck()
             }
         }
 

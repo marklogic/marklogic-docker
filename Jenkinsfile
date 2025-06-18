@@ -443,11 +443,11 @@ void masterBranchBlackDuckScan() {
         
         // Generate report summary
         sh """
-            echo 'BlackDuck Scan Summary for ${dockerRegistry}/${publishImage}' > blackduck-scan-results/summary.txt
-            echo 'Scan completed at: $(date)' >> blackduck-scan-results/summary.txt
-            echo 'Project: MarkLogic-Docker-Images' >> blackduck-scan-results/summary.txt
-            echo 'Version: ${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}' >> blackduck-scan-results/summary.txt
-            echo 'Details: https://progresssoftware.app.blackduck.com/api/projects/MarkLogic-Docker-Images/versions/${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}' >> blackduck-scan-results/summary.txt
+            echo "BlackDuck Scan Summary for '${dockerRegistry}/${publishImage}'" > blackduck-scan-results/summary.txt
+            echo "Scan completed at: $(date)" >> blackduck-scan-results/summary.txt
+            echo "Project: MarkLogic-Docker-Images" >> blackduck-scan-results/summary.txt
+            echo "Version: ${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}" >> blackduck-scan-results/summary.txt
+            echo "Details: https://progresssoftware.app.blackduck.com/api/projects/MarkLogic-Docker-Images/versions/${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}" >> blackduck-scan-results/summary.txt
         """
     }
     

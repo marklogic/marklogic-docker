@@ -368,9 +368,38 @@ void publishToInternalRegistry() {
 /**
  * Triggers a BlackDuck scan job for the published image.
  * Runs asynchronously (wait: false).
+ * 
+ * @param scanType Type of scan to perform:
+ *                - 'current' (default): Scans only the currently built image
+ *                - 'latest': Scans all latest standard MarkLogic Docker images from DockerHub
  */
-void scanWithBlackDuck() {
-    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'branch', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}") ]
+void scanWithBlackDuck(String scanType = 'current') {
+    if (scanType == 'latest') {
+        // Fetch all latest MarkLogic Docker images from DockerHub
+        def dockerHubImages = sh(script: '''
+            curl -s "https://hub.docker.com/v2/repositories/marklogic/marklogic-server/tags?page_size=100" | \
+            jq -r '.results[] | select(.name | startswith("latest-")) | "marklogic/marklogic-server:" + .name'
+        ''', returnStdout: true).trim()
+        
+        // Use only the standard MarkLogic Docker images
+        def allImages = dockerHubImages
+        
+        // Filter out empty lines and create comma-separated list
+        def imageList = allImages.split('\n').findAll { it.trim() != '' }.join(',')
+        
+        echo "Scanning the following standard MarkLogic Docker images with BlackDuck: ${imageList}"
+        
+        build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ 
+            string(name: 'branch', value: "${env.BRANCH_NAME}"), 
+            string(name: 'CONTAINER_IMAGES', value: "${imageList}") 
+        ]
+    } else {
+        // Default behavior - scan only the current built image
+        build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ 
+            string(name: 'branch', value: "${env.BRANCH_NAME}"), 
+            string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}") 
+        ]
+    }
 }
 
 /**
@@ -425,6 +454,7 @@ pipeline {
         // Trigger nightly builds on the develop branch for every supported version of MarkLogic
         // and for every supported image type.
         // Include SCAP scan for rootless images
+        // Run weekly scan of all latest DockerHub images on Mondays at 1 AM
         parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=10;dockerImageType=ubi
                                                              00 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 02 * * * % marklogicVersion=11;dockerImageType=ubi
@@ -432,7 +462,8 @@ pipeline {
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 01 * * 1 % SCAN_LATEST_IMAGES=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -450,6 +481,7 @@ pipeline {
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
+        booleanParam(name: 'SCAN_LATEST_IMAGES', defaultValue: false, description: 'Scan all latest standard MarkLogic Docker images from DockerHub with BlackDuck')
     }
 
     stages {
@@ -553,17 +585,23 @@ pipeline {
                 scanWithBlackDuck()
             }
         }
-
-        // Stage: Run comprehensive BlackDuck scan for master branch builds
-        stage('Master-BlackDuck-Scan') {
+        
+        // Stage: Scan all latest standard MarkLogic images from DockerHub
+        stage('Scan-Latest-Docker-Images') {
             when {
-                branch 'master'
+                anyOf {
+                    // Can be triggered manually with SCAN_LATEST_IMAGES=true 
+                    expression { return params.SCAN_LATEST_IMAGES }
+                    // Schedule it to run weekly on Monday at 1 AM using a cron trigger at pipeline level
+                }
             }
             steps {
-                scanWithBlackDuck()
+                echo 'Scanning all latest standard MarkLogic Docker images from DockerHub...'
+                scanWithBlackDuck('latest')
             }
         }
 
+        
 
     }
 

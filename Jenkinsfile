@@ -194,12 +194,7 @@ void copyRPMs() {
         RPMversion = "11.3"
     }
     else if (marklogicVersion == "12") {
-        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
-        if (dockerImageType.contains("ubi9")) {
-            RPMsuffix = ".nightly-rhel9"
-        } else {
-            RPMsuffix = ".nightly-rhel"
-        }
+        RPMsuffix = ".nightly-rhel"
         RPMbranch = "b12"
         RPMversion = "12.0"
     }
@@ -432,7 +427,9 @@ pipeline {
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
+                                                             30 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

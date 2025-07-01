@@ -363,7 +363,7 @@ void publishToInternalRegistry() {
             }
     }
 
-    // Publish to private ACR repository that is used by PDC. (only ML12)
+    // Publish to private ACR Sandbox repository that is used by PDC. (only ML12)
     if ( params.marklogicVersion == "12" ) {
         withCredentials([usernamePassword(credentialsId: 'PDC_SANDBOX_USER', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
             sh """

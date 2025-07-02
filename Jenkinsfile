@@ -13,6 +13,7 @@ emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth
 emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
+pdcRegistry = 'sandboxpdc.azurecr.io'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
 JIRA_ID = ''
 LINT_OUTPUT = ''
@@ -357,9 +358,21 @@ void publishToInternalRegistry() {
             }
     }
 
+    // Publish to private ACR Sandbox repository that is used by PDC. (only ML12)
+    if ( params.marklogicVersion == "12" ) {
+        withCredentials([usernamePassword(credentialsId: 'PDC_SANDBOX_USER', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+            sh """
+                echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcRegistry}
+                docker tag ${builtImage} ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${builtImage} ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+                docker push ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+            """
+            }
+    }
+
     currentBuild.description = "Published"
 }
-
 /**
  * Triggers a BlackDuck scan job for the published image.
  * Runs asynchronously (wait: false).

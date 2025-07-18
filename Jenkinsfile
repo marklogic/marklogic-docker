@@ -331,7 +331,7 @@ void publishToInternalRegistry() {
         sh """
             docker logout ${dockerRegistry}
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
-            buildDate = sh(returnStdout: true, script: "date +%Y%m%d").trim()
+            def buildDate = sh(returnStdout: true, script: "date +%Y%m%d").trim()
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
             docker tag ${builtImage} ${dockerRegistry}/${latestTag}

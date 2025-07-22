@@ -335,11 +335,11 @@ void publishToInternalRegistry() {
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
             docker tag ${builtImage} ${dockerRegistry}/${latestTag}
-            docker tag ${builtImage} ${dockerRegistry}/${TIMESTAMP}-${builtImage}
+            docker tag ${builtImage} ${dockerRegistry}/${builtImage}-${TIMESTAMP}
             docker push ${dockerRegistry}/${builtImage}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
-            docker push ${dockerRegistry}/${TIMESTAMP}-${builtImage}
+            docker push ${dockerRegistry}/${builtImage}-${TIMESTAMP}
         """
         
     }

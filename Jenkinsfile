@@ -20,6 +20,7 @@ LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
+TIMESTAMP = new Date().format('yyyyMMdd')
 
 // Define local funtions
 
@@ -334,9 +335,11 @@ void publishToInternalRegistry() {
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
             docker tag ${builtImage} ${dockerRegistry}/${latestTag}
+            docker tag ${builtImage} ${dockerRegistry}/${builtImage}-${TIMESTAMP}
             docker push ${dockerRegistry}/${builtImage}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
+            docker push ${dockerRegistry}/${builtImage}-${TIMESTAMP}
         """
         
     }

@@ -12,17 +12,17 @@ Library    DateTime
 ${DEFAULT ADMIN USER}    test_admin
 ${DEFAULT ADMIN PASS}    test_admin_pass
 ${SPEC CHARS ADMIN PASS}    Admin@2$s%^&*!
-${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.1-ubi-rootless-2.1.3}
-${UPGRADE_TEST_IMAGE}    progressofficial/marklogic-db:11.3.1-ubi-rootless-2.1.3
+${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.1-ubi-rootless-2.2.0}
+${UPGRADE_TEST_IMAGE}    progressofficial/marklogic-db:11.3.1-ubi-rootless-2.2.0
 ${DOCKER TIMEOUT}    240s
 ${LICENSE KEY}    %{QA_LICENSE_KEY=none}
 ${LICENSEE}    MarkLogic - Version 9 QA Test License
 ${MARKLOGIC_VERSION}    11.3.1
-${BUILD_BRANCH}    release_2.1.3
+${BUILD_BRANCH}    release_2.2.0
 ${IMAGE_TYPE}    ubi-rootless
 ${VOL_NAME}    MarkLogic_vol_1
 ${VOL_INFO}    src=${VOL_NAME},dst=/var/opt/MarkLogic
-${MARKLOGIC_DOCKER_VERSION}    2.1.3
+${MARKLOGIC_DOCKER_VERSION}    2.2.0
 ${TEST_RESULTS_DIR}    test_results
 
 *** Keywords ***

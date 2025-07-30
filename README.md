@@ -1068,14 +1068,18 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.
 5. The latest released version of RedHat UBI images have known security vulnerabilities.
-    - curl (CVE-2016-5420, CVE-2016-5419, CVE-2016-5421, CVE-2017-3604, CVE-2016-3418, CVE-2017-3605, CVE-2016-0694, CVE-2017-3607, CVE-2017-3608, CVE-2017-3606, CVE-2016-0689, CVE-2017-3609, CVE-2016-0692, CVE-2016-0682, CVE-2016-5420, CVE-2016-5419, CVE-2016-5421)
+    - curl (CVE-2016-5420, CVE-2016-5419, CVE-2016-5421, CVE-2017-3604, CVE-2016-3418, CVE-2017-3605, CVE-2016-0694, CVE-2017-3607, CVE-2017-3608, CVE-2017-3606, CVE-2016-0689, CVE-2017-3609, CVE-2016-0692, CVE-2016-0682, CVE-2016-5420, CVE-2016-5419, CVE-2016-5421, CVE-2023-28322)
     - elfutils (CVE-2017-3610, CVE-2017-3611, CVE-2017-3612, CVE-2017-3613, CVE-2017-3614, CVE-2017-3615)
     - gawk (CVE-2017-3616)
     - gdb (CVE-2017-3617)
-    - glibc (CVE-2016-5420, CVE-2016-5421, CVE-2016-5419, CVE-2016-5419, CVE-2016-5420, CVE-2016-5421)
+    - glib/glibc (CVE-2016-5420, CVE-2016-5421, CVE-2016-5419, CVE-2016-5419, CVE-2016-5420, CVE-2016-5421, CVE-2019-12450, CVE-2020-6096)
+    - libcap (CVE-2023-2603)
     - libdb-utils (CVE-2016-0682, CVE-2016-0689, CVE-2016-0692, CVE-2016-0694, CVE-2016-3418, CVE-2017-3604, CVE-2017-3605, CVE-2017-3606, CVE-2017-3607, CVE-2017-3608, CVE-2017-3609, CVE-2017-3610, CVE-2017-3611, CVE-2017-3612, CVE-2017-3613, CVE-2017-3614, CVE-2017-3615
 CVE-2017-3616, CVE-2017-3617)
+    - libksba(CVE-2022-3515, CVE-2022-47629)
+    - libssh (CVE-2023-6004)
     - nspr (CVE-2016-1951)
+    - pam (CVE-2022-28321)
 
 These packages are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
 

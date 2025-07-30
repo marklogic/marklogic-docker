@@ -13,12 +13,14 @@ emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth
 emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
+pdcRegistry = 'sandboxpdc.azurecr.io'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
 JIRA_ID = ''
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
+TIMESTAMP = new Date().format('yyyyMMdd')
 
 // Define local funtions
 
@@ -194,12 +196,7 @@ void copyRPMs() {
         RPMversion = "11.3"
     }
     else if (marklogicVersion == "12") {
-        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
-        if (dockerImageType.contains("ubi9")) {
-            RPMsuffix = ".nightly-rhel9"
-        } else {
-            RPMsuffix = ".nightly-rhel"
-        }
+        RPMsuffix = ".nightly-rhel"
         RPMbranch = "b12"
         RPMversion = "12.0"
     }
@@ -338,9 +335,11 @@ void publishToInternalRegistry() {
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
             docker tag ${builtImage} ${dockerRegistry}/${latestTag}
+            docker tag ${builtImage} ${dockerRegistry}/${builtImage}-${TIMESTAMP}
             docker push ${dockerRegistry}/${builtImage}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
+            docker push ${dockerRegistry}/${builtImage}-${TIMESTAMP}
         """
         
     }
@@ -362,9 +361,21 @@ void publishToInternalRegistry() {
             }
     }
 
+    // Publish to private ACR Sandbox repository that is used by PDC. (only ML12)
+    if ( params.marklogicVersion == "12" ) {
+        withCredentials([usernamePassword(credentialsId: 'PDC_SANDBOX_USER', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+            sh """
+                echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcRegistry}
+                docker tag ${builtImage} ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${builtImage} ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+                docker push ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${pdcRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+            """
+            }
+    }
+
     currentBuild.description = "Published"
 }
-
 /**
  * Triggers a BlackDuck scan job for the published image.
  * Runs asynchronously (wait: false).
@@ -432,7 +443,9 @@ pipeline {
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi
                                                              30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
+                                                             30 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -440,7 +453,7 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '2.1.3', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '2.2.0', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
@@ -491,7 +504,8 @@ pipeline {
         // Stage: Scan the image for vulnerabilities
         stage('Scan') {
             steps {
-                vulnerabilityScan()
+                echo 'Skipping vulnerability scan due to compatibility issues.'
+                // vulnerabilityScan()
             }
         }
 

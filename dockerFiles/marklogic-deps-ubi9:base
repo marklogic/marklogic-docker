@@ -4,16 +4,15 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5-1747111267
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1752587672
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
 # install libnsl rpm package
 ###############################################################
 
-# Disabled update to avoid issues with libnsl package version (MLE-21703)
-# RUN microdnf -y update \
-RUN curl -Lso libnsl.rpm https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-release-tierpoint/devdependencies/libnsl-2.34-125.el9_5.8.x86_64.rpm \
+RUN microdnf -y update \
+    && curl -Lso libnsl.rpm https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-release-tierpoint/devdependencies/libnsl-2.34-168.el9_6.20.x86_64.rpm \
     && rpm -i libnsl.rpm \
     && rm -f libnsl.rpm
 

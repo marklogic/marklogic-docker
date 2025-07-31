@@ -343,23 +343,23 @@ void publishToInternalRegistry() {
         """
         
     }
-    // Publish to private ECR repository that is used by the performance team. (only ML11)
-    if ( params.marklogicVersion == "11" ) {
-        withCredentials( [[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: "aws-engineering-ct-ecr",
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-            ]]) {
-                sh """
-                    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 713759029616.dkr.ecr.us-west-2.amazonaws.com
-                    docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                    docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
-	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                    docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
-                """
-            }
-    }
+    // // Publish to private ECR repository that is used by the performance team. (only ML11)
+    // if ( params.marklogicVersion == "11" ) {
+    //     withCredentials( [[
+    //         $class: 'AmazonWebServicesCredentialsBinding',
+    //         credentialsId: "aws-engineering-ct-ecr",
+    //         accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+    //         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+    //         ]]) {
+    //             sh """
+    //                 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 713759029616.dkr.ecr.us-west-2.amazonaws.com
+    //                 docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+    //                 docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+	//                 docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+    //                 docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+    //             """
+    //         }
+    // }
 
     // Publish to private ACR Sandbox repository that is used by PDC. (only ML12)
     if ( params.marklogicVersion == "12" ) {

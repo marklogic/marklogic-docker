@@ -466,8 +466,9 @@ Dynamic Host Join Successful on ${group} with ${port}
     Init dynamic host ${port} with token ${token}
 
 Dynamic Host Join Successful with d-node on ${group} with ${port}
-    ${token}=    Create dynamic host token for group ${group} on host node2 and port 8001 using docker port 7102 with duration PT10M and comment no
+    ${token}=    Create dynamic host token for group ${group} on host node2 and port 8001 using docker port 7202 with duration PT10M and comment no
     Init dynamic host ${port} with token ${token}
+    Sleep    5s
 
 Dynamic Host Join Failure on ${group} with ${port} with wrong token
     [Documentation]    Tests that joining fails when token is corrupted

@@ -7,6 +7,9 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1753978370
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
+# MarkLogic version passed from build to enable conditional deps
+ARG ML_VERSION
+
 ###############################################################
 # install libnsl rpm package
 ###############################################################
@@ -23,6 +26,14 @@ RUN microdnf -y update \
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && microdnf -y install --setopt install_weak_deps=0 gdb redhat-lsb-core initscripts tzdata glibc libstdc++ hostname \
     && microdnf clean all
+
+###############################################################
+# MarkLogic 10 requires 32-bit libstdc++ runtime
+###############################################################
+RUN if [ -n "$ML_VERSION" ] && [ "${ML_VERSION%%.*}" = "10" ]; then \
+        microdnf -y install --setopt install_weak_deps=0 libstdc++.i686 && \
+        microdnf clean all; \
+    fi
 
 
 ###############################################################

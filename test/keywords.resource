@@ -14,7 +14,7 @@ ${DEFAULT ADMIN PASS}    test_admin_pass
 ${SPEC CHARS ADMIN PASS}    Admin@2$s%^&*!
 ${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.1-ubi-rootless-2.2.0}
 ${UPGRADE_TEST_IMAGE}    progressofficial/marklogic-db:11.3.1-ubi-rootless-2.2.0
-${DOCKER TIMEOUT}    240s
+${DOCKER TIMEOUT}    300s
 ${LICENSE KEY}    %{QA_LICENSE_KEY=none}
 ${LICENSEE}    MarkLogic - Version 9 QA Test License
 ${MARKLOGIC_VERSION}    11.3.1
@@ -39,6 +39,24 @@ Create container with
     ...            timeout=${DOCKER TIMEOUT}
     File Should Be Empty    test_results/stderr-${container name}.txt
     Docker log should contain    *Cluster config complete, marking this container as ready.*
+
+Create container with latency
+    [Arguments]    @{input parameters}
+    [Documentation]    Use Docker run to create a single container with defined defaults and input parameters and simulated network latency.
+    ...                Container is named based on test case so that the same name can be used in cleanup.
+    ...                Also verifies that the container is up by checking Docker logs.
+    ${container name}=    Remove spaces from    ${TEST NAME}
+    Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}
+    ...            --name    ${container name}
+    ...            --cap-add    NET_ADMIN    --entrypoint    /bin/bash
+    ...            ${TEST_IMAGE}
+    ...            -c    sudo microdnf -y install iproute iptables && sudo curl -s -O https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/i/iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo rpm -i iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo tc qdisc add dev lo root netem delay 30000ms && sudo tc qdisc show dev lo && /tini -- /usr/local/bin/start-marklogic.sh
+    ...            stderr=test_results/stderr-${container name}.txt
+    ...            stdout=test_results/stdout-${container name}.txt
+    ...            timeout=15000
+    File Should Be Empty    test_results/stderr-${container name}.txt
+    Wait Until Keyword Succeeds    5 minutes    10s    Get container log message    *root refcnt 2 limit 1000 delay 30s*
+    Wait Until Keyword Succeeds    30 minutes    30s    Get container log message    *Cluster config complete, marking this container as ready.*
 
 Create failing container with
     [Arguments]    @{input parameters}

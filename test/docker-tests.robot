@@ -89,6 +89,35 @@ Initialized MarkLogic container
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
     [Teardown]    Delete container
 
+Initialized MarkLogic container with latency
+    [Tags]    long_running
+    Skip If    '${IMAGE_TYPE}' != 'ubi'
+    Create container with latency    -e    MARKLOGIC_INIT=true
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    IF    'rootless' not in '${IMAGE_TYPE}' # ROOT image
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+    END
+    IF    'rootless' in '${IMAGE_TYPE}' # ROOTLESS image
+        Docker log should contain    */etc/marklogic.conf will be appended with provided environment variables.*
+    END
+    Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    Docker log should contain    *Starting container with MarkLogic Server.*
+    Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Docker log should contain    *Appended MARKLOGIC_PID_FILE to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_UMASK to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_USER to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_EC2_HOST to /etc/marklogic.conf*
+    Verify That marklogic.conf contains    MARKLOGIC_PID_FILE    MARKLOGIC_UMASK    MARKLOGIC_USER    MARKLOGIC_EC2_HOST=0
+    Verify response for unauthenticated request with    8000    *Unauthorized*
+    Verify response for unauthenticated request with    8001    *Unauthorized*
+    Verify response for unauthenticated request with    8002    *Unauthorized*
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    [Teardown]    Delete container
+
 Upgrade MarkLogic container
     Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
     Create test container with    -e    MARKLOGIC_INIT=true
@@ -562,7 +591,7 @@ Initialized MarkLogic container with ML converters
 Dynamic Host Cluster Test
     [Tags]    dynamic-hosts
     ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
-    Skip If    ${major_version} < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
+    Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
     Start compose from    compose-test-16.yaml
     # give it some time to prepare the large cluster
     Sleep    60s
@@ -593,7 +622,7 @@ Dynamic Host Cluster Test
 Dynamic Host Cluster Concurrecy Join Test
     [Tags]    dynamic-hosts
     ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
-    Skip If    ${major_version} < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
+    Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
     Start compose from    compose-test-16.yaml
     # give it some time to prepare the large cluster
     Sleep    60s

@@ -280,7 +280,7 @@ void structureTests() {
  * Runs Docker functional tests using the 'make docker-tests' target.
  */
 void dockerTests() {
-    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType}"
+    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType} DOCKER_TEST_LIST=\"${params.DOCKER_TEST_LIST}\""
 }
 
 /**
@@ -445,7 +445,10 @@ pipeline {
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
-                                                             30 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+                                                             30 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 05 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST="Initialized MarkLogic container with latency"
+                                                             30 05 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST="Initialized MarkLogic container with latency"
+                                                             00 06 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST="Initialized MarkLogic container with latency"''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -461,7 +464,8 @@ pipeline {
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
-        booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
+    booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
+    string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g "Test one", "Test two"). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
     }
 

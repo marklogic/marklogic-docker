@@ -100,8 +100,12 @@ else
     error "INSTALL_CONVERTERS must be true or false." exit
 fi
 
-N_RETRY=5
+# N_RETRY: Number of retries for failed operations (default: 5)  
+N_RETRY=${N_RETRY:-15}
+# RETRY_INTERVAL: Interval in seconds between retries (default: 10)
 RETRY_INTERVAL=10
+# CURL_TIMEOUT: Timeout in seconds for curl commands (default: 300)
+CURL_TIMEOUT=${CURL_TIMEOUT:-300}
 
 ################################################################
 # restart_check(hostname, baseline_timestamp)
@@ -117,11 +121,11 @@ RETRY_INTERVAL=10
 function restart_check {
     info "Waiting for MarkLogic to restart."
     local retry_count LAST_START
-    LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
+    LAST_START=$(curl -s -m "${CURL_TIMEOUT}" --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
         if [[ "$2" == "${LAST_START}" ]] || [[ -z "${LAST_START}" ]]; then
             sleep ${RETRY_INTERVAL}
-            LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
+            LAST_START=$(curl -s -m "${CURL_TIMEOUT}" --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
         else
             info "MarkLogic has restarted."
             return 0
@@ -178,7 +182,7 @@ function validate_cert {
     local cacertfile=$1
     local return_code
     local curl_output
-    curl_output=$(curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
+    curl_output=$(curl -s -S -L -m "${CURL_TIMEOUT}" --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
     return_code=$?
     if [[ $return_code != 0 ]]; then
         info "$curl_output"
@@ -193,6 +197,8 @@ function validate_cert {
 # Use RETRY_INTERVAL to tune the test length.
 # Validate that response code is the same as expected response
 # code or exit with an error.
+# For instance-admin endpoint, implement special retry logic with exponential backoff
+# due to network latency issues.
 #
 #   $1 :  Flag indicating if the script should exit if the given response code is not received ("true" to exit, "false" to return the response code")
 #   $2 :  The target url to test against
@@ -206,9 +212,26 @@ function curl_retry_validate {
     local expected_response_code=$1; shift
     local curl_options=("$@")
 
+    # Special case: instance-admin must only be invoked once (non-idempotent)
+    if [[ "${endpoint}" == *"/admin/v1/instance-admin"* ]]; then
+        response=$(curl -s -m "${CURL_TIMEOUT}" -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+        response_code=$(tail -n1 <<< "$response")
+        response_content=$(sed '$ d' <<< "$response")
+
+        if [[ ${response_code} -eq ${expected_response_code} ]]; then
+            return "${response_code}"
+        fi
+
+        echo "${response_content}" > start-marklogic_curl_retry_validate.log
+        if [[ "${return_error}" == "false" ]] ; then
+            return "${response_code}"
+        fi
+        [[ -f "start-marklogic_curl_retry_validate.log" ]] && cat start-marklogic_curl_retry_validate.log
+        error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
+    fi
+
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
-        
-        response=$(curl -s -m 30 -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+        response=$(curl -s -m "${CURL_TIMEOUT}" -w '%{http_code}' "${curl_options[@]}" "$endpoint")
         response_code=$(tail -n1 <<< "$response")
         response_content=$(sed '$ d' <<< "$response")
 
@@ -373,7 +396,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     info "Initializing MarkLogic on ${HOSTNAME}"
-    TIMESTAMP=$(curl --anyauth -m 30 -s --retry 5 \
+    TIMESTAMP=$(curl --anyauth -m "${CURL_TIMEOUT}" -s --retry 5 \
         -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
         http://"${HOSTNAME}":8001/admin/v1/init |

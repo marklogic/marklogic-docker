@@ -436,16 +436,16 @@ pipeline {
         // Trigger nightly builds on the develop branch for every supported version of MarkLogic
         // and for every supported image type.
         // Include SCAP scan for rootless images
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=10;dockerImageType=ubi
-                                                             00 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             00 02 * * * % marklogicVersion=11;dockerImageType=ubi
-                                                             30 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi
-                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 04 * * * % marklogicVersion=10;dockerImageType=ubi
+                                                             00 04 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
-                                                             30 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

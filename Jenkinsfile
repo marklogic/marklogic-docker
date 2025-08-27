@@ -330,16 +330,17 @@ void vulnerabilityScan() {
 void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
+            timestamptedTag = builtImage.replace('nightly', TIMESTAMP)
             docker logout ${dockerRegistry}
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
             docker tag ${builtImage} ${dockerRegistry}/${latestTag}
-            docker tag ${builtImage} ${dockerRegistry}/${builtImage}-${TIMESTAMP}
+            docker tag ${builtImage} ${dockerRegistry}/${timestamptedTag}
             docker push ${dockerRegistry}/${builtImage}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
-            docker push ${dockerRegistry}/${builtImage}-${TIMESTAMP}
+            docker push ${dockerRegistry}/${timestamptedTag}
         """
         
     }

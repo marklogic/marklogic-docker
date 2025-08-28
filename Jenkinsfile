@@ -20,7 +20,6 @@ LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
-TIMESTAMP = new Date().format('yyyyMMdd')
 
 // Define local funtions
 
@@ -235,6 +234,8 @@ void buildDockerImage() {
     publishImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}"
     mlVerShort=marklogicVersion.split("\\.")[0]
     latestTag="marklogic/marklogic-server-${dockerImageType}:latest-${mlVerShort}"
+    timeStamp = new Date().format('yyyyMMdd')
+    timestamptedTag = builtImage.replace('nightly', timeStamp)
     sh "make build docker_image_type=${dockerImageType} dockerTag=${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
     currentBuild.displayName = "#${BUILD_NUMBER}: ${marklogicVersion}-${env.dockerImageType} (${env.dockerVersion})"
 }
@@ -330,7 +331,6 @@ void vulnerabilityScan() {
 void publishToInternalRegistry() {
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
-            timestamptedTag = builtImage.replace('nightly', TIMESTAMP)
             docker logout ${dockerRegistry}
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
@@ -344,7 +344,8 @@ void publishToInternalRegistry() {
         """
         
     }
-    // // Publish to private ECR repository that is used by the performance team. (only ML11)
+    // Publish to private ECR repository that is used by the performance team. (only ML11)
+    // (disabled since it's not needed)
     // if ( params.marklogicVersion == "11" ) {
     //     withCredentials( [[
     //         $class: 'AmazonWebServicesCredentialsBinding',

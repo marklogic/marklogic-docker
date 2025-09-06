@@ -91,6 +91,10 @@ Initialized MarkLogic container
 
 Initialized MarkLogic container with latency
     [Tags]    long_running
+    [Documentation]    This test verifies the initialization of the MarkLogic container with high latency.
+    ...                Setup on a linux host can be done with the following commands:
+    ...                sudo dnf install  kernel-modules-extra
+    ...                sudo modprobe sch_netem
     Skip If    '${IMAGE_TYPE}' != 'ubi'
     Create container with latency    -e    MARKLOGIC_INIT=true
     ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}

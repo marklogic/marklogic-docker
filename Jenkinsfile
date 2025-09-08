@@ -20,7 +20,6 @@ LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
-TIMESTAMP = new Date().format('yyyyMMdd')
 
 // Define local funtions
 
@@ -235,6 +234,8 @@ void buildDockerImage() {
     publishImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}"
     mlVerShort=marklogicVersion.split("\\.")[0]
     latestTag="marklogic/marklogic-server-${dockerImageType}:latest-${mlVerShort}"
+    timeStamp = new Date().format('yyyyMMdd')
+    timestamptedTag = builtImage.replace('nightly', timeStamp)
     sh "make build docker_image_type=${dockerImageType} dockerTag=${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
     currentBuild.displayName = "#${BUILD_NUMBER}: ${marklogicVersion}-${env.dockerImageType} (${env.dockerVersion})"
 }
@@ -335,15 +336,16 @@ void publishToInternalRegistry() {
             docker tag ${builtImage} ${dockerRegistry}/${builtImage}
             docker tag ${builtImage} ${dockerRegistry}/${publishImage}
             docker tag ${builtImage} ${dockerRegistry}/${latestTag}
-            docker tag ${builtImage} ${dockerRegistry}/${builtImage}-${TIMESTAMP}
+            docker tag ${builtImage} ${dockerRegistry}/${timestamptedTag}
             docker push ${dockerRegistry}/${builtImage}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
-            docker push ${dockerRegistry}/${builtImage}-${TIMESTAMP}
+            docker push ${dockerRegistry}/${timestamptedTag}
         """
         
     }
-    // // Publish to private ECR repository that is used by the performance team. (only ML11)
+    // Publish to private ECR repository that is used by the performance team. (only ML11)
+    // (disabled since it's not needed)
     // if ( params.marklogicVersion == "11" ) {
     //     withCredentials( [[
     //         $class: 'AmazonWebServicesCredentialsBinding',
@@ -381,7 +383,7 @@ void publishToInternalRegistry() {
  * Runs asynchronously (wait: false).
  */
 void scanWithBlackDuck() {
-    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'branch', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}") ]
+    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}"), string(name: 'ML_VER', value: "${params.marklogicVersion}") ]
 }
 
 /**
@@ -436,19 +438,19 @@ pipeline {
         // Trigger nightly builds on the develop branch for every supported version of MarkLogic
         // and for every supported image type.
         // Include SCAP scan for rootless images
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=10;dockerImageType=ubi
-                                                             00 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             00 02 * * * % marklogicVersion=11;dockerImageType=ubi
-                                                             30 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi
-                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 04 * * * % marklogicVersion=10;dockerImageType=ubi
+                                                             00 04 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 03 * * * % marklogicVersion=12;dockerImageType=ubi9
-                                                             30 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 05 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST="Initialized MarkLogic container with latency"
-                                                             30 05 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST="Initialized MarkLogic container with latency"
-                                                             00 06 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST="Initialized MarkLogic container with latency"''' : '')
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 05 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                                                             30 05 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                                                             00 06 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

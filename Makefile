@@ -71,7 +71,20 @@ docker-tests:
 	python3 -m venv python_env; \
 	source ./python_env/bin/activate; \
 	pip3 install -r requirements.txt; \
-	robot -x docker-tests.xml --outputdir test_results --randomize all --variable TEST_IMAGE:${current_image} --variable UPGRADE_TEST_IMAGE:${upgrade_image} --variable MARKLOGIC_VERSION:${marklogicVersion} --variable BUILD_BRANCH:${build_branch} --variable MARKLOGIC_DOCKER_VERSION:${dockerVersion} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 ./docker-tests.robot; \
+	TEST_ARGS=""; \
+	if [ -n "$(DOCKER_TEST_LIST)" ]; then \
+		echo "$(DOCKER_TEST_LIST)" | sed 's/,/\n/g' | while IFS= read -r ITEM; do \
+			ITEM=$$(echo "$$ITEM" | sed -e 's/^ *//' -e 's/ *$$//' -e 's/^"//' -e 's/"$$//'); \
+			[ -n "$$ITEM" ] && echo "--test \"$$ITEM\""; \
+		done | tr '\n' ' ' > /tmp/test_args; \
+		TEST_ARGS=$$(cat /tmp/test_args); \
+		rm -f /tmp/test_args; \
+		echo "Running selected tests: $(DOCKER_TEST_LIST)"; \
+	else \
+		TEST_ARGS="--exclude long_running"; \
+        echo "Running all tests except those tagged with 'long_running'"; \
+	fi; \
+	eval "robot --consolewidth 120 -x docker-tests.xml --outputdir test_results --randomize all --variable TEST_IMAGE:${current_image} --variable UPGRADE_TEST_IMAGE:${upgrade_image} --variable MARKLOGIC_VERSION:${marklogicVersion} --variable BUILD_BRANCH:${build_branch} --variable MARKLOGIC_DOCKER_VERSION:${dockerVersion} --variable IMAGE_TYPE:${docker_image_type} --maxerrorlines 9999 $$TEST_ARGS ./docker-tests.robot"; \
 	deactivate; \
 	rm -rf python_env
 	

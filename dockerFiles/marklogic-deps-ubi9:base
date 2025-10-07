@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1754584681
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1758184547
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################

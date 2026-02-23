@@ -25,6 +25,16 @@ RPMversion = ''
 // Define local funtions
 
 /**
+ * Determines if the current build is for an ARM image type.
+ * ARM workers (e.g., Graviton3) are only available for MarkLogic 11.
+ * @return true if dockerImageType contains 'arm', false otherwise.
+ */
+@NonCPS
+def isArmImage() {
+    return params.dockerImageType.toLowerCase().contains('arm')
+}
+
+/**
  * Performs pre-build checks:
  * - Initializes parameters as environment variables.
  * - Extracts Jira ID from branch name or PR title.
@@ -292,8 +302,14 @@ void pullUpgradeDockerImage() {
  */
 void structureTests() {
     sh """
-        #install container-structure-test 1.16.0 binary
-        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.16.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+        #install container-structure-test 1.16.0 binary (detect architecture)
+        ARCH=\$(uname -m)
+        if [ "\$ARCH" = "aarch64" ]; then
+            PLATFORM="arm64"
+        else
+            PLATFORM="amd64"
+        fi
+        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.16.0/container-structure-test-linux-\${PLATFORM} && chmod +x container-structure-test-linux-\${PLATFORM} && mv container-structure-test-linux-\${PLATFORM} container-structure-test
         make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${env.BRANCH_NAME} docker_image_type=${env.dockerImageType} Jenkins=true
     """
 }
@@ -458,7 +474,7 @@ void scapScan() {
 pipeline {
     agent {
         label {
-            label 'cld-docker'
+            label isArmImage() ? 'cld-docker-graviton' : 'cld-docker'
         }
     }
     options {

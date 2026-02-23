@@ -51,7 +51,7 @@ Create container with latency
     ...            --name    ${container name}
     ...            --cap-add    NET_ADMIN    --entrypoint    /bin/bash
     ...            ${TEST_IMAGE}
-    ...            -c    sudo microdnf -y install iproute iptables && sudo curl -s -O https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/i/iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo rpm -i iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo tc qdisc add dev lo root netem delay 30000ms && sudo tc qdisc show dev lo && /tini -- /usr/local/bin/start-marklogic.sh
+    ...            -c    sudo microdnf -y install iproute iptables && (sudo yum install -y iproute-tc || sudo microdnf install -y iproute) && sudo tc qdisc add dev lo root netem delay 30000ms && sudo tc qdisc show dev lo && /tini -- /usr/local/bin/start-marklogic.sh
     ...            stderr=test_results/stderr-${container name}.txt
     ...            stdout=test_results/stdout-${container name}.txt
     ...            timeout=15000

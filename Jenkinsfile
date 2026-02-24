@@ -21,6 +21,7 @@ LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
+GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
 
 // Define local funtions
 
@@ -472,11 +473,7 @@ void scapScan() {
 }
 
 pipeline {
-    agent {
-        label {
-            label isArmImage() ? 'cld-docker-graviton' : 'cld-docker'
-        }
-    }
+    agent none
     options {
         checkoutToSubdirectory '.'
         buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
@@ -517,54 +514,91 @@ pipeline {
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
         string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g Test one, Test two). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
+        string(name: 'GRAVITON3_IP', defaultValue: '', description: '[ARM only] Public IP or hostname of Graviton3 instance. Required only for ARM image builds.', trim: true)
     }
 
     stages {
         // Stage: Perform initial checks (PR status, Jira ID)
         stage('Pre-Build-Check') {
+            agent { label 'cld-docker' }
             steps {
                 preBuildCheck()
             }
         }
 
-        // Stage: Download MarkLogic Server and Converters RPMs
+        // Stage: Download MarkLogic Server and Converters RPMs (ARM builds on x86)
         stage('Copy-RPMs') {
+            agent { label 'cld-docker' }
             steps {
                 copyRPMs()
             }
         }
 
-        // Stage: Build the Docker image
+        // Stage: Build the Docker image (ARM builds on x86)
         stage('Build-Image') {
+            agent { label 'cld-docker' }
             steps {
                 buildDockerImage()
             }
         }
 
+        // Stage: Save and transfer Docker image to Graviton3 instance (ARM builds only)
+        stage('Transfer-Image') {
+            agent { label 'cld-docker' }
+            when {
+                expression { return isArmImage() && params.GRAVITON3_IP }
+            }
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'KUBE_NINJAS_AWS_JENKINS', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'SSH_USER')]) {
+                    sh """
+                        echo "Saving ${builtImage} to ${GRAVITON3_IMAGE_ARCHIVE}..."
+                        docker image save ${builtImage} -o /tmp/${GRAVITON3_IMAGE_ARCHIVE}
+                        ls -lh /tmp/${GRAVITON3_IMAGE_ARCHIVE}
+                        
+                        echo "Transferring image to ${params.GRAVITON3_IP}:/tmp/"
+                        scp -i ${SSH_KEY_FILE} \
+                            -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            /tmp/${GRAVITON3_IMAGE_ARCHIVE} \
+                            ${SSH_USER}@${params.GRAVITON3_IP}:/tmp/
+                        echo "Image transfer completed successfully."
+                        
+                        echo "Cleaning up transferred image archive and built image on cld-docker..."
+                        rm -f /tmp/${GRAVITON3_IMAGE_ARCHIVE}
+                        docker rmi ${builtImage} || true
+                    """
+                }
+            }
+        }
+
         // Stage: Pull the base image needed for upgrade testing
         stage('Pull-Upgrade-Image') {
+            agent { label 'cld-docker' }
             steps {
                 pullUpgradeDockerImage()
             }
         }
 
-        // Stage: Lint Dockerfile and startup scripts
+        // Stage: Lint Dockerfile and startup scripts (x86 only)
         stage('Lint') {
+            agent { label 'cld-docker' }
             steps {
                 lint()
             }
         }
 
-        // Stage: Scan the image for vulnerabilities
+        // Stage: Scan the image for vulnerabilities (x86 only)
         stage('Scan') {
+            agent { label 'cld-docker' }
             steps {
                 echo 'Skipping vulnerability scan due to compatibility issues.'
                 // vulnerabilityScan()
             }
         }
 
-        // Stage: Run OpenSCAP compliance scan (conditional)
+        // Stage: Run OpenSCAP compliance scan (conditional, x86 only)
         stage('SCAP-Scan') {
+            agent { label 'cld-docker' }
             when {
                     expression { return params.SCAP_SCAN }
             }
@@ -573,8 +607,28 @@ pipeline {
             }
         }
 
+        // Stage: Load image from tar archive (ARM builds only)
+        stage('Load-Image') {
+            agent { label 'cld-docker-graviton' }
+            when {
+                expression { return isArmImage() && params.GRAVITON3_IP }
+            }
+            steps {
+                sh """
+                    echo "Loading image from /tmp/${GRAVITON3_IMAGE_ARCHIVE}..."
+                    docker image load -i /tmp/${GRAVITON3_IMAGE_ARCHIVE}
+                    docker images | head -5
+                """
+            }
+        }
+
         // Stage: Run container structure tests (conditional)
         stage('Structure-Tests') {
+            agent {
+                label {
+                    label isArmImage() ? 'cld-docker-graviton' : 'cld-docker'
+                }
+            }
             when {
                 expression { return params.TEST_STRUCTURE }
             }
@@ -585,6 +639,11 @@ pipeline {
 
         // Stage: Run Docker functional tests (conditional)
         stage('Docker-Run-Tests') {
+            agent {
+                label {
+                    label isArmImage() ? 'cld-docker-graviton' : 'cld-docker'
+                }
+            }
             when {
                 expression { return params.DOCKER_TESTS }
             }
@@ -595,6 +654,7 @@ pipeline {
 
         // Stage: Publish image to internal registries (conditional)
         stage('Publish-Image') {
+            agent { label 'cld-docker' }
             when {
                     anyOf {
                         branch 'develop'
@@ -610,6 +670,7 @@ pipeline {
 
         // Stage: Trigger BlackDuck security scan (conditional)
         stage('BlackDuck-Scan') {
+            agent { label 'cld-docker' }
             when {
                 anyOf {
                         branch 'develop'
@@ -627,8 +688,12 @@ pipeline {
         always {
             // Clean up the workspace and Docker resources
             sh '''
-                cd src
-                rm -rf *.rpm NOTICE.txt
+                # Clean up RPMs and metadata only if src directory exists (they're on cld-docker only)
+                if [ -d src ]; then
+                    cd src
+                    rm -rf *.rpm NOTICE.txt
+                fi
+                # Docker cleanup applies to both agents
                 docker stop $(docker ps -a -q) || true
                 docker system prune --force --all --volumes
                 docker system df

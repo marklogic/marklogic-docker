@@ -405,6 +405,7 @@ void publishToInternalRegistry() {
             docker tag ${imageToPublish} ${dockerRegistry}/${latestTag}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
+            docker push ${dockerRegistry}/${timestamptedTag}
         """
         
     }

@@ -1,7 +1,7 @@
 #! /bin/bash
 ###############################################################
 #
-#   Copyright 2023 MarkLogic Corporation.  All Rights Reserved.
+#   Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 #
 ###############################################################
 #   Initialise and start MarkLogic server
@@ -33,11 +33,6 @@ log () {
 }
 
 ###############################################################
-# removing MarkLogic ready file and create it when 8001 is accessible on node
-###############################################################
-rm -f /var/opt/MarkLogic/ready
-
-###############################################################
 # Prepare script
 ###############################################################
 info "Starting container with MarkLogic Server."
@@ -54,7 +49,7 @@ done
 HOST_FQDN="${HOSTNAME}"
 if [[ -n "${MARKLOGIC_FQDN_SUFFIX}" ]]; then
     HOST_FQDN="$(hostname).${MARKLOGIC_FQDN_SUFFIX}"
-    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | tee /etc/marklogic.conf
+    echo "export MARKLOGIC_HOSTNAME=\"${HOST_FQDN}\"" | tee -a /etc/marklogic.conf
 fi
 
 ################################################################
@@ -62,15 +57,28 @@ fi
 ################################################################
 
 # If an ENV value exists in a list, append it to the /etc/marklogic.conf file
+info "/etc/marklogic.conf will be appended with provided environment variables."
 
-    [[ "${MARKLOGIC_PID_FILE}" ]] && echo "export MARKLOGIC_PID_FILE=$MARKLOGIC_PID_FILE" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_UMASK}" ]] && echo "export MARKLOGIC_UMASK=$MARKLOGIC_UMASK" >>/etc/marklogic.conf
-    [[ "${TZ}" ]] && echo "export TZ=$TZ" >>/etc/marklogic.conf
-    [[ "${ML_HUGEPAGES_TOTAL}" ]] && echo "export ML_HUGEPAGES_TOTAL=$ML_HUGEPAGES_TOTAL" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_DISABLE_JVM}" ]] && echo "export MARKLOGIC_DISABLE_JVM=$MARKLOGIC_DISABLE_JVM" >>/etc/marklogic.conf
-    [[ "${MARKLOGIC_USER}" ]] && echo "export MARKLOGIC_USER=$MARKLOGIC_USER" >>/etc/marklogic.conf
-    [[ "${JAVA_HOME}" ]] && echo "export JAVA_HOME=$JAVA_HOME" >>/etc/marklogic.conf
-    [[ "${CLASSPATH}" ]] && echo "export CLASSPATH=$CLASSPATH" >>/etc/marklogic.conf
+# List of environment variables to append to /etc/marklogic.conf if set
+ENV_VARS=(
+    "MARKLOGIC_PID_FILE"
+    "MARKLOGIC_UMASK"
+    "TZ"
+    "ML_HUGEPAGES_TOTAL"
+    "MARKLOGIC_DISABLE_JVM"
+    "MARKLOGIC_USER"
+    "JAVA_HOME"
+    "CLASSPATH"
+    "MARKLOGIC_EC2_HOST"
+)
+
+for var in "${ENV_VARS[@]}"; do
+    value="${!var}"
+    if [[ -n "$value" ]]; then
+        echo "export $var=$value" >> /etc/marklogic.conf
+        info "Appended $var to /etc/marklogic.conf"
+    fi
+done
 
 ################################################################
 # Install Converters if required
@@ -92,10 +100,12 @@ else
     error "INSTALL_CONVERTERS must be true or false." exit
 fi
 
-
-# Values taken directy from documentation: https://docs.marklogic.com/guide/admin-api/cluster#id_10889
-N_RETRY=5
+# N_RETRY: Number of retries for failed operations (default: 5)  
+N_RETRY=${N_RETRY:-15}
+# RETRY_INTERVAL: Interval in seconds between retries (default: 10)
 RETRY_INTERVAL=10
+# CURL_TIMEOUT: Timeout in seconds for curl commands (default: 300)
+CURL_TIMEOUT=${CURL_TIMEOUT:-300}
 
 ################################################################
 # restart_check(hostname, baseline_timestamp)
@@ -111,11 +121,11 @@ RETRY_INTERVAL=10
 function restart_check {
     info "Waiting for MarkLogic to restart."
     local retry_count LAST_START
-    LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
+    LAST_START=$(curl -s -m "${CURL_TIMEOUT}" --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
-        if [ "$2" == "${LAST_START}" ] || [ -z "${LAST_START}" ]; then
+        if [[ "$2" == "${LAST_START}" ]] || [[ -z "${LAST_START}" ]]; then
             sleep ${RETRY_INTERVAL}
-            LAST_START=$(curl -s --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
+            LAST_START=$(curl -s -m "${CURL_TIMEOUT}" --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}" "http://$1:8001/admin/v1/timestamp")
         else
             info "MarkLogic has restarted."
             return 0
@@ -172,9 +182,9 @@ function validate_cert {
     local cacertfile=$1
     local return_code
     local curl_output
-    curl_output=$(curl -s -S -L --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
+    curl_output=$(curl -s -S -L -m "${CURL_TIMEOUT}" --cacert "${cacertfile}" --ssl "${ML_BOOTSTRAP_PROTOCOL}"://"${MARKLOGIC_BOOTSTRAP_HOST}":8001 --anyauth --user "${ML_ADMIN_USERNAME}":"${ML_ADMIN_PASSWORD}")
     return_code=$?
-    if [ $return_code -ne 0 ]; then
+    if [[ $return_code != 0 ]]; then
         info "$curl_output"
         error "MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down." exit
     fi
@@ -187,6 +197,8 @@ function validate_cert {
 # Use RETRY_INTERVAL to tune the test length.
 # Validate that response code is the same as expected response
 # code or exit with an error.
+# For instance-admin endpoint, implement special retry logic with exponential backoff
+# due to network latency issues.
 #
 #   $1 :  Flag indicating if the script should exit if the given response code is not received ("true" to exit, "false" to return the response code")
 #   $2 :  The target url to test against
@@ -200,9 +212,26 @@ function curl_retry_validate {
     local expected_response_code=$1; shift
     local curl_options=("$@")
 
+    # Special case: instance-admin must only be invoked once (non-idempotent)
+    if [[ "${endpoint}" == *"/admin/v1/instance-admin"* ]]; then
+        response=$(curl -s -m "${CURL_TIMEOUT}" -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+        response_code=$(tail -n1 <<< "$response")
+        response_content=$(sed '$ d' <<< "$response")
+
+        if [[ ${response_code} -eq ${expected_response_code} ]]; then
+            return "${response_code}"
+        fi
+
+        echo "${response_content}" > start-marklogic_curl_retry_validate.log
+        if [[ "${return_error}" == "false" ]] ; then
+            return "${response_code}"
+        fi
+        [[ -f "start-marklogic_curl_retry_validate.log" ]] && cat start-marklogic_curl_retry_validate.log
+        error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
+    fi
+
     for ((retry_count = 0; retry_count < N_RETRY; retry_count = retry_count + 1)); do
-        
-        response=$(curl -s -m 30 -w '%{http_code}' "${curl_options[@]}" "$endpoint")
+        response=$(curl -s -m "${CURL_TIMEOUT}" -w '%{http_code}' "${curl_options[@]}" "$endpoint")
         response_code=$(tail -n1 <<< "$response")
         response_content=$(sed '$ d' <<< "$response")
 
@@ -214,10 +243,10 @@ function curl_retry_validate {
         
         sleep ${RETRY_INTERVAL}
     done
-    if [[ "${return_error}" = "false" ]] ; then
+    if [[ "${return_error}" == "false" ]] ; then
         return "${response_code}"
     fi
-    [ -f "start-marklogic_curl_retry_validate.log" ] && cat start-marklogic_curl_retry_validate.log
+    [[ -f "start-marklogic_curl_retry_validate.log" ]] && cat start-marklogic_curl_retry_validate.log
     error "Expected response code ${expected_response_code}, got ${response_code} from ${endpoint}." exit
 }
 
@@ -367,7 +396,7 @@ elif [[ "${MARKLOGIC_INIT}" == "true" ]]; then
     fi
 
     info "Initializing MarkLogic on ${HOSTNAME}"
-    TIMESTAMP=$(curl --anyauth -m 30 -s --retry 5 \
+    TIMESTAMP=$(curl --anyauth -m "${CURL_TIMEOUT}" -s --retry 5 \
         -i -X POST -H "Content-type:application/json" \
         -d "${LICENSE_PAYLOAD}" \
         http://"${HOSTNAME}":8001/admin/v1/init |
@@ -470,31 +499,29 @@ fi
 # use latest health check only for version 11 and up
 if [[ "${MARKLOGIC_VERSION}" =~ "10" ]] || [[ "${MARKLOGIC_VERSION}" =~ "9" ]]; then
     HEALTH_CHECK="7997"
-else 
+else
      HEALTH_CHECK="7997/LATEST/healthcheck"
+     OLD_HEALTH_CHECK="7997"
 fi
 ML_HOST_PROTOCOL=$(get_host_protocol "localhost" "7997")
 
 while true
 do
     HOST_RESP_CODE=$(curl "${ML_HOST_PROTOCOL}"://"${HOSTNAME}":"${HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n" --cacert "${ML_CACERT_FILE}")
-    if [[ "${MARKLOGIC_INIT}" == "true" ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
-        touch /var/opt/MarkLogic/ready
+    if [[ "${HOST_RESP_CODE}" == "200" ]] || [[ "${MARKLOGIC_INIT}" != "true" ]]; then
         info "Cluster config complete, marking this container as ready."
         break
-    elif [[ "${MARKLOGIC_INIT}" != "true" ]]; then
-        touch /var/opt/MarkLogic/ready
-        info "Cluster config complete, marking this container as ready."
-        rm -f host_health.xml
-        break
-    elif [[ -f /var/opt/MarkLogic/DOCKER_INIT ]] && [ "${HOST_RESP_CODE}" -eq 200 ]; then
-        touch /var/opt/MarkLogic/ready
-        info "Cluster config complete, marking this container as ready."
-        break
+    elif [[ "${HOST_RESP_CODE}" == "404" ]]; then
+        # check old healthcheck in case of upgrade
+        HOST_RESP_CODE=$(curl "${ML_HOST_PROTOCOL}"://"${HOSTNAME}":"${OLD_HEALTH_CHECK}" -X GET -o host_health.xml -s -w "%{http_code}\n" --cacert "${ML_CACERT_FILE}")
+        if [[ "${HOST_RESP_CODE}" == "200" ]]; then
+            info "Cluster config complete, marking this container as ready."
+            break
+        fi
     else
         info "MarkLogic not ready yet, retrying."
-        sleep 5
     fi
+    sleep 5
 done
 
 ################################################################

@@ -1,0 +1,315 @@
+# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+#Docker compose file sample to setup a three node cluster
+version: '3.6'
+services:
+    bootstrap_3n:
+      image: progressofficial/marklogic-db
+      container_name: bootstrap_3n
+      hostname: bootstrap_3n
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      secrets:
+          - mldb_admin_password
+          - mldb_admin_username
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+    node2:
+      image: progressofficial/marklogic-db
+      container_name: node2
+      hostname: node2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7200-7210:8000-8010
+        - 7297:7997
+      depends_on:
+      - bootstrap_3n
+      networks:
+      - external_net
+    node3:
+      image: progressofficial/marklogic-db
+      container_name: node3
+      hostname: node3
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=true
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - MARKLOGIC_JOIN_CLUSTER=true
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_3n_vol3:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7300-7310:8000-8010
+        - 7397:7997
+      depends_on:
+      - bootstrap_3n
+      networks:
+      - external_net
+    dynamic0:
+      image: progressofficial/marklogic-db
+      container_name: dynamic0
+      hostname: dynamic0
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        # No MARKLOGIC_JOIN_CLUSTER flag - this keeps it standalone
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic0_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7400-7410:8000-8010
+        - 7497:7997
+      networks:
+        - external_net
+    dynamic1:
+      image: progressofficial/marklogic-db
+      container_name: dynamic1
+      hostname: dynamic1
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic1_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7500-7510:8000-8010
+        - 7597:7997
+      networks:
+        - external_net
+    dynamic2:
+      image: progressofficial/marklogic-db
+      container_name: dynamic2
+      hostname: dynamic2
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic2_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7600-7610:8000-8010
+        - 7697:7997
+      networks:
+        - external_net
+    dynamic3:
+      image: progressofficial/marklogic-db
+      container_name: dynamic3
+      hostname: dynamic3
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic3_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7700-7710:8000-8010
+        - 7797:7997
+      networks:
+        - external_net
+    dynamic4:
+      image: progressofficial/marklogic-db
+      container_name: dynamic4
+      hostname: dynamic4
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic4_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7800-7810:8000-8010
+        - 7897:7997
+      networks:
+        - external_net
+    dynamic5:
+      image: progressofficial/marklogic-db
+      container_name: dynamic5
+      hostname: dynamic5
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic5_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 7900-7910:8000-8010
+        - 7997:7997
+      networks:
+        - external_net
+    dynamic6:
+      image: progressofficial/marklogic-db
+      container_name: dynamic6
+      hostname: dynamic6
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic6_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 8000-8010:8000-8010
+        - 8097:7997
+      networks:
+        - external_net
+    dynamic7:
+      image: progressofficial/marklogic-db
+      container_name: dynamic7
+      hostname: dynamic7
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic7_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 8100-8110:8000-8010
+        - 8197:7997
+      networks:
+        - external_net
+    dynamic8:
+      image: progressofficial/marklogic-db
+      container_name: dynamic8
+      hostname: dynamic8
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic8_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 8200-8210:8000-8010
+        - 8297:7997
+      networks:
+        - external_net
+    dynamic9:
+      image: progressofficial/marklogic-db
+      container_name: dynamic9
+      hostname: dynamic9
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic9_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 8300-8310:8000-8010
+        - 8397:7997
+      networks:
+        - external_net
+    dynamic10:
+      image: progressofficial/marklogic-db
+      container_name: dynamic10
+      hostname: dynamic10
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
+        - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
+        - TZ=Europe/Prague
+      volumes:
+        - MarkLogic_dynamic10_vol:/var/opt/MarkLogic
+      secrets:
+        - mldb_admin_password
+        - mldb_admin_username
+      ports:
+        - 8400-8410:8000-8010
+        - 8497:7997
+      networks:
+        - external_net
+secrets:
+  mldb_admin_password:
+    file: ./mldb_admin_password.txt
+  mldb_admin_username:
+    file: ./mldb_admin_username.txt
+networks:
+  external_net: {}
+volumes:
+  MarkLogic_3n_vol1:
+  MarkLogic_3n_vol2:
+  MarkLogic_3n_vol3:
+  MarkLogic_dynamic0_vol:
+  MarkLogic_dynamic1_vol:
+  MarkLogic_dynamic2_vol:
+  MarkLogic_dynamic3_vol:
+  MarkLogic_dynamic4_vol:
+  MarkLogic_dynamic5_vol:
+  MarkLogic_dynamic6_vol:
+  MarkLogic_dynamic7_vol:
+  MarkLogic_dynamic8_vol:
+  MarkLogic_dynamic9_vol:
+  MarkLogic_dynamic10_vol:

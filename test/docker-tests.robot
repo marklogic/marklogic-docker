@@ -1,17 +1,34 @@
+# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 *** Settings ***
 Resource         keywords.resource
 Documentation    Test all initialization options using Docker run and Docker Compose.
 ...              Each test case creates and then tears down one or more Docker containers.
 ...              Verification is done using REST calls to MarkLogic server and Docker logs.
+Suite Setup      Ensure Test Results Directory Exists
 
 *** Test Cases ***
 
+Smoke Test
+    Create container with
+    Docker log should contain    *MARKLOGIC_INIT is set to false or not defined, not initializing.*
+    [Teardown]    Delete container
+
 Uninitialized MarkLogic container
     Create container with    -e    MARKLOGIC_INIT=false
+    IF    'rootless' not in '${IMAGE_TYPE}' # ROOT image
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+    END
+    IF    'rootless' in '${IMAGE_TYPE}' # ROOTLESS image
+        Docker log should contain    */etc/marklogic.conf will be appended with provided environment variables.*
+    END
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is set to false or not defined, not initializing.*
     Docker log should contain    *Starting container with MarkLogic Server.*
     Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Docker log should contain    *Appended MARKLOGIC_PID_FILE to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_UMASK to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_USER to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_EC2_HOST to /etc/marklogic.conf*
     Verify response for unauthenticated request with    8000    *Forbidden*
     Verify response for unauthenticated request with    8001    *This server must now self-install the initial databases and application servers. Click OK to continue.*
     Verify response for unauthenticated request with    8002    *Forbidden*
@@ -20,12 +37,23 @@ Uninitialized MarkLogic container
     Verify response for authenticated request with    8002    *Forbidden*
     [Teardown]    Delete container
 
-Uninitialized MarkLogic container no parameters
+Uninitialized MarkLogic container with no parameters
     Create container with
+    IF    'rootless' not in '${IMAGE_TYPE}' # ROOT image
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+    END
+    IF    'rootless' in '${IMAGE_TYPE}' # ROOTLESS image
+        Docker log should contain    */etc/marklogic.conf will be appended with provided environment variables.*
+    END
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is set to false or not defined, not initializing.*
     Docker log should contain    *Starting container with MarkLogic Server.*
     Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Docker log should contain    *Appended MARKLOGIC_PID_FILE to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_UMASK to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_USER to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_EC2_HOST to /etc/marklogic.conf*
+    Verify That marklogic.conf contains    MARKLOGIC_PID_FILE    MARKLOGIC_UMASK    MARKLOGIC_USER    MARKLOGIC_EC2_HOST=0
     Verify response for unauthenticated request with    8000    *Forbidden*
     Verify response for unauthenticated request with    8001    *This server must now self-install the initial databases and application servers. Click OK to continue.*
     Verify response for unauthenticated request with    8002    *Forbidden*
@@ -36,12 +64,56 @@ Uninitialized MarkLogic container no parameters
 
 Initialized MarkLogic container
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    IF    'rootless' not in '${IMAGE_TYPE}' # ROOT image
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+    END
+    IF    'rootless' in '${IMAGE_TYPE}' # ROOTLESS image
+        Docker log should contain    */etc/marklogic.conf will be appended with provided environment variables.*
+    END
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *Starting container with MarkLogic Server.*
     Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Docker log should contain    *Appended MARKLOGIC_PID_FILE to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_UMASK to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_USER to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_EC2_HOST to /etc/marklogic.conf*
+    Verify That marklogic.conf contains    MARKLOGIC_PID_FILE    MARKLOGIC_UMASK    MARKLOGIC_USER    MARKLOGIC_EC2_HOST=0
+    Verify response for unauthenticated request with    8000    *Unauthorized*
+    Verify response for unauthenticated request with    8001    *Unauthorized*
+    Verify response for unauthenticated request with    8002    *Unauthorized*
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    [Teardown]    Delete container
+
+Initialized MarkLogic container with latency
+    [Tags]    long_running
+    [Documentation]    This test verifies the initialization of the MarkLogic container with high latency.
+    ...                Setup on a linux host can be done with the following commands:
+    ...                sudo dnf install  kernel-modules-extra
+    ...                sudo modprobe sch_netem
+    Skip If    '${IMAGE_TYPE}' != 'ubi'
+    Create container with latency    -e    MARKLOGIC_INIT=true
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    IF    'rootless' not in '${IMAGE_TYPE}' # ROOT image
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+    END
+    IF    'rootless' in '${IMAGE_TYPE}' # ROOTLESS image
+        Docker log should contain    */etc/marklogic.conf will be appended with provided environment variables.*
+    END
+    Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    Docker log should contain    *Starting container with MarkLogic Server.*
+    Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Docker log should contain    *Appended MARKLOGIC_PID_FILE to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_UMASK to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_USER to /etc/marklogic.conf*
+    Docker log should contain    *Appended MARKLOGIC_EC2_HOST to /etc/marklogic.conf*
+    Verify That marklogic.conf contains    MARKLOGIC_PID_FILE    MARKLOGIC_UMASK    MARKLOGIC_USER    MARKLOGIC_EC2_HOST=0
     Verify response for unauthenticated request with    8000    *Unauthorized*
     Verify response for unauthenticated request with    8001    *Unauthorized*
     Verify response for unauthenticated request with    8002    *Unauthorized*
@@ -52,9 +124,10 @@ Initialized MarkLogic container
 
 Upgrade MarkLogic container
     Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for ARM image
     Create test container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *Starting container with MarkLogic Server.*
@@ -74,10 +147,62 @@ Upgrade MarkLogic container
     [Teardown]    Run Keywords    Delete container    True
     ...           AND             Delete Volume
 
+Upgrade MarkLogic container with init parameter
+    Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for ARM image
+    Create test container with    -e    MARKLOGIC_INIT=true
+...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    Docker log should contain    *Starting container with MarkLogic Server.*
+    Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Verify response for unauthenticated request with    8000    *Unauthorized*
+    Verify response for unauthenticated request with    8001    *Unauthorized*
+    Verify response for unauthenticated request with    8002    *Unauthorized*
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    Stop container
+    Create upgrade container with    -e    MARKLOGIC_INIT=true
+    Docker log should contain    *Cluster config complete, marking this container as ready.*    True
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    [Teardown]    Run Keywords    Delete container    True
+    ...           AND             Delete Volume
+
+Upgrade MarkLogic container with init and credential parameters
+    Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for ARM image
+    Create test container with    -e    MARKLOGIC_INIT=true
+...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    Docker log should contain    *Starting container with MarkLogic Server.*
+    Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
+    Verify response for unauthenticated request with    8000    *Unauthorized*
+    Verify response for unauthenticated request with    8001    *Unauthorized*
+    Verify response for unauthenticated request with    8002    *Unauthorized*
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    Stop container
+    Create upgrade container with    -e    MARKLOGIC_INIT=true
+    ...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    Docker log should contain    *Cluster config complete, marking this container as ready.*    True
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    [Teardown]    Run Keywords    Delete container    True
+    ...           AND             Delete Volume
+
 Initialized MarkLogic container with admin password containing special characters
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${SPEC CHARS ADMIN PASS}
+...                          -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+...                          -e    MARKLOGIC_ADMIN_PASSWORD=${SPEC CHARS ADMIN PASS}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *| server ver: ${MARKLOGIC_VERSION} | scripts ver: ${MARKLOGIC_DOCKER_VERSION} | image type: ${IMAGE_TYPE} | branch: ${BUILD_BRANCH} |*
@@ -91,10 +216,10 @@ Initialized MarkLogic container with admin password containing special character
 
 Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE
     Create container with    -e    MARKLOGIC_INIT=TRUE
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    LICENSEE=${LICENSEE}
-    ...                                        -e    LICENSE_KEY=${LICENSE KEY}
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    LICENSEE=${LICENSEE}
+    ...                      -e    LICENSE_KEY=${LICENSE KEY}
     Docker log should contain    *MARKLOGIC_JOIN_CLUSTER is false or not defined, not joining cluster.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Verify response for unauthenticated request with    8000    *Unauthorized*
@@ -114,9 +239,9 @@ Initialized MarkLogic container without credentials
 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
     [Tags]    negative
     Create failing container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    MARKLOGIC_JOIN_CLUSTER=invalid
+    ...                              -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                              -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                              -e    MARKLOGIC_JOIN_CLUSTER=invalid
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Docker log should contain    *Error: MARKLOGIC_JOIN_CLUSTER must be true or false.*
     [Teardown]    Delete container
@@ -124,30 +249,69 @@ Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
 Invalid value for INIT
     [Tags]    negative
     Create failing container with    -e    MARKLOGIC_INIT=invalid
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                              -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                              -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *Error: MARKLOGIC_INIT must be true or false.*
     [Teardown]    Delete container
 
 Invalid value for HOSTNAME
     [Tags]    negative
     Create failing container with    -e    HOSTNAME=invalid_hostname
-    ...                                        -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                              -e    MARKLOGIC_INIT=true
+    ...                              -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                              -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
     Docker log should contain    *Error: Failed to restart invalid_hostname*
+    [Teardown]    Delete container
+
+Initialized MarkLogic container without config overrides
+    Create container with    -e    MARKLOGIC_INIT=true
+    ...                      -e    OVERWRITE_ML_CONF=false
+    ...                      -e    TZ=America/Los_Angeles
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    # ROOT image
+    IF    'rootless' not in '${IMAGE_TYPE}'
+        Docker log should contain    *OVERWRITE_ML_CONF is false, not writing to /etc/marklogic.conf*
+        Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
+        Docker log should NOT contain    *Appended MARKLOGIC_PID_FILE to /etc/marklogic.conf*
+        Docker log should NOT contain    *Appended MARKLOGIC_UMASK to /etc/marklogic.conf*
+        Docker log should NOT contain    *Appended MARKLOGIC_USER to /etc/marklogic.conf*
+        Docker log should NOT contain    *Appended MARKLOGIC_EC2_HOST to /etc/marklogic.conf*
+    END
+    # ROOTLESS image doesn't support OVERWRITE_ML_CONF=false
+    IF    'rootless' in '${IMAGE_TYPE}'
+        Docker log should contain    */etc/marklogic.conf will be appended with provided environment variables.*
+        Docker log should contain    *Appended MARKLOGIC_PID_FILE to /etc/marklogic.conf*
+        Docker log should contain    *Appended MARKLOGIC_UMASK to /etc/marklogic.conf*
+        Docker log should contain    *Appended MARKLOGIC_USER to /etc/marklogic.conf*
+        Docker log should contain    *Appended MARKLOGIC_EC2_HOST to /etc/marklogic.conf*
+        Verify That marklogic.conf contains    MARKLOGIC_PID_FILE    MARKLOGIC_UMASK    MARKLOGIC_USER    MARKLOGIC_EC2_HOST=0    TZ=America/Los_Angeles
+    END
+    Docker log should contain    *INSTALL_CONVERTERS is false, not installing converters.*
+    Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
+    Verify response for unauthenticated request with    8000    *Unauthorized*
+    Verify response for unauthenticated request with    8001    *Unauthorized*
+    Verify response for unauthenticated request with    8002    *Unauthorized*
+    Verify response for authenticated request with    8000    *Query Console*
+    Verify response for authenticated request with    8001    *No license key has been entered*
+    Verify response for authenticated request with    8002    *Monitoring Dashboard*
+    Verify container timezone    America/Los_Angeles
     [Teardown]    Delete container
 
 Initialized MarkLogic container with config overrides
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    OVERWRITE_ML_CONF=true
-    ...                                        -e    TZ=America/Los_Angeles
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    IF    'rootless' not in '${IMAGE_TYPE}'
+    ...                      -e    OVERWRITE_ML_CONF=true
+    ...                      -e    TZ=America/Los_Angeles
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    IF    'rootless' not in '${IMAGE_TYPE}' # ROOT image
         Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
         Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
     END
+    IF    'rootless' in '${IMAGE_TYPE}' # ROOTLESS image
+        Docker log should contain    */etc/marklogic.conf will be appended with provided environment variables.*
+    END
+    Verify That marklogic.conf contains    TZ=America/Los_Angeles
     Docker log should contain    *INSTALL_CONVERTERS is false, not installing converters.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     Verify response for unauthenticated request with    8000    *Unauthorized*
@@ -408,10 +572,10 @@ Two node compose with second node uninitialized
 
 Initialized MarkLogic Server with wallet password and realm
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    MARKLOGIC_WALLET_PASSWORD=test_wallet_pass
-    ...                                        -e    REALM=public
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    MARKLOGIC_WALLET_PASSWORD=test_wallet_pass
+    ...                      -e    REALM=public
     Verify response for unauthenticated request with    8000    *Unauthorized*
     Verify response for unauthenticated request with    8001    *Unauthorized*
     Verify response for unauthenticated request with    8002    *Unauthorized*
@@ -421,12 +585,96 @@ Initialized MarkLogic Server with wallet password and realm
     [Teardown]    Delete container
 
 Initialized MarkLogic container with ML converters
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping ML converters test for ARM image (converters not available)
     Create container with    -e    MARKLOGIC_INIT=true
-    ...                                        -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
-    ...                                        -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
-    ...                                        -e    INSTALL_CONVERTERS=true
+    ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
+    ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
+    ...                      -e    INSTALL_CONVERTERS=true
     Docker log should contain    *INSTALL_CONVERTERS is true, installing converters.*
     Docker log should contain    *MARKLOGIC_INIT is true, initializing the MarkLogic server.*
     MarkLogic Error log should contain    .*Info: MarkLogic Converters.*found
     Verify converter package installation
     [Teardown]    Delete container
+ 
+Dynamic Host Cluster Test
+    [Tags]    dynamic-hosts
+    ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
+    Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
+    Start compose from    compose-test-16.yaml
+    # give it some time to prepare the large cluster
+    Sleep    60s
+    ${group}=    set Variable    dynamic
+    Set up dynamic host group ${group}
+    Enable API token authentication on 7202 for group Default
+    Dynamic Host Join Successful on ${group} with 7401
+    Dynamic Host Join Failure on dynamic with 7501 with wrong token
+    Dynamic Host Join Failure on dynamic with 7501 when feature disabled
+    Dynamic Host Join Failure on ${group} with 7501 when not using the Admin app server
+    Dynamic Host Remove Successful When Host is down
+    Dynamic Host Join Successful on ${group} with 7601
+    Dynamic Host Remove Successful When All Node is up
+    Dynamic Host Added When Some Host is down 7701
+    Dynamic Host Join Successful on dynamic with 7801
+    Dynamic Host Returns All Id dynamic4
+    Verify Full Cluster Restart Removes Dynamic Host Configuration dynamic
+    Enable dynamic host feature on 7102 for group Default
+    Dynamic Host Join Successful with d-node on Default with 7901
+    Disable dynamic host feature on 7102 for group Default
+    Verify Dynamic Host Count on port 7102 for group Default equals 1
+    Enable dynamic host feature on 7102 for group Default
+    Dynamic Host Join Fails When Token Expires ${group}
+    Dynamic Host Join Fails After Token Revoked ${group}
+    Verify Dynamic Host Can Execute Query Default 7902
+    [Teardown]    Delete compose from    compose-test-16.yaml
+
+Dynamic Host Cluster Concurrecy Join Test
+    [Tags]    dynamic-hosts
+    ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
+    Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
+    Start compose from    compose-test-16.yaml
+    # give it some time to prepare the large cluster
+    Sleep    60s
+    ${group}=    set Variable    dynamic
+    Set up dynamic host group ${group}
+    Enable API token authentication on 7202 for group Default
+    Concurrent Dynamic Host Join Test
+
+    [Teardown]    Delete compose from    compose-test-16.yaml
+
+Verify parameter overrides
+    Create container with    -e    OVERWRITE_ML_CONF=true
+    ...                      -e    TZ=America/Los_Angeles
+    ...                      -e    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test
+    ...                      -e    MARKLOGIC_UMASK=022
+    ...                      -e    ML_HUGEPAGES_TOTAL=0
+    ...                      -e    MARKLOGIC_DISABLE_JVM=true
+    ...                      -e    MARKLOGIC_USER=marklogic_user
+    ...                      -e    JAVA_HOME=fakejava
+    ...                      -e    CLASSPATH=fakeclasspath
+    ...                      -e    MARKLOGIC_EC2_HOST=false
+
+    IF    'rootless' not in '${IMAGE_TYPE}'
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+        Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
+    END
+    Verify That marklogic.conf contains    TZ=America/Los_Angeles    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test    MARKLOGIC_UMASK=022    ML_HUGEPAGES_TOTAL=0    MARKLOGIC_DISABLE_JVM=true    MARKLOGIC_USER=marklogic_user    JAVA_HOME=fakejava    CLASSPATH=fakeclasspath    MARKLOGIC_EC2_HOST=false
+    [Teardown]    Delete container
+
+Verify implicit parameter overrides
+    Create container with    -e    TZ=America/Los_Angeles
+    ...                      -e    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test
+    ...                      -e    MARKLOGIC_UMASK=022
+    ...                      -e    ML_HUGEPAGES_TOTAL=0
+    ...                      -e    MARKLOGIC_DISABLE_JVM=true
+    ...                      -e    MARKLOGIC_USER=marklogic_user
+    ...                      -e    JAVA_HOME=fakejava
+    ...                      -e    CLASSPATH=fakeclasspath
+    ...                      -e    MARKLOGIC_EC2_HOST=false
+
+    IF    'rootless' not in '${IMAGE_TYPE}'
+        Docker log should contain    *OVERWRITE_ML_CONF is true, deleting existing /etc/marklogic.conf and overwriting with ENV variables.*
+        Docker log should contain    *TZ is defined, setting timezone to America/Los_Angeles.*
+    END
+    Verify That marklogic.conf contains    TZ=America/Los_Angeles    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test    MARKLOGIC_UMASK=022    ML_HUGEPAGES_TOTAL=0    MARKLOGIC_DISABLE_JVM=true    MARKLOGIC_USER=marklogic_user    JAVA_HOME=fakejava    CLASSPATH=fakeclasspath    MARKLOGIC_EC2_HOST=false
+    [Teardown]    Delete container
+    

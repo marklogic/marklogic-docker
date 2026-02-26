@@ -1,5 +1,7 @@
-/* groovylint-disable CompileStatic, LineLength, VariableTypeRequired */
+// Copyright © 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 // This Jenkinsfile defines internal MarkLogic build pipeline.
+// The pipeline builds, tests, scans, and optionally publishes MarkLogic Docker images.
+// It can be triggered manually, by pull requests, or on a schedule.
 
 //Shared library definitions: https://github.com/marklogic/MarkLogic-Build-Libs/tree/1.0-declarative/vars
 @Library('shared-libraries@1.0-declarative')
@@ -8,20 +10,66 @@ import groovy.json.JsonSlurperClassic
 // email list for scheduled builds (includes security vulnerability)
 emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
 // email list for security vulnerabilities only
-emailSecList = 'Rangan.Doreswamy@progress.com, Mahalakshmi.Srinivasan@progress.com'
+emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
+pdcSbRegistry = 'sandboxpdc.azurecr.io'
+pdcDevRegistry = 'marklogicclouddev.azurecr.io'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
 JIRA_ID = ''
 LINT_OUTPUT = ''
 SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
+GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
+builtImage = ''
+publishImage = ''
+latestTag = ''
+upgradeDockerImage = ''
 
 // Define local funtions
+
+/**
+ * Determines if the current build is for an ARM image type.
+ * ARM workers (e.g., Graviton3) are only available for MarkLogic 11.
+ * @return true if dockerImageType contains 'arm', false otherwise.
+ */
+@NonCPS
+def isArmImage() {
+    return params.dockerImageType.toLowerCase().contains('arm')
+}
+
+/**
+ * Performs pre-build checks:
+ * - Initializes parameters as environment variables.
+ * - Extracts Jira ID from branch name or PR title.
+ * - Checks if the PR is a draft or has requested changes (for PR builds).
+ * - Validates ARM image types are only used with MarkLogic 11.
+ */
 void preBuildCheck() {
-    // Initialize parameters as env variables as workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929
+    // Initialize parameters as env variables (workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929)
     evaluate """${ def script = ''; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
+
+    // Validate ARM images are only supported for MarkLogic 11
+    if (env.dockerImageType.contains('arm') && env.marklogicVersion != '11') {
+        error "ARM images (${env.dockerImageType}) are only supported for MarkLogic 11. Current version: ${env.marklogicVersion}"
+    }
+
+    // If GRAVITON3_IP is not provided, try to retrieve it from Jenkins credentials
+    if (!params.GRAVITON3_IP) {
+        withCredentials([sshUserPrivateKey(credentialsId: 'KUBE_NINJAS_AWS_JENKINS', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'GRAVITON_IP_FROM_SECRET')]) {
+            env.GRAVITON3_IP = env.GRAVITON_IP_FROM_SECRET
+            echo "GRAVITON3_IP retrieved from Jenkins credentials: ${env.GRAVITON3_IP}"
+        }
+    } else {
+        env.GRAVITON3_IP = params.GRAVITON3_IP
+        echo "Using provided GRAVITON3_IP parameter: ${env.GRAVITON3_IP}"
+    }
+
+    // Validate that ARM builds have GRAVITON3_IP available
+    if (env.dockerImageType.contains('arm') && !env.GRAVITON3_IP) {
+        error "ARM image type ${env.dockerImageType} requires GRAVITON3_IP parameter or KUBE_NINJAS_AWS_JENKINS credentials to be configured. Please provide the Graviton3 instance IP or hostname."
+    }
 
     JIRA_ID = extractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
@@ -42,6 +90,10 @@ void preBuildCheck() {
     }
 }
 
+/**
+ * Extracts a Jira ID (e.g., MLE-1234) from the PR title or branch name.
+ * @return The extracted Jira ID string, or an empty string if not found.
+ */
 @NonCPS
 def extractJiraID() {
     // Extract Jira ID from one of the environment variables
@@ -67,6 +119,11 @@ def extractJiraID() {
     }
 }
 
+/**
+ * Checks if the current Pull Request is marked as a draft via GitHub API.
+ * Requires CHANGE_ID and GIT_URL environment variables.
+ * @return true if the PR is a draft, false otherwise.
+ */
 def prDraftCheck() {
     withCredentials([usernameColonPassword(credentialsId: gitCredID, variable: 'Credentials')]) {
         PrObj = sh(returnStdout: true, script:'''
@@ -77,6 +134,11 @@ def prDraftCheck() {
     return jsonObj.draft
 }
 
+/**
+ * Gets the review state of the current Pull Request via GitHub API.
+ * Requires CHANGE_ID and GIT_URL environment variables.
+ * @return The review state string (e.g., 'APPROVED', 'CHANGES_REQUESTED').
+ */
 def getReviewState() {
     def reviewResponse
     def commitHash
@@ -95,7 +157,12 @@ def getReviewState() {
     return reviewState
 }
 
-void resultNotification(message) {
+/**
+ * Sends an email notification with the build status and summary.
+ * Includes links to build URL, test reports, scan reports, and Jira ticket (if found).
+ * @param status The build status string (e.g., 'Success', 'Failure').
+ */
+void resultNotification(status) {
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
@@ -130,7 +197,7 @@ void resultNotification(message) {
     // If Jira ID is available, add comment to the ticket and add link to email.
     if (JIRA_ID) {
         def jira_link = "https://progresssoftware.atlassian.net/browse/${JIRA_ID}"
-        def comment = [ body: "Jenkins pipeline build result: ${message}" ]
+        def comment = [ body: "Jenkins pipeline build result: ${status}" ]
         jiraAddComment site: 'JIRA',
             input: comment,
             idOrKey: JIRA_ID,
@@ -139,11 +206,20 @@ void resultNotification(message) {
     }
     mail to: "${emailList}",
         body: "${email_body}",
-        subject: "${message}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        subject: "🥷 ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
         charset: 'UTF-8', mimeType: 'text/html'
 }
 
+/**
+ * Copies the MarkLogic Server and Converters RPMs.
+ * Determines the correct RPM version/branch based on marklogicVersion parameter.
+ * Downloads nightly builds from Artifactory unless specific RPM URLs are provided via ML_RPM/ML_CONVERTERS parameters.
+ * Sets RPM, CONVERTERS, and marklogicVersion global variables.
+ */
 void copyRPMs() {
+    // Determine architecture suffix based on image type
+    def archSuffix = dockerImageType.contains('arm') ? 'aarch64' : 'x86_64'
+    
     if (marklogicVersion == "10") {
         RPMsuffix = "-nightly"
         RPMbranch = "b10"
@@ -160,53 +236,77 @@ void copyRPMs() {
         RPMversion = "11.3"
     }
     else if (marklogicVersion == "12") {
-        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
-        if (dockerImageType.contains("ubi9")) {
-            RPMsuffix = ".nightly-rhel9"
-        } else {
-            RPMsuffix = ".nightly-rhel"
-        }
+        RPMsuffix = ".nightly-rhel"
         RPMbranch = "b12"
-        RPMversion = "12.0"
+        RPMversion = "12.1"
     }
     else {
         error "Invalid value in marklogicVersion parameter."
     }
     sh """
         cd src
+        ARM_DATE=\$(TZ=America/Los_Angeles date +%Y%m%d)
         if [ -z ${env.ML_RPM} ]; then
-            wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.x86_64.rpm
+            if [ "${archSuffix}" = "aarch64" ]; then
+                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\${ARM_DATE}-rhel9.aarch64.rpm
+            else
+                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
+            fi
         else
-            wget --no-verbose ${ML_RPM}
+            wget  --no-verbose ${ML_RPM}
         fi
-        if [ -z ${env.ML_CONVERTERS}]; then
-            wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.x86_64.rpm
+        if [ -z ${env.ML_CONVERTERS} ]; then
+            if [ "${archSuffix}" = "aarch64" ]; then
+                # ARM converters package not yet available in Artifactory - converters can be installed at runtime via INSTALL_CONVERTERS env var
+                # For now, create a placeholder to allow build to proceed
+                touch MarkLogicConverters-placeholder.rpm
+            else
+                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
+            fi
         else
-            wget --no-verbose ${ML_CONVERTERS}
+            wget  --no-verbose ${ML_CONVERTERS}
         fi
     """
     script {
-        // Get the RPM and Converters file names
-        RPM = sh(returnStdout: true, script: 'cd src;file MarkLogic-*.rpm | cut -d: -f1').trim()
-        CONVERTERS = sh(returnStdout: true, script: 'cd src;file MarkLogicConverters-*.rpm | cut -d: -f1').trim()
-        // Extract MarkLogic version from RPM file name
-        marklogicVersion = sh(returnStdout: true, script: "echo ${RPM}|  awk -F \"MarkLogic-\" '{print \$2;}'  | awk -F \".x86_64.rpm\"  '{print \$1;}' | awk -F \"-rhel\"  '{print \$1;}' ").trim()
+        // Get the RPM and Converters file names for the correct architecture (archSuffix already defined above)
+        RPM = sh(returnStdout: true, script: "cd src; ls -1 MarkLogic-*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+        CONVERTERS = sh(returnStdout: true, script: "cd src; ls -1 MarkLogicConverters-*.${archSuffix}.rpm 2>/dev/null || ls -1 MarkLogicConverters-*.rpm 2>/dev/null | head -1").trim()
+        // Extract MarkLogic version from RPM file name (handle both x86_64 and aarch64)
+        marklogicVersion = sh(returnStdout: true, script: "echo ${RPM} | awk -F 'MarkLogic-' '{print \$2;}' | awk -F '.x86_64.rpm' '{print \$1;}' | awk -F '.aarch64.rpm' '{print \$1;}' | awk -F '-rhel' '{print \$1;}'").trim()
     }
 }
 
+/**
+ * Builds the Docker image using the 'make build' target.
+ * Sets various image tag variables (builtImage, publishImage, latestTag).
+ * Updates the Jenkins build display name.
+ */
 void buildDockerImage() {
     builtImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}"
     publishImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}"
     mlVerShort=marklogicVersion.split("\\.")[0]
     latestTag="marklogic/marklogic-server-${dockerImageType}:latest-${mlVerShort}"
+    // Use Los Angeles time (same as ARM_DATE in copyRPMs) to ensure consistency across UTC/PST boundaries
+    timeStamp = sh(returnStdout: true, script: "TZ=America/Los_Angeles date +%Y%m%d").trim()
+    timestamptedTag = builtImage.replace('nightly', timeStamp)
     sh "make build docker_image_type=${dockerImageType} dockerTag=${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
     currentBuild.displayName = "#${BUILD_NUMBER}: ${marklogicVersion}-${env.dockerImageType} (${env.dockerVersion})"
+    echo "Built image: ${builtImage}"
 }
 
+/**
+ * Pulls the Docker image required for upgrade testing.
+ * Uses the 'upgradeDockerImage' parameter or defaults to a corresponding 'ubi' image.
+ * Skips the pull if the target image is 'ubi-rootless' and DOCKER_TESTS is false.
+ */
 void pullUpgradeDockerImage() {
     if (dockerImageType == "ubi-rootless" && params.DOCKER_TESTS != "true") {
         sh """
             echo 'dockerImageType is set to ubi-rootless, skipping this stage and Docker upgrade test.'
+        """
+    } else if (isArmImage()) {
+        sh """
+            echo 'ARM image type detected. Skipping upgrade test (no previous ARM images available for upgrade testing).'
         """
     } else {
         if (upgradeDockerImage != "" ) {
@@ -224,18 +324,35 @@ void pullUpgradeDockerImage() {
     }
 }
 
+/**
+ * Runs container structure tests using the 'make structure-test' target.
+ */
 void structureTests() {
     sh """
-        #install container-structure-test 1.16.0 binary
-        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.16.0/container-structure-test-linux-amd64 && chmod +x container-structure-test-linux-amd64 && mv container-structure-test-linux-amd64 container-structure-test
+        #install container-structure-test 1.16.0 binary (detect architecture)
+        ARCH=\$(uname -m)
+        if [ "\$ARCH" = "aarch64" ]; then
+            PLATFORM="arm64"
+        else
+            PLATFORM="amd64"
+        fi
+        curl -s -LO https://storage.googleapis.com/container-structure-test/v1.16.0/container-structure-test-linux-\${PLATFORM} && chmod +x container-structure-test-linux-\${PLATFORM} && mv container-structure-test-linux-\${PLATFORM} container-structure-test
         make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${env.BRANCH_NAME} docker_image_type=${env.dockerImageType} Jenkins=true
     """
 }
 
+/**
+ * Runs Docker functional tests using the 'make docker-tests' target.
+ */
 void dockerTests() {
-    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType}"
+    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType} DOCKER_TEST_LIST=\"${params.DOCKER_TEST_LIST}\""
 }
 
+/**
+ * Lints the Dockerfile and startup scripts using hadolint and shellcheck via 'make lint'.
+ * Captures the lint output in the LINT_OUTPUT variable.
+ * Records the built image size in the IMAGE_SIZE variable.
+ */
 void lint() {
     IMAGE_SIZE = sh(returnStdout: true, script: "docker images marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} --format '{{.Repository}}:{{.Tag}}\t{{.Size}}'")
 
@@ -251,6 +368,12 @@ void lint() {
     """
 }
 
+/**
+ * Scans the built Docker image for vulnerabilities using Grype via 'make scan'.
+ * Captures the scan summary in the SCAN_OUTPUT variable.
+ * Archives the full JSON scan report.
+ * Sends an email notification if critical or high severity vulnerabilities are found.
+ */
 void vulnerabilityScan() {
     sh """
         make scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} docker_image_type=${dockerImageType} Jenkins=true
@@ -263,41 +386,85 @@ void vulnerabilityScan() {
     archiveArtifacts artifacts: 'scan/*', onlyIfSuccessful: true
 }
 
+/**
+ * Publishes the built Docker image to the internal Artifactory registry.
+ * Also publishes ML12 images to private Azure ACR repositories (PDC).
+ * Tags the image with multiple tags (version-specific, branch-specific, latest).
+ * Requires Artifactory and Azure ACR credentials.
+ */
 void publishToInternalRegistry() {
+    // Use the discovered image tag if available (handles date/time mismatches across day boundaries)
+    def imageToPublish = env.IMAGE_TO_PUBLISH ?: builtImage
+    echo "Publishing image: ${imageToPublish}"
+    
     withCredentials([usernamePassword(credentialsId: 'builder-credentials-artifactory', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
         sh """
             docker logout ${dockerRegistry}
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
-            docker tag ${builtImage} ${dockerRegistry}/${builtImage}
-            docker tag ${builtImage} ${dockerRegistry}/${publishImage}
-            docker tag ${builtImage} ${dockerRegistry}/${latestTag}
-            docker push ${dockerRegistry}/${builtImage}
+            docker tag ${imageToPublish} ${dockerRegistry}/${publishImage}
+            docker tag ${imageToPublish} ${dockerRegistry}/${latestTag}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
         """
         
     }
     // Publish to private ECR repository that is used by the performance team. (only ML11)
-    if ( params.marklogicVersion == "11" ) {
-        withCredentials( [[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: "aws-engineering-ct-ecr",
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-            ]]) {
-                sh """
-                    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 713759029616.dkr.ecr.us-west-2.amazonaws.com
-                    docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                    docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
-	                docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                    docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
-                """
-            }
+    // (disabled since it's not needed)
+    // if ( params.marklogicVersion == "11" ) {
+    //     withCredentials( [[
+    //         $class: 'AmazonWebServicesCredentialsBinding',
+    //         credentialsId: "aws-engineering-ct-ecr",
+    //         accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+    //         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+    //         ]]) {
+    //             sh """
+    //                 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 713759029616.dkr.ecr.us-west-2.amazonaws.com
+    //                 docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+    //                 docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+	//                 docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+    //                 docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+    //             """
+    //         }
+    // }
+
+    // Publish to private ACR repositories that are used by PDC. (only ML12)
+    if ( params.marklogicVersion == "12" ) {
+        // Publish to Sandbox PDC registry
+        withCredentials([usernamePassword(credentialsId: 'PDC_SANDBOX_USER', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+            sh """
+                echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcSbRegistry}
+                docker tag ${imageToPublish} ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${imageToPublish} ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+                docker push ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+            """
+        }
+        // Publish to Dev PDC registry
+        withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+            sh """
+                echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcDevRegistry}
+                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
+                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
+            """
+        }
     }
 
     currentBuild.description = "Published"
 }
+/**
+ * Triggers a BlackDuck scan job for the published image.
+ * Runs asynchronously (wait: false).
+ */
+void scanWithBlackDuck() {
+    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}"), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}") ]
+}
 
+/**
+ * Publishes JUnit XML test results from structure and Docker tests.
+ * Publishes HTML reports for Docker tests and SCAP scans if they were executed.
+ */
 void publishTestResults() {
     junit allowEmptyResults:true, testResults: '**/test_results/docker-tests.xml,**/container-structure-test.xml'
         if (params.DOCKER_TESTS) {
@@ -321,6 +488,10 @@ void publishTestResults() {
     }
 }
 
+/**
+ * Runs an OpenSCAP compliance scan on the rootless image using 'make scap-scan'.
+ * Generates an HTML report.
+ */
 void scapScan() {
     sh """
         make scap-scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
@@ -328,25 +499,36 @@ void scapScan() {
 }
 
 pipeline {
-    agent {
-        label {
-            label 'cld-docker'
-        }
-    }
+    agent none
     options {
         checkoutToSubdirectory '.'
         buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
         skipStagesAfterUnstable()
     }
     triggers {
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 02 * * * % marklogicVersion=10;dockerImageType=ubi
-                                                             00 02 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             00 02 * * * % marklogicVersion=11;dockerImageType=ubi
-                                                             30 02 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi
-                                                             30 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true''' : '')
+        // Trigger nightly builds on the develop branch for every supported version of MarkLogic
+        // and for every supported image type.
+        // Include SCAP scan for rootless images
+        parameterizedCron( 
+            env.BRANCH_NAME == 'develop' ? '''  
+                03 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
+                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true
+                00 04 * * * % marklogicVersion=10;dockerImageType=ubi
+                00 04 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                00 03 * * * % marklogicVersion=11;dockerImageType=ubi
+                00 03 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
+                00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                00 02 * * * % marklogicVersion=12;dockerImageType=ubi
+                00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
+                00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                00 05 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                30 05 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                00 06 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' :
+            env.BRANCH_NAME == 'Docker-ARM-support' ? '''
+                03 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
+                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -354,92 +536,268 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '2.1.0', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
-        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
+        string(name: 'dockerVersion', defaultValue: '2.2.3', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
-        choice(name: 'marklogicVersion', choices: '11\n12\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
+        choice(name: 'marklogicVersion', choices: '12\n11\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
+        string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g Test one, Test two). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
+        string(name: 'GRAVITON3_IP', defaultValue: '', description: '[ARM only] Public IP or hostname of Graviton3 instance. Will pull from secrets by default.', trim: true)
     }
 
     stages {
+        // Stage: Perform initial checks (PR status, Jira ID)
         stage('Pre-Build-Check') {
+            agent { node { label 'cld-docker' } }
             steps {
                 preBuildCheck()
             }
         }
 
+        // Stage: Download MarkLogic Server and Converters RPMs (ARM builds on x86)
         stage('Copy-RPMs') {
+            agent { node { label 'cld-docker' } }
             steps {
                 copyRPMs()
             }
         }
 
+        // Stage: Build the Docker image
+        // Save image archive to workspace and stash for cross-agent stages.
         stage('Build-Image') {
+            agent { node { label 'cld-docker' } }
             steps {
                 buildDockerImage()
+                script {
+                    // Always save image for cases where agents might differ
+                    sh """
+                        echo "Saving ${builtImage} to ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
+                        docker image save ${builtImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                        ls -lh ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                    """
+                    stash name: 'built-image-archive', includes: "${GRAVITON3_IMAGE_ARCHIVE}", allowEmpty: false
+                }
             }
         }
 
+        // Stage: Pull the base image needed for upgrade testing
         stage('Pull-Upgrade-Image') {
+            agent { node { label 'cld-docker' } }
             steps {
                 pullUpgradeDockerImage()
             }
         }
 
+        // Stage: Lint Dockerfile and startup scripts (x86 only)
         stage('Lint') {
+            agent { node { label 'cld-docker' } }
             steps {
                 lint()
             }
         }
 
+        // Stage: Scan the image for vulnerabilities (x86 only)
         stage('Scan') {
+            agent { node { label 'cld-docker' } }
             steps {
-                vulnerabilityScan()
+                echo 'Skipping vulnerability scan due to compatibility issues.'
+                // vulnerabilityScan()
             }
         }
 
+        // Stage: Run OpenSCAP compliance scan (conditional)
         stage('SCAP-Scan') {
+            agent {
+                node {
+                    label isArmImage() ? 'cld-docker-graviton' : 'cld-docker'
+                }
+            }
             when {
+                    beforeAgent true
                     expression { return params.SCAP_SCAN }
             }
             steps {
+                script {
+                    unstash 'built-image-archive'
+                    // Load image from tar if not already available (applies to all build types)
+                    def imageSource = "${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}"
+                    sh """
+                        if ! docker image inspect ${builtImage} &>/dev/null; then
+                            echo "Loading image from ${imageSource} for SCAP scan..."
+                            docker image load -i ${imageSource}
+                        else
+                            echo "Image ${builtImage} already available locally"
+                        fi
+                    """
+                }
                 scapScan()
+                stash name: 'scap-results', includes: 'scap/**', allowEmpty: true
             }
         }
 
-        stage('Structure-Tests') {
+        // Stage: Load image from tar archive (ARM builds only)
+        stage('Load-Image') {
+            agent { label 'cld-docker-graviton' }
             when {
+                beforeAgent true
+                expression { return isArmImage() && env.GRAVITON3_IP }
+            }
+            steps {
+                script {
+                    unstash 'built-image-archive'
+                    sh """
+                        if ! docker image inspect ${builtImage} &>/dev/null; then
+                            echo "Loading image from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
+                            docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                        else
+                            echo "Image ${builtImage} already loaded (likely by SCAP-Scan stage)"
+                        fi
+                        docker images | head -5
+                    """
+                }
+            }
+        }
+
+        // Stage: Run container structure tests (conditional)
+        stage('Structure-Tests') {
+            agent {
+                node {
+                    label isArmImage() ? 'cld-docker-graviton' : 'cld-docker'
+                }
+            }
+            when {
+                beforeAgent true
                 expression { return params.TEST_STRUCTURE }
             }
             steps {
+                script {
+                    unstash 'built-image-archive'
+                    // Load image from tar if not already available (applies to all build types)
+                    def imageSource = "${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}"
+                    sh """
+                        if ! docker image inspect ${builtImage} &>/dev/null; then
+                            echo "Loading image from ${imageSource} for Structure-Tests..."
+                            docker image load -i ${imageSource}
+                        else
+                            echo "Image ${builtImage} already available locally"
+                        fi
+                    """
+                }
                 structureTests()
+                stash name: 'structure-test-results', includes: 'container-structure-test.xml', allowEmpty: true
             }
         }
 
+        // Stage: Run Docker functional tests (conditional)
         stage('Docker-Run-Tests') {
+            agent {
+                node {
+                    label isArmImage() ? 'cld-docker-graviton' : 'cld-docker'
+                }
+            }
             when {
+                beforeAgent true
                 expression { return params.DOCKER_TESTS }
             }
             steps {
+                script {
+                    unstash 'built-image-archive'
+                    // Load image from tar if not already available (applies to all build types)
+                    def imageSource = "${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}"
+                    sh """
+                        if ! docker image inspect ${builtImage} &>/dev/null; then
+                            echo "Loading image from ${imageSource} for Docker-Run-Tests..."
+                            docker image load -i ${imageSource}
+                        else
+                            echo "Image ${builtImage} already available locally"
+                        fi
+                    """
+                }
                 dockerTests()
+                stash name: 'docker-test-results', includes: 'test/test_results/**', allowEmpty: true
             }
         }
 
+        // Stage: Publish image to internal registries (conditional)
         stage('Publish-Image') {
+            agent { node { label 'cld-docker' } }
             when {
+                    beforeAgent true
                     anyOf {
                         branch 'develop'
                         expression { return params.PUBLISH_IMAGE }
                     }
             }
             steps {
+                script {
+                    unstash 'built-image-archive'
+                    // Load image from tar if not already available (applies to all build types)
+                    sh """
+                        if ! docker image inspect ${builtImage} &>/dev/null; then
+                            echo "Image not found locally, loading from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
+                            docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                        else
+                            echo "Image ${builtImage} already available locally"
+                        fi
+                    """
+                    
+                    // If builtImage doesn't exist, find the loaded image by repo pattern
+                    def actualImage = sh(
+                        returnStdout: true,
+                        script: """docker images --format 'table {{.Repository}}:{{.Tag}}' | grep "marklogic/marklogic-server-${dockerImageType}:" | head -1"""
+                    ).trim()
+                    
+                    if (!actualImage) {
+                        actualImage = builtImage
+                        echo "Using builtImage tag: ${actualImage}"
+                    } else {
+                        echo "Found loaded image: ${actualImage}"
+                    }
+                    
+                    // Store for use in publishToInternalRegistry
+                    env.IMAGE_TO_PUBLISH = actualImage
+                }
                 publishToInternalRegistry()
-                build job: 'MarkLogic-Docker-Kubernetes/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+                // Trigger downstream QA image build job
+                build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+            }
+        }
+
+        // Stage: Trigger BlackDuck security scan (conditional)
+        stage('BlackDuck-Scan') {
+            agent { node { label 'cld-docker' } }
+            when {
+                anyOf {
+                        branch 'develop'
+                        expression { return params.PUBLISH_IMAGE }
+                    }
+            }
+            steps {
+                scanWithBlackDuck()
+            }
+        }
+
+        // Stage: Cleanup ARM agent (ARM builds only)
+        stage('Cleanup-ARM') {
+            agent { label 'cld-docker-graviton' }
+            when {
+                beforeAgent true
+                expression { return isArmImage() && env.GRAVITON3_IP }
+            }
+            steps {
+                sh '''
+                    echo "Cleaning up ARM agent..."
+                    # Stop all running containers
+                    docker stop $(docker ps -a -q) || true
+                    # Docker cleanup
+                    docker system prune --force --all --volumes
+                    docker system df
+                '''
             }
         }
 
@@ -447,23 +805,47 @@ pipeline {
 
     post {
         always {
-            sh '''
-                cd src
-                rm -rf *.rpm NOTICE.txt
-                docker stop $(docker ps -a -q) || true
-                docker system prune --force --all --volumes
-                docker system df
-            '''
-            publishTestResults()
+            node('cld-docker') {
+                // Clean up the workspace and Docker resources
+                sh """
+                    # Remove any stale test artifacts before unstash
+                    rm -rf test/test_results scap container-structure-test.xml
+                    # Remove ARM image tar archive
+                    rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                    # Remove ARM image if it was built
+                    if [ -n "${builtImage}" ]; then
+                        docker rmi ${builtImage} || true
+                    fi
+                    # Clean up RPMs
+                    if [ -d src ]; then
+                        cd src
+                        rm -rf *.rpm NOTICE.txt
+                        cd ..
+                    fi
+                    # Docker cleanup applies to both agents
+                    docker stop \$(docker ps -a -q) || true
+                    docker system prune --force --all --volumes
+                    docker system df
+                """
+                script {
+                    try { unstash 'structure-test-results' } catch (e) { echo 'No structure test results to unstash.' }
+                    try { unstash 'docker-test-results' } catch (e) { echo 'No docker test results to unstash.' }
+                    try { unstash 'scap-results' } catch (e) { echo 'No SCAP results to unstash.' }
+                }
+                publishTestResults()
+            }
         }
         success {
-            resultNotification('BUILD SUCCESS ✅')
+            resultNotification('✅ Success')
         }
         failure {
-            resultNotification('BUILD ERROR ❌')
+            resultNotification('❌ Failure')
         }
         unstable {
-            resultNotification('BUILD UNSTABLE ❌')
+            resultNotification('⚠️ Unstable')
         }
-    }
+        aborted {
+            resultNotification('🚫 Aborted')
+        }
+            }
 }

@@ -13,6 +13,7 @@ If you'd like to change the image being tested change the variables in the makef
 
 ## Docker Image Tests
 Docker image tests are implemented with Robot framework. The framework requires Python 3.6+ and pip. Framework requirements are listed in requirements file and can be installed with the following commands:
+`cd test`
 `python3 -m venv python_env`
 `source ./python_env/bin/activate`
 `pip3 install -r requirements.txt`
@@ -26,7 +27,7 @@ For additional installation instruction see https://robotframework.org/robotfram
 In order to run Docker tests, you need to have MarkLogic Docker image available in your environment. The image can be passed as a parameter or set with DOCKER_TEST_IMAGE environment variable.
 
 In order to execute a single test case with a published Docker image, use
-`robot --variable TEST_IMAGE:progressofficial/marklogic-db --test "Initialized MarkLogic container" ./docker-tests.robot`
+`robot --test "Smoke Test" ./docker-tests.robot`
 
 In order to run all tests you can use make from root folder with
 `make docker-tests test_image=progressofficial/marklogic-db`
@@ -36,8 +37,13 @@ or by running Robot in test directly with
 
 *Note*
 QA_LICENSE_KEY environment variable needs to be set to a valid license key for license test to pass.
-If UBI rootless image is used, specify image type for individual tests:
+Some tests expect certain variable to have valid values. For example, if UBI rootless image is used, specify image type for individual tests:
 `robot --variable TEST_IMAGE:marklogic/marklogic-server-ubi-rootless:internal --variable IMAGE_TYPE:ubi-rootless --test 'Initialized MarkLogic container with config overrides' docker-tests.robot`
+
+### Resource Requirements for Dynamic Host Tests
+The "Dynamic Host Cluster Test" and "Dynamic Host Cluster Concurrency Join Test" require significant system resources as they create 13 containers (3 cluster nodes + 10 dynamic hosts) simultaneously. 
+
+**Note:** These tests may fail with "Connection refused" errors if insufficient resources are allocated. Increase Docker's CPU and memory limits in Docker Desktop/Rancher Desktop preferences if you encounter initialization failures.
 
 For a quick start guide for Robot framework see https://robotframework.org/#getting-started
 Full user guide is available at https://robotframework.org/robotframework/#user-guide

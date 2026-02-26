@@ -46,9 +46,20 @@ Docker images are maintained by MarkLogic. Send feedback to the MarkLogic Docker
 
 Supported Docker architectures: x86_64
 
-Base OS: UBI8 and UBI9 with rootless variants.
+Base OS: UBI8 and UBI9 with `rootless` variants.
 
 Published image artifact details: https://github.com/marklogic/marklogic-docker, https://hub.docker.com/r/progressofficial/marklogic-db
+
+## Docker image hardening
+
+Docker images with `rootless` variants are hardened using Openscap (<https://github.com/OpenSCAP/openscap>).
+
+Scoring : 96.67%
+See [Known Issues and Limitations](#known-issues-and-limitations)
+
+## FIPS Enabled
+
+Only Docker images under Base OS UBI8 with `rootless` variants are FIPS enabled following RedHat (<https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/security_hardening/switching-rhel-to-fips-mode_security-hardening#enabling-fips-mode-in-a-container_using-the-system-wide-cryptographic-policies>)
 
 # MarkLogic
 
@@ -170,8 +181,8 @@ MarkLogic Server Docker containers are configured using a set of environment var
 | MARKLOGIC_GROUP           | dnode                     | no                                | n/a       | will join the host to the given MarkLogic group                  |
 | LICENSE_KEY           | license key                     | no                                | n/a       | set MarkLogic license key                          |
 | LICENSEE            | licensee information            | no                                | n/a       | set MarkLogic licensee information                 |
-|INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
-|OVERWRITE_ML_CONF   | true                            | no                                | false     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true | 
+| INSTALL_CONVERTERS   | true                            | no                                | false     | Installs converters for the client if they are not already installed | 
+| OVERWRITE_ML_CONF   | true                            | no                                | true     | Deletes and rewrites `/etc/marklogic.conf` with the passed in env variables if set to true. Always true in rootless image. | 
 
 Note: MARKLOGIC_JOIN_TLS_ENABLED and MARKLOGIC_JOIN_CACERT_FILE should be used only for nodes joining the cluster. These two parameters will be ignored for bootstrap host configurations.
 
@@ -853,6 +864,14 @@ The /space mounted on the Docker volume can now be used as backup directory for 
 
 # Debugging
 
+## Platform warnings on Apple Silicon
+
+When running the MarkLogic Docker image on Apple Silicon, you may see the following warning message:
+`WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested`
+
+Add the `--platform linux/amd64` flag to the `docker run` command to avoid this warning message.
+
+
 ## View MarkLogic Server Startup Status
 To check the MarkLogic Server startup status, run the below command to tail the MarkLogic log file
 ```
@@ -901,7 +920,7 @@ $ docker exec -it f484a784d998 /bin/bash
 4. To verify that MarkLogic is running, use this command:
 
 ```
-$ sudo service MarkLogic status
+$ service MarkLogic status
 ```
 
 Example output:  
@@ -915,7 +934,7 @@ MarkLogic (pid  34) is running...
 For example, you can list the 8001 error logs, and view them with a single command:
 
 ```
-$ sudo cd /var/opt/MarkLogic/Logs && ls && vi ./8001_ErrorLog.txt
+$ cd /var/opt/MarkLogic/Logs && ls && cat ./8001_ErrorLog.txt
 ```
 
 6. To exit the container when you are through debugging, use the exit command:
@@ -1044,13 +1063,31 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 
 # Known Issues and Limitations
 
-1. The image must be run in privileged mode. If the image isn't run as privileged, the calls that use `sudo` in the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions. To run in non-privileged mode, use one of the “rootless” image options.
+1. The root image must be run in privileged mode. If the image isn't run as privileged, the calls that use `sudo` in the startup script will fail due to lack of required permissions as the image will not be able to create a user with the required permissions. To run in non-privileged mode, use one of the “rootless” image options.
 2. Using the "leave" button in the Admin interface to remove a node from a cluster may not succeed, depending on your network configuration. Use the Management API to remove a node from a cluster. See: [https://docs.marklogic.com/REST/DELETE/admin/v1/host-config](https://docs.marklogic.com/REST/DELETE/admin/v1/host-config).
 3. Rejoining a node to a cluster, that had previously left that cluster, may not succeed.
 4. MarkLogic Server will default to the UTC timezone.
 5. The latest released version of RedHat UBI images have known security vulnerabilities.
-    - CVE-2024-6602, CVE-2024-34397, CVE-2024-2236, CVE-2023-7207, CVE-2023-51764, CVE-2023-37920, CVE-2023-32636, CVE-2023-29499, CVE-2023-2650, CVE-2022-4899, CVE-2021-42694, CVE-2021-3997, CVE-2020-35512, CVE-2020-15945, CVE-2019-9937, CVE-2019-9936, CVE-2019-9705, CVE-2019-19244, CVE-2019-17543, CVE-2019-12904, CVE-2019-12900, CVE-2018-20839, CVE-2024-6602, CVE-2024-6119, CVE-2024-26462, CVE-2024-2236, CVE-2023-7207, CVE-2023-37920, CVE-2023-2953, CVE-2022-4899, CVE-2021-3997, CVE-2024-10041
+    - curl (CVE-2016-5420, CVE-2016-5419, CVE-2016-5421, CVE-2017-3604, CVE-2016-3418, CVE-2017-3605, CVE-2016-0694, CVE-2017-3607, CVE-2017-3608, CVE-2017-3606, CVE-2016-0689, CVE-2017-3609, CVE-2016-0692, CVE-2016-0682, CVE-2016-5420, CVE-2016-5419, CVE-2016-5421, CVE-2023-28322)
+    - elfutils (CVE-2017-3610, CVE-2017-3611, CVE-2017-3612, CVE-2017-3613, CVE-2017-3614, CVE-2017-3615)
+    - gawk (CVE-2017-3616)
+    - gdb (CVE-2017-3617)
+    - glib/glibc (CVE-2016-5420, CVE-2016-5421, CVE-2016-5419, CVE-2016-5419, CVE-2016-5420, CVE-2016-5421, CVE-2019-12450, CVE-2020-6096)
+    - libcap (CVE-2023-2603)
+    - libdb-utils (CVE-2016-0682, CVE-2016-0689, CVE-2016-0692, CVE-2016-0694, CVE-2016-3418, CVE-2017-3604, CVE-2017-3605, CVE-2017-3606, CVE-2017-3607, CVE-2017-3608, CVE-2017-3609, CVE-2017-3610, CVE-2017-3611, CVE-2017-3612, CVE-2017-3613, CVE-2017-3614, CVE-2017-3615, CVE-2017-3616, CVE-2017-3617, CVE-2015-2583, CVE-2015-2626, CVE-2015-2640, CVE-2015-2654, CVE-2015-2656, CVE-2015-4754, CVE-2015-2624, CVE-2015-4784, CVE-2015-4787, CVE-2015-4789, CVE-2015-4785, CVE-2015-4786, CVE-2015-4783, CVE-2015-4764, CVE-2015-4780, CVE-2015-4790, CVE-2015-4776, CVE-2015-4775, CVE-2015-4778, CVE-2015-4777, CVE-2015-4782, CVE-2015-4781, CVE-2015-4774)
+    - libcroco (CVE-2017-8871)
+    - libksba (CVE-2022-3515, CVE-2022-47629)
+    - libssh (CVE-2023-6004)
+    - libxml2 (CVE-2022-23308)
+    - nspr (CVE-2016-1951)
+    - pam (CVE-2022-28321)
+    - systemd (CVE-2020-13776)
 
-These libraries are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
+These packages are included in the RedHat UBI base images but, to-date, no fixes have been made available. Even though these libraries may be present in the base image that is used by MarkLogic Server, they are not used by MarkLogic Server itself, hence there is no impact or mitigation required.
 
 6. As part of the hardening process, the following packages are removed from the image: `vim-minimal`, `cups-client`, `cups-libs`, `tar`, `python3-pip-wheel`, `platform-python`, `python3-libs`, `platform-python-setuptools`, `avahi-libs`, `binutils`, `expat`, `libarchive`, `python3`, `python3-libs`, `python-unversioned-command`. These packages are not required for the operation of MarkLogic Server and are removed to reduce the attack surface of the image. If you require any of these packages, you can install them in your own Dockerfile.
+
+7. The scoring of the hardening process is 96.67% that because `authselect is not used but files from the 'pam' package have been altered, so the authselect configuration won't be forced.`
+
+It is a medium severity and not applicable in container environment there is not authentication required when login into a container.
+8. The cryptographic modules of RHEL 9 are not yet certified for the FIPS 140-3 requirements.

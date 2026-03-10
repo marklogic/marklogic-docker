@@ -403,6 +403,7 @@ void publishToInternalRegistry() {
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             docker tag ${imageToPublish} ${dockerRegistry}/${publishImage}
             docker tag ${imageToPublish} ${dockerRegistry}/${latestTag}
+            docker tag ${imageToPublish} ${dockerRegistry}/${timestamptedTag}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
             docker push ${dockerRegistry}/${timestamptedTag}

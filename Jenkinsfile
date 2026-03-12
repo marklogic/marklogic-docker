@@ -219,6 +219,7 @@ void resultNotification(status) {
 void copyRPMs() {
     // Determine architecture suffix based on image type
     def archSuffix = dockerImageType.contains('arm') ? 'aarch64' : 'x86_64'
+    def armRhelSuffix = (marklogicVersion == "12") ? 'rhel' : 'rhel9'
     
     if (marklogicVersion == "10") {
         RPMsuffix = "-nightly"
@@ -248,7 +249,7 @@ void copyRPMs() {
         ARM_DATE=\$(TZ=America/Los_Angeles date +%Y%m%d)
         if [ -z ${env.ML_RPM} ]; then
             if [ "${archSuffix}" = "aarch64" ]; then
-                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\${ARM_DATE}-rhel9.aarch64.rpm
+                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm
             else
                 wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
             fi

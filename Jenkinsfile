@@ -244,17 +244,16 @@ void copyRPMs() {
     else {
         error "Invalid value in marklogicVersion parameter."
     }
-    def defaultServerRpmUrl = archSuffix == 'aarch64'
-        ? "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm"
-        : "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.${archSuffix}.rpm"
-    def defaultConvertersUrl = archSuffix == 'aarch64'
-        ? "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/converters-arm/MarkLogicConverters-${RPMversion}.\\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm"
-        : "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.${archSuffix}.rpm"
+
     sh """
         cd src
         ARM_DATE=\$(TZ=America/Los_Angeles date +%Y%m%d)
         if [ -z "${env.ML_RPM}" ]; then
-            wget --no-verbose ${defaultServerRpmUrl}
+            if [ "${archSuffix}" = "aarch64" ]; then
+                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm
+            else
+                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
+            fi
         else
             wget --no-verbose "${env.ML_RPM}"
         fi
@@ -264,7 +263,11 @@ void copyRPMs() {
             # Temporary exception: remove once the default ML11 ARM converters package is published.
             touch MarkLogicConverters-placeholder.rpm
         else
-            wget --no-verbose ${defaultConvertersUrl}
+            if [ "${archSuffix}" = "aarch64" ]; then
+                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/converters-arm/MarkLogicConverters-${RPMversion}.\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm
+            else
+                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
+            fi
         fi
     """
     script {

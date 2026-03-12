@@ -244,28 +244,27 @@ void copyRPMs() {
     else {
         error "Invalid value in marklogicVersion parameter."
     }
+    def defaultServerRpmUrl = archSuffix == 'aarch64'
+        ? "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm"
+        : "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.${archSuffix}.rpm"
+    def defaultConvertersUrl = archSuffix == 'aarch64'
+        ? "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/converters-arm/MarkLogicConverters-${RPMversion}.\\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm"
+        : "https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.${archSuffix}.rpm"
     sh """
         cd src
         ARM_DATE=\$(TZ=America/Los_Angeles date +%Y%m%d)
-        if [ -z ${env.ML_RPM} ]; then
-            if [ "${archSuffix}" = "aarch64" ]; then
-                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm
-            else
-                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
-            fi
+        if [ -z "${env.ML_RPM}" ]; then
+            wget --no-verbose ${defaultServerRpmUrl}
         else
-            wget  --no-verbose ${ML_RPM}
+            wget --no-verbose "${env.ML_RPM}"
         fi
-        if [ -z ${env.ML_CONVERTERS} ] && [ "${env.marklogicVersion}" = "11" ]; then
-            if [ "${archSuffix}" = "aarch64" ]; then
-                # ARM converters package not yet available in Artifactory for MarkLogic 11.
-                # For now, create a placeholder to allow build to proceed
-                touch MarkLogicConverters-placeholder.rpm
-            else
-                wget  --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
-            fi
+        if [ -n "${env.ML_CONVERTERS}" ]; then
+            wget --no-verbose "${env.ML_CONVERTERS}"
+        elif [ "${env.marklogicVersion}" = "11" ] && [ "${archSuffix}" = "aarch64" ]; then
+            # Temporary exception: remove once the default ML11 ARM converters package is published.
+            touch MarkLogicConverters-placeholder.rpm
         else
-            wget  --no-verbose ${ML_CONVERTERS}
+            wget --no-verbose ${defaultConvertersUrl}
         fi
     """
     script {

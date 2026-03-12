@@ -44,15 +44,15 @@ def isArmImage() {
  * - Initializes parameters as environment variables.
  * - Extracts Jira ID from branch name or PR title.
  * - Checks if the PR is a draft or has requested changes (for PR builds).
- * - Validates ARM image types are only used with MarkLogic 11.
+ * - Validates ARM image types are only used with MarkLogic 11 and 12.
  */
 void preBuildCheck() {
     // Initialize parameters as env variables (workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929)
     evaluate """${ def script = ''; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
-    // Validate ARM images are only supported for MarkLogic 11
-    if (env.dockerImageType.contains('arm') && env.marklogicVersion != '11') {
-        error "ARM images (${env.dockerImageType}) are only supported for MarkLogic 11. Current version: ${env.marklogicVersion}"
+    // Validate ARM images are only supported for MarkLogic 11 and 12
+    if (env.dockerImageType.contains('arm') && !(env.marklogicVersion in ['11', '12'])) {
+        error "ARM images (${env.dockerImageType}) are only supported for MarkLogic 11 and 12. Current version: ${env.marklogicVersion}"
     }
 
     // If GRAVITON3_IP is not provided, try to retrieve it from Jenkins credentials
@@ -255,9 +255,9 @@ void copyRPMs() {
         else
             wget  --no-verbose ${ML_RPM}
         fi
-        if [ -z ${env.ML_CONVERTERS} ]; then
+        if [ -z ${env.ML_CONVERTERS} ] && [ "${env.marklogicVersion}" = "11" ]; then
             if [ "${archSuffix}" = "aarch64" ]; then
-                # ARM converters package not yet available in Artifactory - converters can be installed at runtime via INSTALL_CONVERTERS env var
+                # ARM converters package not yet available in Artifactory for MarkLogic 11.
                 # For now, create a placeholder to allow build to proceed
                 touch MarkLogicConverters-placeholder.rpm
             else

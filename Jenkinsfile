@@ -55,22 +55,6 @@ void preBuildCheck() {
         error "ARM images (${env.dockerImageType}) are only supported for MarkLogic 11 and 12. Current version: ${env.marklogicVersion}"
     }
 
-    // If GRAVITON3_IP is not provided, try to retrieve it from Jenkins credentials
-    if (!params.GRAVITON3_IP) {
-        withCredentials([sshUserPrivateKey(credentialsId: 'KUBE_NINJAS_AWS_JENKINS', keyFileVariable: 'SSH_KEY_FILE', usernameVariable: 'GRAVITON_IP_FROM_SECRET')]) {
-            env.GRAVITON3_IP = env.GRAVITON_IP_FROM_SECRET
-            echo "GRAVITON3_IP retrieved from Jenkins credentials: ${env.GRAVITON3_IP}"
-        }
-    } else {
-        env.GRAVITON3_IP = params.GRAVITON3_IP
-        echo "Using provided GRAVITON3_IP parameter: ${env.GRAVITON3_IP}"
-    }
-
-    // Validate that ARM builds have GRAVITON3_IP available
-    if (env.dockerImageType.contains('arm') && !env.GRAVITON3_IP) {
-        error "ARM image type ${env.dockerImageType} requires GRAVITON3_IP parameter or KUBE_NINJAS_AWS_JENKINS credentials to be configured. Please provide the Graviton3 instance IP or hostname."
-    }
-
     JIRA_ID = extractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
@@ -556,7 +540,7 @@ pipeline {
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
         string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g Test one, Test two). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
-        string(name: 'GRAVITON3_IP', defaultValue: '', description: '[ARM only] Public IP or hostname of Graviton3 instance. Will pull from secrets by default.', trim: true)
+        booleanParam(name: 'GRAVITON3_AGENT', defaultValue: true, description: '[ARM only] Run ARM-only stages on Graviton3 agent')
     }
 
     stages {
@@ -654,7 +638,7 @@ pipeline {
             agent { label 'cld-docker-graviton' }
             when {
                 beforeAgent true
-                expression { return isArmImage() && env.GRAVITON3_IP }
+                expression { return isArmImage() && params.GRAVITON3_AGENT }
             }
             steps {
                 script {
@@ -796,7 +780,7 @@ pipeline {
             agent { label 'cld-docker-graviton' }
             when {
                 beforeAgent true
-                expression { return isArmImage() && env.GRAVITON3_IP }
+                expression { return isArmImage() && params.GRAVITON3_AGENT }
             }
             steps {
                 sh '''

@@ -6,6 +6,7 @@
  * [MarkLogic](#MarkLogic)
  * [Using this Image](#Using-this-Image)
  * [Configuration](#Configuration)
+ * [Enabling Stack Trace Generation](#enabling-stack-trace-generation)
  * [Clustering](#Clustering)
  * [Upgrading to the latest MarkLogic Docker Release](#Upgrading-to-the-latest-MarkLogic-Docker-Release)
  * [Backing Up and Restoring a Database](#Backing-Up-and-Restoring-a-Database)
@@ -81,6 +82,7 @@ To create an initialized MarkLogic Server, pass in the environment variables MAR
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
+     --cap-add=SYS_PTRACE \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -93,6 +95,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 Example run:
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \ 
+     --cap-add=SYS_PTRACE \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME='admin' \
      -e MARKLOGIC_ADMIN_PASSWORD='Areally!PowerfulPassword1337' \
@@ -107,6 +110,7 @@ To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docke
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
+     --cap-add=SYS_PTRACE \
      progressofficial/marklogic-db
 ```
 The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
@@ -136,6 +140,7 @@ The following command uses a named volume and named container in order to make m
 
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
+     --cap-add=SYS_PTRACE \
      --name MarkLogic_cont_1 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
@@ -239,6 +244,18 @@ You can change the number of HugePages available to each MarkLogic container by 
 -e ML_HUGEPAGES_TOTAL=0
 ```
 
+## Enabling Stack Trace Generation
+
+**`--cap-add=SYS_PTRACE` is mandatory** for MarkLogic Server to be able to generate stack traces in the event of a crash (e.g., a segmentation fault). Without this Linux capability, the MarkLogic process cannot attach a debugger to itself and the diagnostic crash output will be incomplete, making root-cause analysis significantly harder.
+
+Add this flag to every `docker run` invocation:
+
+```
+--cap-add=SYS_PTRACE
+```
+
+All example commands in this document already include this flag.
+
 # Clustering
 
 MarkLogic Server Docker containers ship with a small set of scripts, making it easy to create clusters. See the [MarkLogic documentation](https://docs.marklogic.com/guide/concepts/clustering) for more about clusters. The following three examples show how to create MarkLogic Server clusters with Docker containers. The first two use Docker compose scripts to create one-node and three-node clusters. See the documentation for [Docker compose](https://docs.docker.com/compose/) for more details. The third example demonstrates a container setup on separate VMs.
@@ -261,6 +278,8 @@ services:
       container_name: bootstrap
       hostname: bootstrap
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -346,6 +365,8 @@ services:
       container_name: bootstrap_3n
       hostname: bootstrap_3n
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -366,6 +387,8 @@ services:
       container_name: node2
       hostname: node2
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -390,6 +413,8 @@ services:
       container_name: node3
       hostname: node3
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -486,6 +511,8 @@ services:
       image: progressofficial/marklogic-db
       hostname: bootstrap
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -511,6 +538,8 @@ services:
       image: progressofficial/marklogic-db
       hostname: node2
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -539,6 +568,8 @@ services:
       image: progressofficial/marklogic-db
       hostname: node3
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -665,6 +696,7 @@ Run this command to start the Docker container, adding your username and passwor
 
 ```
 $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
+     --cap-add=SYS_PTRACE \
      --name bootstrap -h bootstrap.marklogic.com \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -691,6 +723,7 @@ Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized
 
 ```
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
+     --cap-add=SYS_PTRACE \
      --name ml2 -h ml2.marklogic.com \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -719,6 +752,8 @@ services:
       container_name: bootstrap_3n
       hostname: bootstrap_3n
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME=test_admin
@@ -753,6 +788,8 @@ services:
       container_name: node2
       hostname: node2
       dns_search: ""
+      cap_add:
+        - SYS_PTRACE
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
@@ -764,7 +801,7 @@ services:
         - TZ=Europe/Prague
       volumes:
         - MarkLogic_2n_vol2:/var/opt/MarkLogic
-      secrets:sta
+      secrets:
         - source: mldb_admin_username
           target: mldb_admin_username
         - source: mldb_admin_password
@@ -838,6 +875,7 @@ $ docker stop container_id
 3. To upgrade MarkLogic, create a new container with the latest Docker image while using the same volume mounted to the container that was running the older release. To prevent conflicts, you should either remove the old container or assign a distinct name to the new container. The following commands use a unique name for the new container with the existing volume.
 ```
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
+     --cap-add=SYS_PTRACE \
      --name MarkLogic_cont_2 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
     progressofficial/marklogic-db
@@ -853,6 +891,7 @@ When creating a backup for a database on a MarkLogic Docker container, verify th
 This command is an example of mounting the directory /space used for backup on a Docker volume, while running the MarkLogic Docker container.
 ```
 $ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
+     --cap-add=SYS_PTRACE \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      --mount src=MarkLogic_vol_1,dst=/space \
      -e MARKLOGIC_INIT=true \

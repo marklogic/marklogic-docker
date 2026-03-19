@@ -15,11 +15,11 @@ RUN microdnf -y update \
     && rpm -i https://repo.almalinux.org/almalinux/9/BaseOS/x86_64/os/Packages/libnsl-2.34-231.el9_7.10.x86_64.rpm
 
 ###############################################################
-# install networking, base deps and tzdata for timezone
+# install python3-rpm,networking, base deps and tzdata for timezone
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install --setopt install_weak_deps=0 gdb nss libtool-ltdl cpio tzdata util-linux hostname \
+    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libtool-ltdl cpio tzdata util-linux hostname \
     && microdnf clean all
 
 

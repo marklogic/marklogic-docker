@@ -249,15 +249,15 @@ You can change the number of HugePages available to each MarkLogic container by 
 
 ## Enabling Stack Trace Generation
 
-**`--cap-add=SYS_PTRACE` is mandatory** for MarkLogic Server to be able to generate stack traces in the event of a crash (e.g., a segmentation fault). Without this Linux capability, the MarkLogic process cannot attach a debugger to itself and the diagnostic crash output will be incomplete, making root-cause analysis significantly harder.
+ To enable detailed native stack trace generation in the event of a crash (for example, a segmentation fault), you can grant the container the `SYS_PTRACE` capability.
 
-Add this flag to every `docker run` invocation:
+ Add this flag to your `docker run` invocation when you require enhanced crash diagnostics and your container runtime policy permits it:
 
-```
+```bash
 --cap-add=SYS_PTRACE
 ```
 
-All example commands in this document already include this flag.
+This capability is optional and not required for normal MarkLogic Server operation. In hardened or restricted environments where `SYS_PTRACE` is disallowed, omit this flag; crash diagnostics will be more limited, but the server will still run.
 
 # Clustering
 

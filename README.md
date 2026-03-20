@@ -80,9 +80,9 @@ For an initialized MarkLogic Server, admin credentials are required to be passed
 
 To create an initialized MarkLogic Server, pass in the environment variables MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD, and replace {insert admin username}/{insert admin password} with actual values for admin credentials. Use the optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set the wallet password and authentication realm of the admin user. If not provided, the wallet-password will default to the value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command: 
 
-```
+```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -92,15 +92,18 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e LICENSEE="{insert licensee}" \
      progressofficial/marklogic-db
 ```
+
 Example run:
-```
+
+```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \ 
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME='admin' \
      -e MARKLOGIC_ADMIN_PASSWORD='Areally!PowerfulPassword1337' \
      progressofficial/marklogic-db
 ```
+
 Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
 ## Uninitialized MarkLogic Server
@@ -108,9 +111,9 @@ For an uninitialized MarkLogic Server, admin credentials or license information 
 
 To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
 
-```
+```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      progressofficial/marklogic-db
 ```
 The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
@@ -126,7 +129,7 @@ A MarkLogic Docker container stores data in `/var/opt/MarkLogic` which is persis
 
 The following command will list previously created volumes:
 
-```
+```bash
 $ docker volume ls
 ```
 If the instructions in the **Using this Image** section are followed, the previous command should output at least two volume identifiers:
@@ -138,9 +141,9 @@ local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
 
 The following command uses a named volume and named container in order to make management easier:
 
-```
+```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name MarkLogic_cont_1 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
@@ -152,7 +155,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 Above command will start a Docker container `MarkLogic_cont_1` running MarkLogic Server and associate the named Docker volume `MarkLogic_vol_1` with it.
 
 Run this command to check the volumes:
-```
+```bash
 $ docker volume ls
 ```
 
@@ -269,7 +272,7 @@ Create these files on your host machine: `marklogic-single-node.yaml`, `mldb_adm
 
 **marklogic-single-node.yaml**
 
-```
+```yaml
 #Docker compose file sample to setup single node cluster
 version: '3.6'
 services:
@@ -337,13 +340,13 @@ volumes:
 
 Once the files are ready, run this command to start the MarkLogic Server container.
 
-```
+```bash
 $ docker-compose -f marklogic-single-node.yaml up -d
 ```
 The previous command starts a container running MarkLogic Server named "bootstrap".
 
 Run this next command to verify if the container is running:
-```
+```bash
 $ docker ps
 ```
 If the containers are running correctly, this command lists all the Docker containers running on the host.
@@ -356,7 +359,7 @@ The following is an example of a three-node MarkLogic server cluster created usi
 
 **marklogic-multi-node.yaml**
 
-```
+```yaml
 #Docker compose file sample to setup a three node cluster
 version: '3.6'
 services:
@@ -463,14 +466,14 @@ volumes:
 
 Once the files have been created, run the following command to start the MarkLogic Server container:
 
-```
+```bash
 $ docker-compose -f marklogic-multi-node.yaml up -d
 ```
 
 This command will start three Docker containers running MarkLogic Server, named "bootstrap_3n", "node2" and, "node3".
 
 Run this command to verify if the containers are running:
-```
+```bash
 $ docker ps
 ```
 This command lists all the Docker containers running on the host.
@@ -504,7 +507,7 @@ Using Docker secrets, username and password information are secured when transmi
   $docker secret create mldb_wallet_password_v1 mldb_wallet_password_v1.txt
 ```
 3. Create marklogic-multi-node.yaml using below:
-```
+```yaml
 version: '3.6'
 services:
     bootstrap:
@@ -630,7 +633,7 @@ Now that the nodes have been initialized, we rotate the secrets files to overwri
   $docker secret create mldb_wallet_password_v2 mldb_wallet_password_v2.txt
 ```
 6. Use the following commands to rotate the Docker secrets for all the Docker services created above using Docker stack:
-```
+```bash
 docker service update \
     --secret-rm mldb_admin_username_v1 \
     --secret-rm mldb_admin_password_v1 \
@@ -640,7 +643,7 @@ docker service update \
     --secret-add source=mldb_wallet_password_v2,target=mldb_wallet_password \
     mlstack_bootstrap
 ```
-```
+```bash
 docker service update \
     --secret-rm mldb_admin_username_v1 \
     --secret-rm mldb_admin_password_v1 \
@@ -650,7 +653,7 @@ docker service update \
     --secret-add source=mldb_wallet_password_v2,target=mldb_wallet_password \
     mlstack_node2
 ```
-```
+```bash
 docker service update \
     --secret-rm mldb_admin_username_v1 \
     --secret-rm mldb_admin_password_v1 \
@@ -674,29 +677,29 @@ Follow these steps to set up the first node ("bootstrap") on VM1.
 
 Initialize the Docker Swarm with this command:
 
-```
+```bash
 $ docker swarm init
 ```
 Copy the output from this step. The other VMs will need this information to connect them to the swarm. The output will be similar to this: `docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377`. 
 
 Use this command to create a new network:
 
-```
+```bash
 $ docker network create --driver=overlay --attachable ml-cluster-network
 ```
 
 Use this command to verify the ml-cluster-network has been created:
 
-```
+```bash
 $ docker network ls
 ```
 The `network ls` command will list all the networks on the host.
 
 Run this command to start the Docker container, adding your username and password to the command. It will start the Docker container (named "bootstrap") with MarkLogic Server initialized.
 
-```
+```bash
 $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name bootstrap -h bootstrap.marklogic.com \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -714,16 +717,16 @@ Follow the next steps to set up an additional node (for example ml2) on VM#n.
 
 Run the Docker `swarm join` command that you got as output when you set up VM#1 previously.
 
-```
+```bash
 $ docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377
 ```
 This command adds the current node to the swarm initialized earlier. 
 
 Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join the container to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows. To join this host to a specific MarkLogic Group, use the MARKLOGIC_GROUP environment parameter as below.
 
-```
+```bash
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name ml2 -h ml2.marklogic.com \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -744,7 +747,7 @@ This example shows how to join a node to a TLS enabled cluster. There are two pr
 Below example uses docker stack for MarkLogic cluster deployment. It will create a docker stack named mlstack with two services named bootstrap and node2.
 
 1. Create a bootstrap host using the following compose file:
-```
+```yaml
 version: '3.6'
 services:
     bootstrap_3n:
@@ -780,7 +783,7 @@ docker stack deploy -c bootstrap-compose.yaml mlstack
 4. Obtain the CA certificate for SSL enabled app servers on the bootstrap host and store it in the same directory as the compose file. The CA certificate/certificate chain used to join the cluster will be stored as Docker secret.
 5. Create files `mldb_admin_username.txt` and `mldb_admin_password.txt` to set the admin username/password used for joining the bootstrap host.
 6. Use the compose file below to create node2. Please note the {MARKLOGIC_JOIN_TLS_ENABLED} parameter is set to true and the {MARKLOGIC_JOIN_CACERT_FILE} is set as a Docker secret with the value set to the CA certificate/certificate chain file path. Please see the [Configuration](#Configuration) section for more details on these two parameters.
-```
+```yaml
 version: '3.6'
 services:
     node2:
@@ -843,7 +846,7 @@ Follow below steps to update the certificate:
   $docker secret create certificate_v2.cer certificate_v2.cer
 ```
 2. Use the below command to rotate the Docker secret for the mlstack_node2 Docker services created above using Docker stack:
-```
+```bash
 docker service update \
     --secret-rm certificate_v1.cer \
     --secret-add source=certificate_v2.cer,target=certificate.cer \
@@ -862,20 +865,20 @@ Note: In the below example, we are upgrading an initialized MarkLogic host to th
 
 1. If you are upgrading to a rootless image, you need to update the ownership of all files and directories under /var/opt/MarkLogic in the container. Otherwise skip to step 2.
 Use the following two commands to stop the MarkLogic server and update the ownership of the files and directories:
-```
+```bash
 $ docker exec -it -u root container_id /etc/init.d/MarkLogic stop
 
 $ docker exec -it -u root container_id chown -R 1000:100 /var/opt/MarkLogic
 ```
 2. Stop the MarkLogic Docker container.
 Use following command to stop the container:
-```
+```bash
 $ docker stop container_id
 ```
 3. To upgrade MarkLogic, create a new container with the latest Docker image while using the same volume mounted to the container that was running the older release. To prevent conflicts, you should either remove the old container or assign a distinct name to the new container. The following commands use a unique name for the new container with the existing volume.
-```
+```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name MarkLogic_cont_2 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
     progressofficial/marklogic-db
@@ -889,9 +892,9 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 When creating a backup for a database on a MarkLogic Docker container, verify that the directory used for the backup is mounted to a directory on the Docker host machine or Docker volume. This is so that the database backup persists even after the container is stopped.
 
 This command is an example of mounting the directory /space used for backup on a Docker volume, while running the MarkLogic Docker container.
-```
+```bash
 $ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
-     --cap-add=SYS_PTRACE \
+     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      --mount src=MarkLogic_vol_1,dst=/space \
      -e MARKLOGIC_INIT=true \
@@ -913,7 +916,7 @@ Add the `--platform linux/amd64` flag to the `docker run` command to avoid this 
 
 ## View MarkLogic Server Startup Status
 To check the MarkLogic Server startup status, run the below command to tail the MarkLogic log file
-```
+```bash
 $ docker exec -it <container name> tail -f /var/opt/MarkLogic/Logs/ErrorLog.txt
 ```
 
@@ -924,7 +927,7 @@ The following is a set of steps to run to access a container while it is running
 1. Access the machine running the Docker container. This is typically done using SSH or by having physical access to the machine hosting the container.
 2. Get the container ID for the MarkLogic container running on the machine. To do this, run the following command:
 
-```
+```bash
 $ docker container ps --filter ancestor=progressofficial/marklogic-db -q
 ```
 In this example command `progressofficial/marklogic-db` is an image ID. Your container ID may be different for your machine.
@@ -937,7 +940,7 @@ f484a784d998
 
 If you don't know the image name, you can search for it without a filter:
 
-```
+```bash
 $ docker container ps
 ```
 
@@ -952,13 +955,13 @@ f484a784d998   progressofficial/marklogic-db   "/usr/local/bin/star…"   16 min
 
 For this example command, `f484a784d998` is the container ID from the prior step. The one assigned to your container will be different. 
 
-```
+```bash
 $ docker exec -it f484a784d998 /bin/bash
 ```
 
 4. To verify that MarkLogic is running, use this command:
 
-```
+```bash
 $ service MarkLogic status
 ```
 
@@ -972,13 +975,13 @@ MarkLogic (pid  34) is running...
 
 For example, you can list the 8001 error logs, and view them with a single command:
 
-```
+```bash
 $ cd /var/opt/MarkLogic/Logs && ls && cat ./8001_ErrorLog.txt
 ```
 
 6. To exit the container when you are through debugging, use the exit command:
 
-```
+```bash
 $ exit
 ```
 
@@ -988,13 +991,13 @@ $ exit
 These are the steps you can use to remove the containers created in the "Using this Image" section of the text. It is important to remove resources after development is complete to free up ports and resources when they are not in use.  
 
 Use this command to stop a container, replacing `container_name` with the name(s) of the container(s) found when using the command: `docker container ps`.
-```
+```bash
 $ docker stop container_name
 ```
 
 Use this command to remove a stopped container: 
 
-```
+```bash
 $ docker rm container_name
 ```
 
@@ -1005,20 +1008,20 @@ This section describes the teardown process for clusters set up on a single VM u
 
 Resources such as containers, volumes, and networks that were created with compose command can be removed using this command:
 
-```
+```bash
 $ docker-compose -f marklogic-single-node.yaml down
 ```
 
 ### Remove volumes
 
 Volumes can be removed in a few ways. Adding the `–rm` option while running a container will remove the volume when the container dies. You can also remove a volume by using `prune`. See the following examples for more information.
-```
+```bash
 $ docker run --rm -v /foo -v awesome:/bar container image
 ```
 
 To remove all other unused volumes use this command:
 
-```
+```bash
 $ docker volume prune
 ```
 If the process is successful, the output will list all of the removed volumes.
@@ -1029,7 +1032,7 @@ Then remove all the volumes with the commands described in the "Remove volumes" 
 
 Finally, disconnect VMs from the swarm running the following command on each VM:
 
-```
+```bash
 docker swarm leave --force
 ```
 If the process is successful, a message saying the node has left the swarm will be displayed.

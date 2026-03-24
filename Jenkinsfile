@@ -169,7 +169,7 @@ void resultNotification(status) {
     }
     mail to: "${emailList}",
         body: "${email_body}",
-        subject: "🥷 ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+        subject: "f977 ${status}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
         charset: 'UTF-8', mimeType: 'text/html'
 }
 
@@ -390,6 +390,7 @@ void publishToInternalRegistry() {
 
     currentBuild.description = "Published"
 }
+
 /**
  * Triggers a BlackDuck scan job for the published image.
  * Runs asynchronously (wait: false).
@@ -433,6 +434,31 @@ void scapScan() {
     sh """
         make scap-scan current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
     """
+}
+
+/**
+ * Pushes the built MarkLogic Docker image to ECR for use by the EKS test environment.
+ * Tags and pushes both the versioned tag and the latest-{mlMajorVersion} tag.
+ * Requires the KUBE_NINJAS_OPS_AWS_JENKINS credential to be present on the Jenkins agent.
+ * ECR registry: 308453789681.dkr.ecr.us-west-1.amazonaws.com
+ * ECR repo:     jenkins-kube-ninjas/marklogic-server-{dockerImageType}
+ */
+void pushToECR() {
+    def ecrRegistry = '308453789681.dkr.ecr.us-west-1.amazonaws.com'
+    def ecrRepo = "${ecrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
+    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                      credentialsId: 'KUBE_NINJAS_OPS_AWS_JENKINS',
+                      accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                      secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+        sh """
+            aws ecr get-login-password --region us-west-1 | \\
+              docker login --username AWS --password-stdin ${ecrRegistry}
+            docker tag ${builtImage} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+            docker tag ${builtImage} ${ecrRepo}:latest-${mlVerShort}
+            docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+            docker push ${ecrRepo}:latest-${mlVerShort}
+        """
+    }
 }
 
 pipeline {
@@ -481,6 +507,7 @@ pipeline {
     booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
     string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g Test one, Test two). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
+        booleanParam(name: 'PUSH_TO_ECR', defaultValue: false, description: 'Push built images to ECR (jenkins-kube-ninjas) for EKS operator testing. Requires KUBE_NINJAS_OPS_AWS_JENKINS credentials on this agent.')
     }
 
     stages {
@@ -540,7 +567,7 @@ pipeline {
         // Stage: Run OpenSCAP compliance scan (conditional)
         stage('SCAP-Scan') {
             when {
-                    expression { return params.SCAP_SCAN }
+                expression { return params.SCAP_SCAN }
             }
             steps {
                 scapScan()
@@ -570,7 +597,7 @@ pipeline {
         // Stage: Publish image to internal registries (conditional)
         stage('Publish-Image') {
             when {
-                    anyOf {
+                anyOf {
                         branch 'develop'
                         expression { return params.PUBLISH_IMAGE }
                     }
@@ -579,6 +606,16 @@ pipeline {
                 publishToInternalRegistry()
                 // Trigger downstream QA image build job
                 build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+            }
+        }
+
+        // Stage: Push images to ECR for EKS operator testing (conditional)
+        stage('Push-to-ECR') {
+            when {
+                expression { return params.PUSH_TO_ECR }
+            }
+            steps {
+                pushToECR()
             }
         }
 
@@ -619,7 +656,7 @@ pipeline {
             resultNotification('⚠️ Unstable')
         }
         aborted {
-            resultNotification('🚫 Aborted')
+            resultNotification('f6ab Aborted')
         }
-            }
+    }
 }

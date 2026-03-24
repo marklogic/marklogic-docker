@@ -484,6 +484,16 @@ pipeline {
     }
 
     stages {
+        // Stage: Remove stale test results from previous builds
+        stage('Clean-Previous-Results') {
+            steps {
+                sh '''
+                    rm -f container-structure-test.xml
+                    rm -rf test/test_results
+                '''
+            }
+        }
+
         // Stage: Perform initial checks (PR status, Jira ID)
         stage('Pre-Build-Check') {
             steps {

@@ -370,7 +370,8 @@ Create dynamic host token for group ${group} on host ${host} and port ${port} us
     ${token_details}=    Create Dictionary    group=${group}    host=${host}    port=${port_num}    duration=${duration}    comment=${comment}
     ${token_body}=    Create Dictionary    dynamic-host-token=${token_details}
     ${response}=    Create Digest Session    RestSession    url=http://localhost:${dockerport}    headers=${headers}    auth=${auth}
-    ${response}=    POST On Session    RestSession    url=/manage/v2/clusters/Default/dynamic-host-token    json=${token_body}    headers=${header}
+    ${cluster_name}=    Get Local Cluster Name on port ${dockerport}
+    ${response}=    POST On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-host-token    json=${token_body}    headers=${header}
     ${token_xml}=    Set Variable    ${response.text}
     ${token_content}=    Get Regexp Matches    ${token_xml}    <dynamic-host-token[^>]*>(.*)</dynamic-host-token>    1
     ${token}=    Set Variable    ${token_content[0]}
@@ -427,6 +428,15 @@ Set up dynamic host group ${group}
     Create group ${group} on port 7102
     Enable dynamic host feature on 7102 for group ${group}
 
+Get Local Cluster Name on port ${port}
+    [Documentation]    Gets the local cluster name from the MarkLogic Management API
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Accept=application/json
+    ${response}=    Create Digest Session    ClusterNameSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    GET On Session    ClusterNameSession    url=/manage/v2/properties?format=json    headers=${header}
+    ${cluster_name}=    Set Variable    ${response.json()["cluster-name"]}
+    RETURN    ${cluster_name}
+
 Get MarkLogic Host ID on port ${port} with hostname ${hostname}
     [Documentation]    Returns the host ID of a MarkLogic server with the specified hostname
     ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
@@ -446,16 +456,41 @@ Get MarkLogic Host ID on port ${port} with hostname ${hostname}
     RETURN    ${host_id}
 
 Get All Dynamic Host IDs on port ${port} for group ${group}
-    [Documentation]    Gets all dynamic host IDs from the MarkLogic cluster
+    [Documentation]    Gets all dynamic host IDs from the MarkLogic cluster for a specific group
     ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
     ${header}=    Create Dictionary    Accept=application/json
-    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
-    ${response}=    GET On Session    RestSession    url=/manage/v2/clusters/${group}/dynamic-hosts?format=json    headers=${header}
+    ${cluster_name}=    Get Local Cluster Name on port ${port}
+    # Get all cluster-wide dynamic host IDs
+    ${session}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    GET On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-hosts?format=json    headers=${header}
     ${has_hosts}=    Run Keyword And Return Status    Dictionary Should Contain Key    ${response.json()}    dynamic-hosts
-    @{host_ids}=    Create List
+    @{all_dynamic_ids}=    Create List
     IF    ${has_hosts}
-        ${hosts}=    Set Variable    ${response.json()["dynamic-hosts"]}
-        ${host_ids}=    Set Variable    ${hosts}
+        @{all_dynamic_ids}=    Set Variable    ${response.json()["dynamic-hosts"]}
+    END
+    # Get all host IDs in the specified group
+    ${resp2}=    GET On Session    RestSession    url=/manage/v2/hosts?format=json&group-id=${group}    headers=${header}
+    ${group_items}=    Set Variable    ${resp2.json()["host-default-list"]["list-items"]}
+    @{group_host_ids}=    Create List
+    ${has_items}=    Run Keyword And Return Status    Dictionary Should Contain Key    ${group_items}    list-item
+    IF    ${has_items}
+        ${items}=    Set Variable    ${group_items["list-item"]}
+        ${is_list}=    Evaluate    isinstance($items, list)
+        IF    ${is_list}
+            FOR    ${item}    IN    @{items}
+                Append To List    ${group_host_ids}    ${item["idref"]}
+            END
+        ELSE
+            Append To List    ${group_host_ids}    ${items["idref"]}
+        END
+    END
+    # Return intersection: dynamic hosts that are also in the specified group
+    @{host_ids}=    Create List
+    FOR    ${id}    IN    @{all_dynamic_ids}
+        ${in_group}=    Evaluate    $id in $group_host_ids
+        IF    ${in_group}
+            Append To List    ${host_ids}    ${id}
+        END
     END
     RETURN    ${host_ids}
 
@@ -465,14 +500,14 @@ Remove All Dynamic Hosts on port ${port} for group ${group}
     ${host_count}=    Get Length    ${host_ids}
     IF    ${host_count} > 0
         ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
-        ${header}=    Create Dictionary    Accept=application/json
-        # Create session and delete hosts one by one using URL parameters
+        ${header}=    Create Dictionary    Content-type=application/xml
+        ${host_elements}=    Evaluate    ''.join(f'<dynamic-host>{id}</dynamic-host>' for id in $host_ids)
+        ${xml_body}=    Set Variable    <dynamic-hosts xmlns="http://marklogic.com/manage/dynamic-host">${host_elements}</dynamic-hosts>
+        ${cluster_name}=    Get Local Cluster Name on port ${port}
         ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
-        FOR    ${host_id}    IN    @{host_ids}
-            ${response}=    DELETE On Session    RestSession
-            ...            url=/manage/v2/clusters/${group}/dynamic-hosts/${host_id}
-            ...            headers=${header}
-        END
+        ${response}=    DELETE On Session    RestSession
+        ...            url=/manage/v2/clusters/${cluster_name}/dynamic-hosts
+        ...            data=${xml_body}    headers=${header}
         Log    Removed ${host_count} dynamic hosts from group ${group}
     ELSE
         Log    No dynamic hosts to remove from group ${group}
@@ -592,8 +627,9 @@ Dynamic Host Join Fails After Token Revoked ${group}
     ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
     ${header}=    Create Dictionary    Content-Type=application/xml
     ${xml_body}=    Set Variable    <dynamic-host-tokens><token>${token}</token></dynamic-host-tokens>
-    ${response}=    Create Digest Session    RestSession    url=http://localhost:8002    headers=${headers}    auth=${auth}
-    ${response}=    DELETE On Session    RestSession    url=/manage/v2/clusters/${group}/dynamic-host-token    data=${xml_body}    headers=${header}
+    ${cluster_name}=    Get Local Cluster Name on port 7102
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:7102    headers=${headers}    auth=${auth}
+    ${response}=    DELETE On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-host-token    data=${xml_body}    headers=${header}
 
     ${status}=    Run Keyword And Return Status    Init dynamic host 8201 with token ${token}
     Should Be Equal    ${status}    ${FALSE}    Join succeeded with revoked token when it should have failed

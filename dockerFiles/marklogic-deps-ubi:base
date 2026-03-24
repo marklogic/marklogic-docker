@@ -19,12 +19,11 @@ RUN microdnf -y upgrade glibc \
     && microdnf clean all
 
 ###############################################################
-# install networking, base deps and tzdata for timezone
+# install gdb and dependencies for stack traces, networking, base deps and tzdata for timezone
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install --setopt install_weak_deps=0 gdb redhat-lsb-core initscripts tzdata glibc libstdc++ hostname \
-    && microdnf -y upgrade tzdata \
+    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm libcap procps-ng python3 nss libtool-ltdl cpio redhat-lsb-core initscripts tzdata glibc libstdc++ hostname \
     && microdnf clean all
 
 ###############################################################

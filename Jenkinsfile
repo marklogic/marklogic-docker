@@ -15,6 +15,7 @@ gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 pdcSbRegistry = 'sandboxpdc.azurecr.io'
 pdcDevRegistry = 'marklogicclouddev.azurecr.io'
+kubeNinjasEcrRegistry = '308453789681.dkr.ecr.us-west-1.amazonaws.com'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
 JIRA_ID = ''
 LINT_OUTPUT = ''
@@ -386,7 +387,21 @@ void publishToInternalRegistry() {
                 docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
             """
         }
-    }
+        // Publish to Kubernetes ECR for testing on EKS
+        def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'KUBE_NINJAS_OPS_AWS_JENKINS',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            sh """
+                aws ecr get-login-password --region us-west-1 | \\
+                docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}
+                docker tag ${builtImage} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${builtImage} ${ecrRepo}:latest-${mlVerShort}
+                docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${ecrRepo}:latest-${mlVerShort}
+            """
+        }
 
     currentBuild.description = "Published"
 }

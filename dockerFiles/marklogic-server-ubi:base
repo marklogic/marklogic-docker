@@ -111,7 +111,7 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
 # Set Timezone
 ################################################################
 
-RUN microdnf install -y tzdata
+RUN microdnf install -y tzdata && microdnf clean all
 
 ###############################################################
 # Remove optional packages that have known vulnerabilities

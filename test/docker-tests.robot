@@ -124,6 +124,7 @@ Initialized MarkLogic container with latency
 
 Upgrade MarkLogic container
     Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for ARM image
     Create test container with    -e    MARKLOGIC_INIT=true
 ...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
 ...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
@@ -148,6 +149,7 @@ Upgrade MarkLogic container
 
 Upgrade MarkLogic container with init parameter
     Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for ARM image
     Create test container with    -e    MARKLOGIC_INIT=true
 ...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
 ...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
@@ -172,6 +174,7 @@ Upgrade MarkLogic container with init parameter
 
 Upgrade MarkLogic container with init and credential parameters
     Skip If  'rootless' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for rootless image
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping Upgrade MarkLogic test for ARM image
     Create test container with    -e    MARKLOGIC_INIT=true
 ...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
 ...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}
@@ -582,6 +585,7 @@ Initialized MarkLogic Server with wallet password and realm
     [Teardown]    Delete container
 
 Initialized MarkLogic container with ML converters
+    Skip If  'arm' in '${IMAGE_TYPE}'  msg = Skipping ML converters test for ARM image (converters not available)
     Create container with    -e    MARKLOGIC_INIT=true
     ...                      -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
     ...                      -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}

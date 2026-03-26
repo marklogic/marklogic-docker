@@ -1,8 +1,8 @@
-# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Copyright © 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 dockerTag?=internal
 package?=MarkLogic.rpm
 repo_dir=marklogic
-docker_build_options=--compress --platform linux/amd64
+docker_build_options=--compress
 build_branch?=local
 docker_image_type?=ubi
 upgrade_docker_image_type?=ubi
@@ -12,12 +12,30 @@ current_image?=${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}
 open_scap_version?=0.1.79
 
 #***************************************************************************
+# set docker platform based on the docker image type
+#***************************************************************************
+ifeq ($(findstring arm,$(docker_image_type)),arm)
+	docker_build_options += --platform linux/arm64
+	export DOCKER_PLATFORM=linux/arm64
+else
+	docker_build_options += --platform linux/amd64
+	export DOCKER_PLATFORM=linux/amd64
+endif
+
+#***************************************************************************
 # build docker image
 #***************************************************************************
 build:
 # NOTICE file need to be in the build context to be included in the built image
 	cp NOTICE.txt src/NOTICE.txt
 
+# Install ARM64 emulation support on Linux (assuming Jenkins environment which is not aarch64)
+ifeq ($(findstring arm,$(docker_image_type)),arm)
+ifeq ($(shell uname -s),Linux)
+	docker run --privileged --rm tonistiigi/binfmt --install arm64
+endif
+endif
+	
 # rootless images use the same dependencies as ubi image so we copy the file
 ifeq ($(docker_image_type),ubi9)
 	cp dockerFiles/marklogic-server-ubi\:base dockerFiles/marklogic-server-ubi9\:base
@@ -27,10 +45,15 @@ ifeq ($(findstring rootless,$(docker_image_type)),rootless)
 	cp dockerFiles/marklogic-deps-ubi9\:base dockerFiles/marklogic-deps-ubi9-rootless\:base
 	cp dockerFiles/marklogic-server-ubi-rootless\:base dockerFiles/marklogic-server-ubi9-rootless\:base
 endif
+# ubi9-rootless-arm needs deps from ubi9-arm and server template from ubi-rootless
+ifeq ($(docker_image_type),ubi9-rootless-arm)
+	cp dockerFiles/marklogic-deps-ubi9-arm\:base dockerFiles/marklogic-deps-ubi9-rootless-arm\:base
+	cp dockerFiles/marklogic-server-ubi-rootless\:base dockerFiles/marklogic-server-ubi9-rootless-arm\:base
+endif
 
 # retrieve and copy open scap hardening script
 ifeq ($(findstring rootless,$(docker_image_type)),rootless)
-	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lo scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
+	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
 #UBI9 needs a different version of the remediation script
 ifeq ($(findstring ubi9,$(docker_image_type)),ubi9)
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/bash/rhel9-script-cis.sh > src/rhel-script-cis.sh
@@ -45,7 +68,7 @@ endif
 	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}" --build-arg BASE_IMAGE=${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_DOCKER_VERSION=${dockerVersion} --build-arg ML_VERSION=${marklogicVersion} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} --build-arg ML_DOCKER_TYPE=${docker_image_type} -f ../dockerFiles/marklogic-server-${docker_image_type}:base .
 
 # remove temporary files
-	rm -f dockerFiles/marklogic-deps-ubi-rootless\:base dockerFiles/marklogic-deps-ubi9-rootless\:base dockerFiles/marklogic-server-ubi9-rootless\:base dockerFiles/marklogic-server-ubi9\:base src/NOTICE.txt src/rhel-script-cis.sh
+	rm -f dockerFiles/marklogic-deps-ubi-rootless\:base dockerFiles/marklogic-deps-ubi9-rootless\:base dockerFiles/marklogic-server-ubi9-rootless\:base dockerFiles/marklogic-server-ubi9\:base dockerFiles/marklogic-deps-ubi9-rootless-arm\:base dockerFiles/marklogic-server-ubi9-rootless-arm\:base src/NOTICE.txt src/rhel-script-cis.sh
 
 #***************************************************************************
 # strcture test docker images
@@ -133,15 +156,21 @@ endif
 # security scan docker images
 #***************************************************************************
 scap-scan:
+	# Clean up any existing scap-scan container from previous runs
+	docker rm -f scap-scan 2>/dev/null || true
 	mkdir -p scap
-	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lo scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
+	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
 #UBI9 needs a different version of the evaluation profile
 ifeq ($(findstring ubi9,$(current_image)),ubi9)
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel9-ds.xml > scap/ssg-rhel-ds.xml
 else
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel8-ds.xml > scap/ssg-rhel-ds.xml
 endif
-	docker run -itd --name scap-scan -v $(PWD)/scap:/scap ${current_image}
+	docker run -itd --name scap-scan --entrypoint /bin/bash -v $(PWD)/scap:/scap ${current_image} -c "sleep infinity"
+	# Wait a moment for container to be fully up
+	sleep 2
+	# Verify container is running
+	docker ps | grep scap-scan || (docker logs scap-scan; exit 1)
 	docker exec -u root scap-scan /bin/bash -c "microdnf update -y; microdnf install -y openscap-scanner"
 	# ensure the file is owned by root in order to avoid permission issues
 	docker exec -u root scap-scan /bin/bash -c "chown root:root /scap/ssg-rhel-ds.xml"

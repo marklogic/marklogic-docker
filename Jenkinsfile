@@ -402,6 +402,7 @@ void publishToInternalRegistry() {
                 docker push ${ecrRepo}:latest-${mlVerShort}
             """
         }
+	}
 
     currentBuild.description = "Published"
 }

@@ -65,3 +65,22 @@ fileExistenceTests:
   shouldExist: true
   uid: 1000
   gid: 100
+- name: 'gdb binary exists'
+  path: '/usr/bin/gdb'
+  shouldExist: true
+  isExecutableBy: 'any'
+- name: 'python3 binary exists'
+  path: '/usr/bin/python3'
+  shouldExist: true
+  isExecutableBy: 'any'
+
+commandTests:
+- name: 'gdb is installed and functional (required for stack traces)'
+  command: 'gdb'
+  args: ['--version']
+  expectedOutput: ['GNU gdb']
+  exitCode: 0
+- name: 'python3 is installed and functional (required for gdb stack trace scripts)'
+  command: 'python3'
+  args: ['-c', 'import sys; sys.exit(0)']
+  exitCode: 0

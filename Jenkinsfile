@@ -393,7 +393,7 @@ void publishToInternalRegistry() {
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
             // Resolve account ID via STS — no account number is hardcoded in this file.
             def awsAccountId = sh(returnStdout: true,
-                script: 'aws sts get-caller-identity --query Account --output text').trim()
+                script: 'aws sts get-caller-identity --region us-west-1 --query Account --output text').trim()
             def kubeNinjasEcrRegistry = "${awsAccountId}.dkr.ecr.us-west-1.amazonaws.com"
             def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
             sh """

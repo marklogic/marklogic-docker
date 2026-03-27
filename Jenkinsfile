@@ -15,7 +15,6 @@ gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 pdcSbRegistry = 'sandboxpdc.azurecr.io'
 pdcDevRegistry = 'marklogicclouddev.azurecr.io'
-kubeNinjasEcrRegistry = '308453789681.dkr.ecr.us-west-1.amazonaws.com'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
 JIRA_ID = ''
 LINT_OUTPUT = ''
@@ -388,11 +387,15 @@ void publishToInternalRegistry() {
             """
         }
         // Publish to Kubernetes ECR for testing on EKS
-        def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                         credentialsId: 'KUBE_NINJAS_OPS_AWS_JENKINS',
                         accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            // Resolve account ID via STS — no account number is hardcoded in this file.
+            def awsAccountId = sh(returnStdout: true,
+                script: 'aws sts get-caller-identity --query Account --output text').trim()
+            def kubeNinjasEcrRegistry = "${awsAccountId}.dkr.ecr.us-west-1.amazonaws.com"
+            def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
             sh """
                 aws ecr get-login-password --region us-west-1 | \\
                 docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}

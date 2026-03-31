@@ -548,6 +548,7 @@ pipeline {
     stages {
         // Stage: Remove stale test results from previous builds
         stage('Clean-Previous-Results') {
+            agent { node { label 'cld-docker' } }
             steps {
                 sh '''
                     rm -f container-structure-test.xml

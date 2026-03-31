@@ -516,12 +516,14 @@ pipeline {
                 00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                 00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
                 00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                00 05 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
-                30 05 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                00 06 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                00 06 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
                 00 06 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' :
             env.BRANCH_NAME == 'Docker-ARM-support' ? '''
-                03 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
-                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true''' : '')
+                03 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
+                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true
+                00 05 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
+                00 05 * * * % marklogicVersion=12;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -529,7 +531,7 @@ pipeline {
 
     parameters {
         string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
-        string(name: 'dockerVersion', defaultValue: '2.2.4', description: 'ML Docker version. This version along with ML rpm package version will be the image tag as {ML_Version}_{dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '2.2.4', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '12\n11\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
@@ -544,6 +546,17 @@ pipeline {
     }
 
     stages {
+        // Stage: Remove stale test results from previous builds
+        stage('Clean-Previous-Results') {
+            agent { node { label 'cld-docker' } }
+            steps {
+                sh '''
+                    rm -f container-structure-test.xml
+                    rm -rf test/test_results
+                '''
+            }
+        }
+
         // Stage: Perform initial checks (PR status, Jira ID)
         stage('Pre-Build-Check') {
             agent { node { label 'cld-docker' } }

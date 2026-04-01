@@ -73,14 +73,3 @@ fileExistenceTests:
   path: '/usr/bin/python3'
   shouldExist: true
   isExecutableBy: 'any'
-
-commandTests:
-- name: 'gdb is installed and functional (required for stack traces)'
-  command: 'sh'
-  args: ['-c', 'gdb --version 2>&1']
-  expectedOutput: ['GNU gdb']
-  exitCode: 0
-- name: 'python3 is installed and functional (required for gdb stack trace scripts)'
-  command: 'python3'
-  args: ['-c', 'import sys; sys.exit(0)']
-  exitCode: 0

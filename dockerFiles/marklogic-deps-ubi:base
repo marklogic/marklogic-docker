@@ -24,6 +24,7 @@ RUN microdnf -y upgrade glibc \
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname \
+    && microdnf -y upgrade tzdata \
     && microdnf clean all
 
 ###############################################################

@@ -65,3 +65,11 @@ fileExistenceTests:
   shouldExist: true
   uid: 1000
   gid: 100
+- name: 'gdb binary exists'
+  path: '/usr/bin/gdb'
+  shouldExist: true
+  isExecutableBy: 'any'
+- name: 'python3 binary exists'
+  path: '/usr/bin/python3'
+  shouldExist: true
+  isExecutableBy: 'any'

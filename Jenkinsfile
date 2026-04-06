@@ -386,7 +386,26 @@ void publishToInternalRegistry() {
                 docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
             """
         }
-    }
+        // Publish to Kubernetes ECR for testing on EKS
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'KUBE_NINJAS_OPS_AWS_JENKINS',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            // Resolve account ID via STS — no account number is hardcoded in this file.
+            def awsAccountId = sh(returnStdout: true,
+                script: 'aws sts get-caller-identity --region us-west-1 --query Account --output text').trim()
+            def kubeNinjasEcrRegistry = "${awsAccountId}.dkr.ecr.us-west-1.amazonaws.com"
+            def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
+            sh """
+                aws ecr get-login-password --region us-west-1 | \\
+                docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}
+                docker tag ${builtImage} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${builtImage} ${ecrRepo}:latest-${mlVerShort}
+                docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${ecrRepo}:latest-${mlVerShort}
+            """
+        }
+	}
 
     currentBuild.description = "Published"
 }

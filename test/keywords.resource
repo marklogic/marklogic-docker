@@ -937,11 +937,11 @@ Verify Cross Cluster API Returns Error on port ${local_port} for cluster ${forei
     Log    Correctly received 200 with empty tokens - cluster is coupled/known
 
     # POST (create) token for foreign cluster - should return 400 (Bad Request)
-    ${eval_port}=    Evaluate    int(${local_port}) - 2
-    # Use the local cluster's own bootstrap host so the 400 is caused by the cross-cluster restriction, not an invalid host
+    # Use the local cluster's own bootstrap host and container Admin port so the 400 is caused by
+    # the cross-cluster restriction, not an invalid/unreachable host-mapped port combination.
     # is_cluster2=True means foreign=cluster2 → local=cluster1 → cluster1_bootstrap; else local=cluster2 → cluster2_bootstrap
     ${local_bootstrap_name}=    Set Variable If    ${is_cluster2}    cluster1_bootstrap    cluster2_bootstrap
-    ${token_details}=    Create Dictionary    group=Default    host=${local_bootstrap_name}    port=${eval_port}    duration=PT10M    comment=test
+    ${token_details}=    Create Dictionary    group=Default    host=${local_bootstrap_name}    port=8001    duration=PT10M    comment=test
     ${token_body}=    Create Dictionary    dynamic-host-token=${token_details}
     ${response}=    POST On Session    CrossClusterSess_${local_port}    url=/manage/v2/clusters/${foreign_cluster_name}/dynamic-host-token    json=${token_body}    headers=${header_post}    expected_status=400
     Log    Correctly received 400 when POST-ing token on foreign cluster

@@ -28,10 +28,10 @@ RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && microdnf clean all
 
 ###############################################################
-# MarkLogic 10 requires 32-bit libstdc++ runtime
+# MarkLogic 10 requires 32-bit libstdc++ runtime and redhat-lsb-core
 ###############################################################
 RUN if [ -n "$ML_VERSION" ] && [ "${ML_VERSION%%.*}" = "10" ]; then \
-        microdnf -y install --setopt install_weak_deps=0 libstdc++.i686 && \
+        microdnf -y install --setopt install_weak_deps=0 libstdc++.i686 redhat-lsb-core && \
         microdnf clean all; \
     fi
 

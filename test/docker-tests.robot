@@ -1,4 +1,4 @@
-# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Copyright © 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 *** Settings ***
 Resource         keywords.resource
 Documentation    Test all initialization options using Docker run and Docker Compose.
@@ -620,8 +620,51 @@ Dynamic Host Cluster Test
     Enable dynamic host feature on 7102 for group Default
     Dynamic Host Join Fails When Token Expires ${group}
     Dynamic Host Join Fails After Token Revoked ${group}
+    Delete Token By JTI Succeeds on ${group}
+    Verify Decoded Tokens Contain Fields on port 7102
+    Delete Token By Invalid JTI on port 7102
+    Delete Token By Host ID Succeeds on ${group}
+    Delete Token By Invalid Host ID on port 7102
+    Verify Invalid Cluster Name Returns 404 on port 7102
     Verify Dynamic Host Can Execute Query Default 7902
     [Teardown]    Delete compose from    compose-test-16.yaml
+
+Coupled Clusters Cross-Cluster API Test
+    [Tags]    dynamic-hosts    coupled-clusters
+    [Documentation]    Tests that foreign cluster dynamic host endpoints return the expected cross-cluster responses: GET /dynamic-host-token=200(empty), POST /dynamic-host-token=400, and DELETE operations on foreign-cluster resources=404
+    ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
+    Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Coupled Clusters Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
+    
+    # Start two separate clusters
+    Start compose from    compose-test-17.yaml
+    
+    # Get cluster names
+    ${cluster1_name}=    Get Local Cluster Name on port 7102
+    ${cluster2_name}=    Get Local Cluster Name on port 7302
+    Log    Cluster 1 name: ${cluster1_name}
+    Log    Cluster 2 name: ${cluster2_name}
+    
+    # Couple the two clusters (bidirectional)
+    ${foreign_name}=    Couple Cluster on port 7102 with Foreign Cluster on port 7302
+    Log    Cluster 1 coupled with foreign cluster: ${foreign_name}
+    ${foreign_name}=    Couple Cluster on port 7302 with Foreign Cluster on port 7102
+    Log    Cluster 2 coupled with foreign cluster: ${foreign_name}
+    
+    # Enable dynamic host feature and API token auth on both clusters (required for token creation)
+    Enable dynamic host feature on 7102 for group Default
+    Enable API token authentication on 7102 for group Default
+    Enable dynamic host feature on 7302 for group Default
+    Enable API token authentication on 7302 for group Default
+
+    # Test 1: From Cluster 1, try to access Cluster 2's dynamic host token API - should return 400
+    Verify Cross Cluster API Returns Error on port 7102 for cluster ${cluster2_name}
+
+    # Test 2: From Cluster 2, try to access Cluster 1's dynamic host token API - should return 400
+    Verify Cross Cluster API Returns Error on port 7302 for cluster ${cluster1_name}
+
+    Log    Successfully verified coupled cluster API behaviour: GET /dynamic-host-token=200(empty), POST /dynamic-host-token=400, DELETE /dynamic-host-token/{real-jti}=404, DELETE /dynamic-hosts/{real-host-id}=404
+    
+    [Teardown]    Delete compose from    compose-test-17.yaml
 
 Dynamic Host Cluster Concurrecy Join Test
     [Tags]    dynamic-hosts

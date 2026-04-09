@@ -570,6 +570,7 @@ pipeline {
             agent { node { label 'cld-docker' } }
             steps {
                 copyRPMs()
+				stash name: 'rpms', includes: 'src/*.rpm'
             }
         }
 
@@ -578,6 +579,7 @@ pipeline {
         stage('Build-Image') {
             agent { node { label 'cld-docker' } }
             steps {
+				unstash 'rpms'
                 buildDockerImage()
                 script {
                     // Always save image for cases where agents might differ

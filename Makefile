@@ -53,7 +53,7 @@ endif
 
 # retrieve and copy open scap hardening script
 ifeq ($(findstring rootless,$(docker_image_type)),rootless)
-	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
+	([ -f scap-security-guide-${open_scap_version}.zip ] && unzip -t scap-security-guide-${open_scap_version}.zip > /dev/null 2>&1) || (rm -f scap-security-guide-${open_scap_version}.zip && curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip)
 #UBI9 needs a different version of the remediation script
 ifeq ($(findstring ubi9,$(docker_image_type)),ubi9)
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/bash/rhel9-script-cis.sh > src/rhel-script-cis.sh
@@ -159,7 +159,7 @@ scap-scan:
 	# Clean up any existing scap-scan container from previous runs
 	docker rm -f scap-scan 2>/dev/null || true
 	mkdir -p scap
-	[ -f scap-security-guide-${open_scap_version}.zip ] || curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip
+	([ -f scap-security-guide-${open_scap_version}.zip ] && unzip -t scap-security-guide-${open_scap_version}.zip > /dev/null 2>&1) || (rm -f scap-security-guide-${open_scap_version}.zip && curl -Lso scap-security-guide-${open_scap_version}.zip https://github.com/ComplianceAsCode/content/releases/download/v${open_scap_version}/scap-security-guide-${open_scap_version}.zip)
 #UBI9 needs a different version of the evaluation profile
 ifeq ($(findstring ubi9,$(current_image)),ubi9)
 	unzip -p scap-security-guide-${open_scap_version}.zip scap-security-guide-${open_scap_version}/ssg-rhel9-ds.xml > scap/ssg-rhel-ds.xml

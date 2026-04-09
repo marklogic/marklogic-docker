@@ -504,7 +504,7 @@ pipeline {
         // Include SCAP scan for rootless images
         parameterizedCron( 
             env.BRANCH_NAME == 'develop' ? '''  
-                03 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
+                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
                 00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true
                 00 04 * * * % marklogicVersion=10;dockerImageType=ubi
                 00 04 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
@@ -516,14 +516,14 @@ pipeline {
                 00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                 00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
                 00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                00 06 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
-                00 06 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
-                00 06 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' :
+                00 10 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                00 10 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' :
             env.BRANCH_NAME == 'Docker-ARM-support' ? '''
-                03 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
-                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true
-                00 05 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
-                00 05 * * * % marklogicVersion=12;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true''' : '')
+                00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
+                00 06 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true
+                00 07 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
+                00 08 * * * % marklogicVersion=12;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

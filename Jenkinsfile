@@ -8,24 +8,24 @@
 import groovy.json.JsonSlurperClassic
 
 // email list for scheduled builds (includes security vulnerability)
-emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
+def emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
 // email list for security vulnerabilities only
-emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
-gitCredID = 'marklogic-builder-github'
-dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
-pdcSbRegistry = 'sandboxpdc.azurecr.io'
-pdcDevRegistry = 'marklogicclouddev.azurecr.io'
-JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
-JIRA_ID = ''
-LINT_OUTPUT = ''
-SCAN_OUTPUT = ''
-IMAGE_SIZE = 0
-RPMversion = ''
-GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
-builtImage = ''
-publishImage = ''
-latestTag = ''
-upgradeDockerImage = ''
+def emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
+def gitCredID = 'marklogic-builder-github'
+def dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
+def pdcSbRegistry = 'sandboxpdc.azurecr.io'
+def pdcDevRegistry = 'marklogicclouddev.azurecr.io'
+def JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
+def JIRA_ID = ''
+def LINT_OUTPUT = ''
+def SCAN_OUTPUT = ''
+def IMAGE_SIZE = 0
+def RPMversion = ''
+def GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
+def builtImage = ''
+def publishImage = ''
+def latestTag = ''
+def upgradeDockerImage = ''
 
 // Define local funtions
 

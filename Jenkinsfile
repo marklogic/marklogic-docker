@@ -7,10 +7,6 @@
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
 
-// email list for scheduled builds (includes security vulnerability)
-emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
-// email list for security vulnerabilities only
-emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 pdcSbRegistry = 'sandboxpdc.azurecr.io'
@@ -23,6 +19,24 @@ IMAGE_SIZE = 0
 RPMversion = ''
 
 // Define local funtions
+
+/**
+ * Loads email configuration from the KUBE_NINJAS_PIPELINE_EMAILS Jenkins secret file credential.
+ * The credential file must contain key=value lines for 'emailList' and 'emailSecList'.
+ * @return A map with keys 'emailList' and 'emailSecList'.
+ */
+Map loadEmailConfig() {
+    def result = [emailList: '', emailSecList: '']
+    withCredentials([file(credentialsId: 'KUBE_NINJAS_PIPELINE_EMAILS', variable: 'emailConfigFile')]) {
+        def props = readProperties file: emailConfigFile
+        result.emailList = (props.emailList ?: '').trim()
+        result.emailSecList = (props.emailSecList ?: '').trim()
+        if (!result.emailList || !result.emailSecList) {
+            error("KUBE_NINJAS_PIPELINE_EMAILS must define non-empty 'emailList' and 'emailSecList' properties")
+        }
+    }
+    return result
+}
 
 /**
  * Performs pre-build checks:
@@ -126,13 +140,18 @@ def getReviewState() {
  * @param status The build status string (e.g., 'Success', 'Failure').
  */
 void resultNotification(status) {
+    def paramEmailList = params.emailList?.trim()
+    def needSecList = params.SCAP_SCAN && BRANCH_NAME == 'develop'
+    def emailConfig = (!paramEmailList || needSecList) ? loadEmailConfig() : null
+    def baseEmailList = paramEmailList ?: emailConfig.emailList
+    def emailSecList = emailConfig?.emailSecList ?: ''
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
         authorEmail = getEmailFromGITUser author
-        emailList = params.emailList + ',' + authorEmail
+        emailList = baseEmailList + ',' + authorEmail
     } else {
-        emailList = params.emailList
+        emailList = baseEmailList
     }
     
     email_body = "<b>Build URL: </b><a href='${env.BUILD_URL}'>${env.BUILD_URL}</a><br/>" +
@@ -318,7 +337,8 @@ void vulnerabilityScan() {
     SCAN_OUTPUT = sh(returnStdout: true, script: "cat scan/report-${env.dockerImageType}.txt")
     sh 'echo "SCAN_OUTPUT: ${SCAN_OUTPUT}"'
     if (SCAN_OUTPUT.size()) {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        def emailConfig = loadEmailConfig()
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailConfig.emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
     archiveArtifacts artifacts: 'scan/*', onlyIfSuccessful: true
 }
@@ -488,7 +508,6 @@ pipeline {
     }
 
     parameters {
-        string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '2.2.4', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
@@ -500,6 +519,7 @@ pipeline {
     booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
     string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g Test one, Test two). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
+        string(name: 'emailList', defaultValue: '', description: 'Optional override for the build notification email list. If left blank, the list is loaded from the KUBE_NINJAS_PIPELINE_EMAILS Jenkins credential file. Specify a comma-separated list only to send notifications to additional or different recipients for a specific build run.', trim: true)
     }
 
     stages {

@@ -521,9 +521,9 @@ pipeline {
                 00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' :
             env.BRANCH_NAME == 'Docker-ARM-support' ? '''
                 00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
-                00 06 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true
+                00 06 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;PUBLISH_IMAGE=true
                 00 07 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
-                00 08 * * * % marklogicVersion=12;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true;PUBLISH_IMAGE=true''' : '')
+                00 08 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;PUBLISH_IMAGE=true''' : '')
     }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

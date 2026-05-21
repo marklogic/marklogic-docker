@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1775152441
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1778735208
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # MarkLogic version passed from build to enable conditional deps

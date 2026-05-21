@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1778735208
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1771947229
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # MarkLogic version passed from build to enable conditional deps
@@ -14,9 +14,8 @@ ARG ML_VERSION
 # install libnsl rpm package
 ###############################################################
 
-RUN microdnf -y upgrade glibc \
-    && rpm -i https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/Packages/libnsl-2.28-251.el8_10.34.x86_64.rpm \
-    && microdnf clean all
+RUN microdnf -y update \
+    && rpm -i https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/Packages/libnsl-2.28-251.el8_10.27.x86_64.rpm
 
 ###############################################################
 # install networking, base deps and tzdata for timezone

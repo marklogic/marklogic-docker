@@ -149,3 +149,6 @@ VOLUME /var/opt/MarkLogic
 # set entrypoint
 ###############################################################
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/start-marklogic.sh"]
+
+# TODO: move to secrets
+ENV ADMIN_PASSWORD=marklogic123

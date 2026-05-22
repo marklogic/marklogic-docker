@@ -199,12 +199,7 @@ void resultNotification(status) {
  * Sets RPM, CONVERTERS, and marklogicVersion global variables.
  */
 void copyRPMs() {
-    if (marklogicVersion == "10") {
-        RPMsuffix = "-nightly"
-        RPMbranch = "b10"
-        RPMversion = "10.0"
-    }
-    else if (marklogicVersion == "11") {
+    if (marklogicVersion == "11") {
         //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
         if (dockerImageType.contains("ubi9")) {
             RPMsuffix = ".nightly-rhel9"
@@ -493,9 +488,7 @@ pipeline {
         // Trigger nightly builds on the develop branch for every supported version of MarkLogic
         // and for every supported image type.
         // Include SCAP scan for rootless images
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 04 * * * % marklogicVersion=10;dockerImageType=ubi
-                                                             00 04 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % marklogicVersion=11;dockerImageType=ubi
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
                                                              00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
@@ -503,7 +496,6 @@ pipeline {
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 05 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
                                                              30 05 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
                                                              00 06 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' : '')
     }
@@ -515,7 +507,7 @@ pipeline {
         string(name: 'dockerVersion', defaultValue: '2.2.5', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
-        choice(name: 'marklogicVersion', choices: '12\n11\n10', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
+        choice(name: 'marklogicVersion', choices: '12\n11', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')

@@ -15,7 +15,7 @@ ARG ML_VERSION
 ###############################################################
 
 RUN microdnf -y upgrade glibc \
-    && rpm -i https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/Packages/libnsl-2.28-251.el8_10.34.x86_64.rpm \
+    && rpm -i https://repo.almalinux.org/almalinux/8.10/BaseOS/x86_64/os/Packages/libnsl-2.28-251.el8_10.34.x86_64.rpm \
     && microdnf clean all
 
 ###############################################################

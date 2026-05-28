@@ -17,7 +17,7 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 # supply verbatim; the symbol ABI is compatible and smoke-tested across all four
 # UBI8/UBI9 x ML11/ML12 build combinations.
 RUN microdnf -y upgrade glibc \
-    && rpm -i --nodeps https://repo.almalinux.org/almalinux/9/BaseOS/x86_64/os/Packages/libnsl-2.34-231.el9_7.10.x86_64.rpm \
+    && rpm -i --nodeps https://repo.almalinux.org/almalinux/9.7/BaseOS/x86_64/os/Packages/libnsl-2.34-231.el9_7.10.x86_64.rpm \
     && microdnf clean all
 
 ###############################################################

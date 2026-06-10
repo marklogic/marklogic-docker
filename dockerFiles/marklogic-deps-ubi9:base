@@ -11,13 +11,12 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 # install libnsl rpm package
 ###############################################################
 
-# microdnf -y upgrade glibc brings the UBI9 glibc to a level consistent with the
-# pinned AlmaLinux libnsl build. --nodeps is required because the AlmaLinux libnsl RPM
-# declares an exact glibc version from the AlmaLinux package set that UBI9 repos do not
-# supply verbatim; the symbol ABI is compatible and smoke-tested across all four
-# UBI8/UBI9 x ML11/ML12 build combinations.
+# microdnf -y upgrade glibc brings the UBI9 glibc to el9_8 (currently 2.34-270.el9_8).
+# --nodeps is required because the AlmaLinux libnsl RPM declares a dependency on
+# AlmaLinux's glibc packaging; UBI9 provides the same ABI but different package provenance.
+# The AlmaLinux 9.8 libnsl version is kept in sync with the glibc version UBI9 pulls.
 RUN microdnf -y upgrade glibc \
-    && rpm -i --nodeps https://repo.almalinux.org/almalinux/9.7/BaseOS/x86_64/os/Packages/libnsl-2.34-231.el9_7.10.x86_64.rpm \
+    && rpm -i --nodeps https://repo.almalinux.org/almalinux/9.8/BaseOS/x86_64/os/Packages/libnsl-2.34-270.el9_8.x86_64.rpm \
     && microdnf clean all
 
 ###############################################################

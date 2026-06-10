@@ -12,7 +12,7 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 ###############################################################
 
 RUN microdnf -y update \
-    && rpm -i --nodeps https://download.rockylinux.org/pub/rocky/9.7/BaseOS/aarch64/os/Packages/l/libnsl-2.34-231.el9_7.10.aarch64.rpm
+    && rpm -i --nodeps https://download.rockylinux.org/pub/rocky/9.8/BaseOS/aarch64/os/Packages/l/libnsl-2.34-270.el9_8.aarch64.rpm
 
 ###############################################################
 # install networking, base deps and tzdata for timezone

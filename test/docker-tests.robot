@@ -747,7 +747,7 @@ C17 Coupled clusters cross-cluster API
 
 C18 Dynamic Host concurrent join
     [Tags]    compose    C18    positive    dynamic-hosts
-    [Documentation]    Detailed scenario: Dynamic Host Cluster Concurrecy Join Test.
+    [Documentation]    Detailed scenario: Dynamic Host Cluster Concurrency Join Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
     Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})

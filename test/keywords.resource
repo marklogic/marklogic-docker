@@ -17,7 +17,7 @@ ${UPGRADE_TEST_IMAGE}    progressofficial/marklogic-db:${MARKLOGIC_VERSION}-${IM
 ${DOCKER TIMEOUT}    300s
 ${LICENSE KEY}    %{QA_LICENSE_KEY=none}
 ${LICENSEE}    MarkLogic - Version 9 QA Test License
-${MARKLOGIC_VERSION}    11.3.1
+${MARKLOGIC_VERSION}    11.3.6
 ${BUILD_BRANCH}    release_2.2.1
 ${IMAGE_TYPE}    ubi-rootless
 ${VOL_NAME}    MarkLogic_vol_1

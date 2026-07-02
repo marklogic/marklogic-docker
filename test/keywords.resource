@@ -12,7 +12,7 @@ Library    DateTime
 ${DEFAULT ADMIN USER}    test_admin
 ${DEFAULT ADMIN PASS}    test_admin_pass
 ${SPEC CHARS ADMIN PASS}    Admin@2$s%^&*!
-${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.1-ubi-rootless-2.2.6}
+${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.6-ubi-rootless-2.2.6}
 ${UPGRADE_TEST_IMAGE}    progressofficial/marklogic-db:${MARKLOGIC_VERSION}-${IMAGE_TYPE}-${MARKLOGIC_DOCKER_VERSION}
 ${DOCKER TIMEOUT}    300s
 ${LICENSE KEY}    %{QA_LICENSE_KEY=none}

@@ -8,7 +8,7 @@ Suite Setup      Ensure Test Results Directory Exists
 
 *** Test Cases ***
 
-Smoke Test
+D01 Smoke Test
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Smoke Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -16,7 +16,7 @@ Smoke Test
     Docker log should contain    *MARKLOGIC_INIT is set to false or not defined, not initializing.*
     [Teardown]    Delete container
 
-Uninitialized MarkLogic container
+D02 Uninitialized MarkLogic container
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Uninitialized MarkLogic container.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -43,7 +43,7 @@ Uninitialized MarkLogic container
     Verify response for authenticated request with    8002    *Forbidden*
     [Teardown]    Delete container
 
-Uninitialized MarkLogic container with no parameters
+D03 Uninitialized MarkLogic container with no parameters
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Uninitialized MarkLogic container with no parameters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -71,7 +71,7 @@ Uninitialized MarkLogic container with no parameters
     Verify response for authenticated request with    8002    *Forbidden*
     [Teardown]    Delete container
 
-Initialized MarkLogic container
+D04 Initialized MarkLogic container
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -101,7 +101,7 @@ Initialized MarkLogic container
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
     [Teardown]    Delete container
 
-Initialized MarkLogic container with latency
+D05 Initialized MarkLogic container with latency
     [Tags]    docker-run    positive    long_running
     [Documentation]    This test verifies the initialization of the MarkLogic container with high latency. Detailed scenario: Initialized MarkLogic container with latency.
     ...                Setup on a linux host can be done with the following commands:
@@ -134,7 +134,7 @@ Initialized MarkLogic container with latency
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
     [Teardown]    Delete container
 
-Upgrade MarkLogic container
+D06 Upgrade MarkLogic container
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Upgrade MarkLogic container.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -161,7 +161,7 @@ Upgrade MarkLogic container
     [Teardown]    Run Keywords    Delete container    True
     ...           AND             Delete Volume
 
-Upgrade MarkLogic container with init parameter
+D07 Upgrade MarkLogic container with init parameter
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Upgrade MarkLogic container with init parameter.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -188,7 +188,7 @@ Upgrade MarkLogic container with init parameter
     [Teardown]    Run Keywords    Delete container    True
     ...           AND             Delete Volume
 
-Upgrade MarkLogic container with init and credential parameters
+D08 Upgrade MarkLogic container with init and credential parameters
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Upgrade MarkLogic container with init and credential parameters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -217,7 +217,7 @@ Upgrade MarkLogic container with init and credential parameters
     [Teardown]    Run Keywords    Delete container    True
     ...           AND             Delete Volume
 
-Initialized MarkLogic container with admin password containing special characters
+D09 Initialized MarkLogic container with admin password containing special characters
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with admin password containing special characters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -235,7 +235,7 @@ Initialized MarkLogic container with admin password containing special character
     Verify response for authenticated request with    8002    *Monitoring Dashboard*    ${SPEC CHARS ADMIN PASS}
     [Teardown]    Delete container
 
-Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE
+D10 Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -254,7 +254,7 @@ Initialized MarkLogic container with license key installed and MARKLOGIC_INIT se
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
     [Teardown]    Delete container
 
-Initialized MarkLogic container without credentials
+D11 Initialized MarkLogic container without credentials
     [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Initialized MarkLogic container without credentials.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -262,7 +262,7 @@ Initialized MarkLogic container without credentials
     Docker log should contain    *MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD must be set.*
     [Teardown]    Delete container
 
-Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
+D12 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
     [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -274,7 +274,7 @@ Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
     Docker log should contain    *Error: MARKLOGIC_JOIN_CLUSTER must be true or false.*
     [Teardown]    Delete container
 
-Invalid value for INIT
+D13 Invalid value for INIT
     [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Invalid value for INIT.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -284,7 +284,7 @@ Invalid value for INIT
     Docker log should contain    *Error: MARKLOGIC_INIT must be true or false.*
     [Teardown]    Delete container
 
-Invalid value for HOSTNAME
+D14 Invalid value for HOSTNAME
     [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Invalid value for HOSTNAME.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -295,7 +295,7 @@ Invalid value for HOSTNAME
     Docker log should contain    *Error: Failed to restart invalid_hostname*
     [Teardown]    Delete container
 
-Initialized MarkLogic container without config overrides
+D15 Initialized MarkLogic container without config overrides
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container without config overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -333,7 +333,7 @@ Initialized MarkLogic container without config overrides
     Verify container timezone    America/Los_Angeles
     [Teardown]    Delete container
 
-Initialized MarkLogic container with config overrides
+D16 Initialized MarkLogic container with config overrides
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with config overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -361,7 +361,7 @@ Initialized MarkLogic container with config overrides
     Verify container timezone    America/Los_Angeles
     [Teardown]    Delete container
 
-Single node compose example
+C01 Single node compose example
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Single node compose example.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -380,7 +380,7 @@ Single node compose example
     Verify container timezone    Europe/Prague
     [Teardown]    Delete compose from    ../docker-compose/marklogic-single-node.yaml
 
-Single node compose example with special characters in secrets file
+C02 Single node compose example with special characters in secrets file
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Single node compose example with special characters in secrets file.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -393,7 +393,7 @@ Single node compose example with special characters in secrets file
     Verify response for authenticated request with    8002    *Monitoring Dashboard*    ${SPEC CHARS ADMIN PASS}
     [Teardown]    Delete compose from    ../docker-compose/marklogic-single-node.yaml
 
-Single node compose with special characters in yaml
+C03 Single node compose with special characters in yaml
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Single node compose with special characters in yaml.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -406,7 +406,7 @@ Single node compose with special characters in yaml
     Verify response for authenticated request with    7102    *Monitoring Dashboard*    ${SPEC CHARS ADMIN PASS}
     [Teardown]    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
 
-Three node compose example
+C04 Three node compose example
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Three node compose example.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -434,7 +434,7 @@ Three node compose example
     Host count on port 7302 should be 3
     [Teardown]    Delete compose from    ../docker-compose/marklogic-multi-node.yaml
 
-Two node compose example with node joining enode group
+C05 Two node compose example with node joining enode group
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose example with node joining enode group.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -454,7 +454,7 @@ Two node compose example with node joining enode group
     ...    AND    Delete compose from    ./compose-2node-join-enode-secrets.yaml
 
 # Tests for invalid certificate/CA, invalid    value for MARKLOGIC_JOIN_TLS_ENABLED 
-Compose example with node joining cluster using https with invalid parameter values
+C06 Compose example with node joining cluster using https with invalid parameter values
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Compose example with node joining cluster using https with invalid parameter values.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -463,7 +463,7 @@ Compose example with node joining cluster using https with invalid parameter val
     Compose logs should contain    ./compose-2node-join-https-invalid-tls.yaml    *MARKLOGIC_JOIN_TLS_ENABLED must be set to true or false, please review the configuration. Container shutting down.*
     [Teardown]    Delete compose from    ./compose-2node-join-https-invalid-tls.yaml
 
-Compose example with node joining cluster using https and missing certificate parameter
+C07 Compose example with node joining cluster using https and missing certificate parameter
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Compose example with node joining cluster using https and missing certificate parameter.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -471,7 +471,7 @@ Compose example with node joining cluster using https and missing certificate pa
     Compose logs should contain    ./compose-2node-join-https-missing-cacert.yaml    *MARKLOGIC_JOIN_CACERT_FILE is not set, please review the configuration. Container shutting down.*
     [Teardown]    Delete compose from    ./compose-2node-join-https-missing-cacert.yaml
 
-Two node compose example with bootstrap node without SSL enabled and node joining cluster using https
+C08 Two node compose example with bootstrap node without SSL enabled and node joining cluster using https
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with bootstrap node without SSL enabled and node joining cluster using https.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -489,7 +489,7 @@ Two node compose example with bootstrap node without SSL enabled and node joinin
     ...    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
     ...    AND    Delete compose from    ./compose-2node-join-https-secrets.yaml
 
-Two node compose example with node joining cluster using invalid CAcertificate
+C09 Two node compose example with node joining cluster using invalid CAcertificate
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with node joining cluster using invalid CAcertificate.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -507,7 +507,7 @@ Two node compose example with node joining cluster using invalid CAcertificate
     ...    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
     ...    AND    Delete compose from    ./compose-2node-join-https-secrets.yaml
 
-Two node compose example with node joining cluster using https
+C10 Two node compose example with node joining cluster using https
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose example with node joining cluster using https.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -524,7 +524,7 @@ Two node compose example with node joining cluster using https
     ...    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
     ...    AND    Delete compose from    ./compose-2node-join-https-secrets.yaml
 
-Single node compose example with bootstrap node joining trying to itself
+C11 Single node compose example with bootstrap node joining trying to itself
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Single node compose example with bootstrap node joining trying to itself.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -546,7 +546,7 @@ Single node compose example with bootstrap node joining trying to itself
     Verify container timezone    America/Los_Angeles    port=7100
     [Teardown]    Delete compose from    ${compose test file}
     
-Two node compose example with incorrect bootstrap host name
+C12 Two node compose example with incorrect bootstrap host name
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with incorrect bootstrap host name.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -574,7 +574,7 @@ Two node compose example with incorrect bootstrap host name
 
     [Teardown]    Delete compose from    ${compose test file}
     
-Two node compose with credentials in env and verify restart logic
+C13 Two node compose with credentials in env and verify restart logic
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with credentials in env and verify restart logic.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -614,7 +614,7 @@ Two node compose with credentials in env and verify restart logic
     Verify container timezone    America/Los_Angeles    port=7200
     [Teardown]    Delete compose from    ${compose test file}
 
-Two node compose with second node uncoupled
+C14 Two node compose with second node uncoupled
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with second node uncoupled.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -625,7 +625,7 @@ Two node compose with second node uncoupled
     Host count on port 7202 should be 1
     [Teardown]    Delete compose from    ./compose-2node-second-uncoupled.yaml
 
-Two node compose with second node uninitialized
+C15 Two node compose with second node uninitialized
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with second node uninitialized.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -638,7 +638,7 @@ Two node compose with second node uninitialized
     Verify response for authenticated request with    7202    *Forbidden*
     [Teardown]    Delete compose from    ./compose-2node-second-uninitialized.yaml
 
-Initialized MarkLogic Server with wallet password and realm
+D17 Initialized MarkLogic Server with wallet password and realm
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic Server with wallet password and realm.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -655,7 +655,7 @@ Initialized MarkLogic Server with wallet password and realm
     Verify response for authenticated request with    8002    *Monitoring Dashboard*
     [Teardown]    Delete container
 
-Initialized MarkLogic container with ML converters
+D18 Initialized MarkLogic container with ML converters
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with ML converters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -669,7 +669,7 @@ Initialized MarkLogic container with ML converters
     Verify converter package installation
     [Teardown]    Delete container
  
-Dynamic Host Cluster Test
+C16 Dynamic Host Cluster Test
     [Tags]    compose    positive    dynamic-hosts
     [Documentation]    Detailed scenario: Dynamic Host Cluster Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -708,7 +708,7 @@ Dynamic Host Cluster Test
     Verify Dynamic Host Can Execute Query Default 7902
     [Teardown]    Delete compose from    ./compose-3core-11dynamic-hosts.yaml
 
-Coupled Clusters Cross-Cluster API Test
+C17 Coupled Clusters Cross-Cluster API Test
     [Tags]    compose    positive    dynamic-hosts    coupled-clusters
     [Documentation]    Tests that foreign cluster dynamic host endpoints return expected cross-cluster responses.
     ...                GET /dynamic-host-token=200(empty), POST /dynamic-host-token=400, and DELETE operations on foreign-cluster resources=404.
@@ -747,7 +747,7 @@ Coupled Clusters Cross-Cluster API Test
     
     [Teardown]    Delete compose from    ./compose-2x2node-clusters-secrets.yaml
 
-Dynamic Host Cluster Concurrecy Join Test
+C18 Dynamic Host Cluster Concurrecy Join Test
     [Tags]    compose    positive    dynamic-hosts
     [Documentation]    Detailed scenario: Dynamic Host Cluster Concurrency Join Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -763,7 +763,7 @@ Dynamic Host Cluster Concurrecy Join Test
 
     [Teardown]    Delete compose from    ./compose-3core-11dynamic-hosts.yaml
 
-Verify parameter overrides
+D19 Verify parameter overrides
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Verify parameter overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
@@ -785,7 +785,7 @@ Verify parameter overrides
     Verify That marklogic.conf contains    TZ=America/Los_Angeles    MARKLOGIC_PID_FILE=/tmp/MarkLogic.pid.test    MARKLOGIC_UMASK=022    ML_HUGEPAGES_TOTAL=0    MARKLOGIC_DISABLE_JVM=true    MARKLOGIC_USER=marklogic_user    JAVA_HOME=fakejava    CLASSPATH=fakeclasspath    MARKLOGIC_EC2_HOST=false
     [Teardown]    Delete container
 
-Verify implicit parameter overrides
+D20 Verify implicit parameter overrides
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Verify implicit parameter overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.

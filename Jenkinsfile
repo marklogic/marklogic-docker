@@ -296,6 +296,7 @@ void structureTests() {
  * Runs Docker functional tests using the 'make docker-tests' target.
  */
 void dockerTests() {
+    sh "make docker-test-ids"
     sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType} DOCKER_TEST_LIST=\"${params.DOCKER_TEST_LIST}\""
 }
 

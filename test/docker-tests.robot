@@ -192,7 +192,7 @@ Upgrade MarkLogic container with init and credential parameters
     [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Upgrade MarkLogic container with init and credential parameters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Skip If    'rootless' in '${IMAGE_TYPE}'    msg = Skipping Upgrade MarkLogic test for rootless image
+    Skip If    'rootless' in '${IMAGE_TYPE}'    msg=Skipping Upgrade MarkLogic test for rootless image
     Create test container with    -e    MARKLOGIC_INIT=true
 ...                               -e    MARKLOGIC_ADMIN_USERNAME=${DEFAULT ADMIN USER}
 ...                               -e    MARKLOGIC_ADMIN_PASSWORD=${DEFAULT ADMIN PASS}

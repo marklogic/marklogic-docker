@@ -589,7 +589,7 @@ Verify Full Cluster Restart Removes Dynamic Host Configuration ${group}
     Should Be Equal As Integers    ${host_count}    2    Expected 2 dynamic hosts but found ${host_count}
     
     # Restart the entire cluster
-    Restart compose from    compose-test-16.yaml
+    Restart compose from    compose-3core-11dynamic-hosts.yaml
     Sleep    30s
 
     # Verify dynamic host information is removed

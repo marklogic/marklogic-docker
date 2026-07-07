@@ -1,5 +1,5 @@
 # Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
-#Docker compose file sample to setup a three node cluster
+# Compose scenario: Dynamic host test topology with 3 core nodes and 11 dynamic nodes.
 version: '3.6'
 services:
     bootstrap_3n:

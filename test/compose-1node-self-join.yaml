@@ -1,19 +1,21 @@
 # Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Compose scenario: Single node configured to join itself to validate self-join handling.
 version: '3.6'
 services:
-    bootstrap_3n:
+    bootstrap:
       image: progressofficial/marklogic-db
-      container_name: bootstrap_3n
-      hostname: bootstrap_3n
+      hostname: bootstrap
+      container_name: bootstrap
       dns_search: ""
       environment:
-        - MARKLOGIC_INIT=true
+        - MARKLOGIC_INIT=True
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
-        - REALM=public
-        - TZ=Europe/Prague
+        - MARKLOGIC_JOIN_CLUSTER=True
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
+        - TZ=America/Los_Angeles
       volumes:
-        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+        - MarkLogic_2n_vol1:/var/opt/MarkLogic
       ports:
         - 7100-7110:8000-8010
         - 7197:7997
@@ -22,4 +24,4 @@ services:
 networks:
   external_net: {}
 volumes:
-  MarkLogic_3n_vol1:
+  MarkLogic_2n_vol1:

@@ -1,5 +1,5 @@
 # Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
-#Docker compose file sample to setup a three node cluster
+# Compose scenario: Two-node deployment where second node remains uninitialized.
 version: '3.6'
 services:
     testbootstrap:
@@ -8,7 +8,7 @@ services:
       container_name: testbootstrap
       dns_search: ""
       environment:
-        - MARKLOGIC_INIT=tRue
+        - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
         - TZ=America/Los_Angeles
@@ -25,11 +25,11 @@ services:
       container_name: testnode
       dns_search: ""
       environment:
-        - MARKLOGIC_INIT=TRUE
+        - MARKLOGIC_INIT=false
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
-        - MARKLOGIC_JOIN_CLUSTER=FALSE
-        - MARKLOGIC_BOOTSTRAP_HOST=testbootstrap
+        - MARKLOGIC_JOIN_CLUSTER=False
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
         - TZ=America/Los_Angeles
       volumes:
         - MarkLogic_3n_vol2:/var/opt/MarkLogic

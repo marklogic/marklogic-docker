@@ -1,5 +1,5 @@
 # Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
-#Docker compose file sample to setup a two node cluster
+# Compose scenario: Two-node deployment with an invalid bootstrap host name for node2.
 version: '3.6'
 services:
     bootstrap:

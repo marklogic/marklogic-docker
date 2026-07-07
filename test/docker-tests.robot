@@ -397,14 +397,14 @@ Single node compose with special characters in yaml
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Single node compose with special characters in yaml.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-1.yaml    ${SPEC CHARS ADMIN PASS}
+    Start compose from    ./compose-1node-bootstrap-env-creds.yaml    ${SPEC CHARS ADMIN PASS}
     Verify response for unauthenticated request with    7100    *Unauthorized*
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7102    *Unauthorized*
     Verify response for authenticated request with    7100    *Query Console*    ${SPEC CHARS ADMIN PASS}
     Verify response for authenticated request with    7101    *No license key has been entered*    ${SPEC CHARS ADMIN PASS}
     Verify response for authenticated request with    7102    *Monitoring Dashboard*    ${SPEC CHARS ADMIN PASS}
-    [Teardown]    Delete compose from    ./compose-test-1.yaml
+    [Teardown]    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
 
 Three node compose example
     [Tags]    compose    positive
@@ -438,7 +438,7 @@ Two node compose example with node joining enode group
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose example with node joining enode group.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-6.yaml
+    Start compose from    ./compose-2node-bootstrap-only.yaml
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7102    *Unauthorized*
@@ -446,12 +446,12 @@ Two node compose example with node joining enode group
     Verify response for authenticated request with    7101    *No license key has been entered*
     Verify response for authenticated request with    7102    *Monitoring Dashboard*
     Add group enode on host on port 7102
-    Start compose from    ./compose-test-7.yaml    readiness=False
-    Compose logs should contain    ./compose-test-7.yaml    *Cluster config complete, marking this container as ready.*
+    Start compose from    ./compose-2node-join-enode-secrets.yaml    readiness=False
+    Compose logs should contain    ./compose-2node-join-enode-secrets.yaml    *Cluster config complete, marking this container as ready.*
     Host node2 should be part of group enode
     [Teardown]    Run keywords    
-    ...    Delete compose from    ./compose-test-6.yaml
-    ...    AND    Delete compose from    ./compose-test-7.yaml
+    ...    Delete compose from    ./compose-2node-bootstrap-only.yaml
+    ...    AND    Delete compose from    ./compose-2node-join-enode-secrets.yaml
 
 # Tests for invalid certificate/CA, invalid    value for MARKLOGIC_JOIN_TLS_ENABLED 
 Compose example with node joining cluster using https with invalid parameter values
@@ -459,23 +459,23 @@ Compose example with node joining cluster using https with invalid parameter val
     [Documentation]    Detailed scenario: Compose example with node joining cluster using https with invalid parameter values.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create invalid certificate file
-    Start compose from    ./compose-test-10.yaml    readiness=False
-    Compose logs should contain    ./compose-test-10.yaml    *MARKLOGIC_JOIN_TLS_ENABLED must be set to true or false, please review the configuration. Container shutting down.*
-    [Teardown]    Delete compose from    ./compose-test-10.yaml
+    Start compose from    ./compose-2node-join-https-invalid-tls.yaml    readiness=False
+    Compose logs should contain    ./compose-2node-join-https-invalid-tls.yaml    *MARKLOGIC_JOIN_TLS_ENABLED must be set to true or false, please review the configuration. Container shutting down.*
+    [Teardown]    Delete compose from    ./compose-2node-join-https-invalid-tls.yaml
 
 Compose example with node joining cluster using https and missing certificate parameter
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Compose example with node joining cluster using https and missing certificate parameter.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-11.yaml    readiness=False
-    Compose logs should contain    ./compose-test-11.yaml    *MARKLOGIC_JOIN_CACERT_FILE is not set, please review the configuration. Container shutting down.*
-    [Teardown]    Delete compose from    ./compose-test-11.yaml
+    Start compose from    ./compose-2node-join-https-missing-cacert.yaml    readiness=False
+    Compose logs should contain    ./compose-2node-join-https-missing-cacert.yaml    *MARKLOGIC_JOIN_CACERT_FILE is not set, please review the configuration. Container shutting down.*
+    [Teardown]    Delete compose from    ./compose-2node-join-https-missing-cacert.yaml
 
 Two node compose example with bootstrap node without SSL enabled and node joining cluster using https
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with bootstrap node without SSL enabled and node joining cluster using https.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-1.yaml
+    Start compose from    ./compose-1node-bootstrap-env-creds.yaml
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7102    *Unauthorized*
@@ -483,17 +483,17 @@ Two node compose example with bootstrap node without SSL enabled and node joinin
     Verify response for authenticated request with    7101    *No license key has been entered*
     Verify response for authenticated request with    7102    *Monitoring Dashboard*
     Create invalid certificate file
-    Start compose from    ./compose-test-2.yaml    readiness=False
-    Compose logs should contain    ./compose-test-2.yaml    *TLS is not enabled on bootstrap_host_name host, please verify the configuration. Container shutting down.*
+    Start compose from    ./compose-2node-join-https-secrets.yaml    readiness=False
+    Compose logs should contain    ./compose-2node-join-https-secrets.yaml    *TLS is not enabled on bootstrap_host_name host, please verify the configuration. Container shutting down.*
     [Teardown]    Run keywords    
-    ...    Delete compose from    ./compose-test-1.yaml
-    ...    AND    Delete compose from    ./compose-test-2.yaml
+    ...    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
+    ...    AND    Delete compose from    ./compose-2node-join-https-secrets.yaml
 
 Two node compose example with node joining cluster using invalid CAcertificate
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with node joining cluster using invalid CAcertificate.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-1.yaml
+    Start compose from    ./compose-1node-bootstrap-env-creds.yaml
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for authenticated request with    7101    *No license key has been entered*
     Add certificate template on bootstrap host    ./test_template.json    7102
@@ -501,34 +501,34 @@ Two node compose example with node joining cluster using invalid CAcertificate
     Apply certificate testTemplate on App Server Admin 7102
     Apply certificate testTemplate on App Server Manage 7102
     Create invalid certificate file
-    Start compose from    ./compose-test-2.yaml    readiness=False
-    Compose logs should contain    ./compose-test-2.yaml    *MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down.*
+    Start compose from    ./compose-2node-join-https-secrets.yaml    readiness=False
+    Compose logs should contain    ./compose-2node-join-https-secrets.yaml    *MARKLOGIC_JOIN_CACERT_FILE is not valid, please check above error for details. Node shutting down.*
     [Teardown]    Run keywords    
-    ...    Delete compose from    ./compose-test-1.yaml
-    ...    AND    Delete compose from    ./compose-test-2.yaml
+    ...    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
+    ...    AND    Delete compose from    ./compose-2node-join-https-secrets.yaml
 
 Two node compose example with node joining cluster using https
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose example with node joining cluster using https.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-1.yaml
+    Start compose from    ./compose-1node-bootstrap-env-creds.yaml
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for authenticated request with    7101    *No license key has been entered*
     Add certificate template on bootstrap host    ./test_template.json    7102
     Get CAcertificate for testTemplate 7100
     Apply certificate testTemplate on App Server Admin 7102
     Apply certificate testTemplate on App Server Manage 7102
-    Start compose from    ./compose-test-2.yaml    readiness=False
-    Compose logs should contain    ./compose-test-2.yaml    *Cluster config complete, marking this container as ready.*
+    Start compose from    ./compose-2node-join-https-secrets.yaml    readiness=False
+    Compose logs should contain    ./compose-2node-join-https-secrets.yaml    *Cluster config complete, marking this container as ready.*
     [Teardown]    Run keywords    
-    ...    Delete compose from    ./compose-test-1.yaml
-    ...    AND    Delete compose from    ./compose-test-2.yaml
+    ...    Delete compose from    ./compose-1node-bootstrap-env-creds.yaml
+    ...    AND    Delete compose from    ./compose-2node-join-https-secrets.yaml
 
 Single node compose example with bootstrap node joining trying to itself
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Single node compose example with bootstrap node joining trying to itself.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    ${compose test file}=    Set Variable    ./compose-test-8.yaml
+    ${compose test file}=    Set Variable    ./compose-1node-self-join.yaml
     Start compose from    ${compose test file}
     Verify response for unauthenticated request with    7100    *Unauthorized*
     Verify response for unauthenticated request with    7101    *Unauthorized*
@@ -550,7 +550,7 @@ Two node compose example with incorrect bootstrap host name
     [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with incorrect bootstrap host name.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    ${compose test file}=    Set Variable    ./compose-test-9.yaml
+    ${compose test file}=    Set Variable    ./compose-2node-invalid-bootstrap-host.yaml
     Start compose from    ${compose test file}
     Verify response for unauthenticated request with    7100    *Unauthorized*
     Verify response for unauthenticated request with    7101    *Unauthorized*
@@ -578,7 +578,7 @@ Two node compose with credentials in env and verify restart logic
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with credentials in env and verify restart logic.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    ${compose test file}=    Set Variable    ./compose-test-3.yaml
+    ${compose test file}=    Set Variable    ./compose-2node-cluster-env-creds.yaml
     Start compose from    ${compose test file}
     Verify response for unauthenticated request with    7100    *Unauthorized*
     Verify response for unauthenticated request with    7101    *Unauthorized*
@@ -618,25 +618,25 @@ Two node compose with second node uncoupled
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with second node uncoupled.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-4.yaml
+    Start compose from    ./compose-2node-second-uncoupled.yaml
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7201    *Unauthorized*
     Host count on port 7102 should be 1
     Host count on port 7202 should be 1
-    [Teardown]    Delete compose from    ./compose-test-4.yaml
+    [Teardown]    Delete compose from    ./compose-2node-second-uncoupled.yaml
 
 Two node compose with second node uninitialized
     [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with second node uninitialized.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
-    Start compose from    ./compose-test-5.yaml
+    Start compose from    ./compose-2node-second-uninitialized.yaml
     Verify response for unauthenticated request with    7101    *Unauthorized*
     Verify response for unauthenticated request with    7201    *This server must now self-install the initial databases and application servers. Click OK to continue.*
     Host count on port 7102 should be 1
     Verify response for authenticated request with    7200    *Forbidden*
     Verify response for authenticated request with    7201    *This server must now self-install the initial databases and application servers. Click OK to continue.*
     Verify response for authenticated request with    7202    *Forbidden*
-    [Teardown]    Delete compose from    ./compose-test-5.yaml
+    [Teardown]    Delete compose from    ./compose-2node-second-uninitialized.yaml
 
 Initialized MarkLogic Server with wallet password and realm
     [Tags]    docker-run    positive
@@ -675,7 +675,7 @@ Dynamic Host Cluster Test
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
     Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
-    Start compose from    ./compose-test-16.yaml
+    Start compose from    ./compose-3core-11dynamic-hosts.yaml
     # give it some time to prepare the large cluster
     Sleep    60s
     ${group}=    set Variable    dynamic
@@ -706,7 +706,7 @@ Dynamic Host Cluster Test
     Delete Token By Invalid Host ID on port 7102
     Verify Invalid Cluster Name Returns 404 on port 7102
     Verify Dynamic Host Can Execute Query Default 7902
-    [Teardown]    Delete compose from    ./compose-test-16.yaml
+    [Teardown]    Delete compose from    ./compose-3core-11dynamic-hosts.yaml
 
 Coupled Clusters Cross-Cluster API Test
     [Tags]    compose    positive    dynamic-hosts    coupled-clusters
@@ -717,7 +717,7 @@ Coupled Clusters Cross-Cluster API Test
     Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Coupled Clusters Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
     
     # Start two separate clusters
-    Start compose from    ./compose-test-17.yaml
+    Start compose from    ./compose-2x2node-clusters-secrets.yaml
     
     # Get cluster names
     ${cluster1_name}=    Get Local Cluster Name on port 7102
@@ -745,7 +745,7 @@ Coupled Clusters Cross-Cluster API Test
 
     Log    Successfully verified coupled cluster API behaviour: GET /dynamic-host-token=200(empty), POST /dynamic-host-token=400, DELETE /dynamic-host-token/{real-jti}=404, DELETE /dynamic-hosts/{real-host-id}=404
     
-    [Teardown]    Delete compose from    ./compose-test-17.yaml
+    [Teardown]    Delete compose from    ./compose-2x2node-clusters-secrets.yaml
 
 Dynamic Host Cluster Concurrecy Join Test
     [Tags]    compose    positive    dynamic-hosts
@@ -753,7 +753,7 @@ Dynamic Host Cluster Concurrecy Join Test
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
     Skip If    '${major_version}' == '' or '${major_version}' == 'None' or int('${major_version}' or '0') < 12    msg=Dynamic Host Concurrency Test requires MarkLogic 12 or higher (current version: ${MARKLOGIC_VERSION})
-    Start compose from    ./compose-test-16.yaml
+    Start compose from    ./compose-3core-11dynamic-hosts.yaml
     # give it some time to prepare the large cluster
     Sleep    60s
     ${group}=    set Variable    dynamic
@@ -761,7 +761,7 @@ Dynamic Host Cluster Concurrecy Join Test
     Enable API token authentication on 7202 for group Default
     Concurrent Dynamic Host Join Test
 
-    [Teardown]    Delete compose from    ./compose-test-16.yaml
+    [Teardown]    Delete compose from    ./compose-3core-11dynamic-hosts.yaml
 
 Verify parameter overrides
     [Tags]    docker-run    positive

@@ -9,7 +9,7 @@ Suite Setup      Ensure Test Results Directory Exists
 *** Test Cases ***
 
 Smoke Test
-    [Tags]    docker-run    D01    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Smoke Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with
@@ -17,7 +17,7 @@ Smoke Test
     [Teardown]    Delete container
 
 Uninitialized MarkLogic container
-    [Tags]    docker-run    D02    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Uninitialized MarkLogic container.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=false
@@ -44,7 +44,7 @@ Uninitialized MarkLogic container
     [Teardown]    Delete container
 
 Uninitialized MarkLogic container with no parameters
-    [Tags]    docker-run    D03    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Uninitialized MarkLogic container with no parameters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with
@@ -72,7 +72,7 @@ Uninitialized MarkLogic container with no parameters
     [Teardown]    Delete container
 
 Initialized MarkLogic container
-    [Tags]    docker-run    D04    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=true
@@ -102,7 +102,7 @@ Initialized MarkLogic container
     [Teardown]    Delete container
 
 Initialized MarkLogic container with latency
-    [Tags]    docker-run    D05    positive    long_running
+    [Tags]    docker-run    positive    long_running
     [Documentation]    This test verifies the initialization of the MarkLogic container with high latency. Detailed scenario: Initialized MarkLogic container with latency.
     ...                Setup on a linux host can be done with the following commands:
     ...                sudo dnf install  kernel-modules-extra
@@ -135,7 +135,7 @@ Initialized MarkLogic container with latency
     [Teardown]    Delete container
 
 Upgrade MarkLogic container
-    [Tags]    docker-run    D06    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Upgrade MarkLogic container.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Skip If    'rootless' in '${IMAGE_TYPE}'    msg = Skipping Upgrade MarkLogic test for rootless image
@@ -162,7 +162,7 @@ Upgrade MarkLogic container
     ...           AND             Delete Volume
 
 Upgrade MarkLogic container with init parameter
-    [Tags]    docker-run    D07    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Upgrade MarkLogic container with init parameter.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Skip If    'rootless' in '${IMAGE_TYPE}'    msg = Skipping Upgrade MarkLogic test for rootless image
@@ -189,7 +189,7 @@ Upgrade MarkLogic container with init parameter
     ...           AND             Delete Volume
 
 Upgrade MarkLogic container with init and credential parameters
-    [Tags]    docker-run    D08    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Upgrade MarkLogic container with init and credential parameters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Skip If    'rootless' in '${IMAGE_TYPE}'    msg = Skipping Upgrade MarkLogic test for rootless image
@@ -218,7 +218,7 @@ Upgrade MarkLogic container with init and credential parameters
     ...           AND             Delete Volume
 
 Initialized MarkLogic container with admin password containing special characters
-    [Tags]    docker-run    D09    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with admin password containing special characters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=true
@@ -236,7 +236,7 @@ Initialized MarkLogic container with admin password containing special character
     [Teardown]    Delete container
 
 Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE
-    [Tags]    docker-run    D10    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with license key installed and MARKLOGIC_INIT set to TRUE.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=TRUE
@@ -255,7 +255,7 @@ Initialized MarkLogic container with license key installed and MARKLOGIC_INIT se
     [Teardown]    Delete container
 
 Initialized MarkLogic container without credentials
-    [Tags]    docker-run    D11    negative
+    [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Initialized MarkLogic container without credentials.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create failing container with    -e    MARKLOGIC_INIT=true
@@ -263,7 +263,7 @@ Initialized MarkLogic container without credentials
     [Teardown]    Delete container
 
 Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
-    [Tags]    docker-run    D12    negative
+    [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create failing container with    -e    MARKLOGIC_INIT=true
@@ -275,7 +275,7 @@ Initialized MarkLogic container with invalid value for MARKLOGIC_JOIN_CLUSTER
     [Teardown]    Delete container
 
 Invalid value for INIT
-    [Tags]    docker-run    D13    negative
+    [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Invalid value for INIT.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create failing container with    -e    MARKLOGIC_INIT=invalid
@@ -285,7 +285,7 @@ Invalid value for INIT
     [Teardown]    Delete container
 
 Invalid value for HOSTNAME
-    [Tags]    docker-run    D14    negative
+    [Tags]    docker-run    negative
     [Documentation]    Detailed scenario: Invalid value for HOSTNAME.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create failing container with    -e    HOSTNAME=invalid_hostname
@@ -296,7 +296,7 @@ Invalid value for HOSTNAME
     [Teardown]    Delete container
 
 Initialized MarkLogic container without config overrides
-    [Tags]    docker-run    D15    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container without config overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=true
@@ -334,7 +334,7 @@ Initialized MarkLogic container without config overrides
     [Teardown]    Delete container
 
 Initialized MarkLogic container with config overrides
-    [Tags]    docker-run    D16    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with config overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=true
@@ -362,7 +362,7 @@ Initialized MarkLogic container with config overrides
     [Teardown]    Delete container
 
 Single node compose example
-    [Tags]    compose    C01    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Single node compose example.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${compose test file}=    Set Variable    ../docker-compose/marklogic-single-node.yaml
@@ -381,7 +381,7 @@ Single node compose example
     [Teardown]    Delete compose from    ../docker-compose/marklogic-single-node.yaml
 
 Single node compose example with special characters in secrets file
-    [Tags]    compose    C02    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Single node compose example with special characters in secrets file.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ../docker-compose/marklogic-single-node.yaml    ${SPEC CHARS ADMIN PASS}
@@ -394,7 +394,7 @@ Single node compose example with special characters in secrets file
     [Teardown]    Delete compose from    ../docker-compose/marklogic-single-node.yaml
 
 Single node compose with special characters in yaml
-    [Tags]    compose    C03    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Single node compose with special characters in yaml.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-1.yaml    ${SPEC CHARS ADMIN PASS}
@@ -407,7 +407,7 @@ Single node compose with special characters in yaml
     [Teardown]    Delete compose from    ./compose-test-1.yaml
 
 Three node compose example
-    [Tags]    compose    C04    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Three node compose example.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ../docker-compose/marklogic-multi-node.yaml
@@ -435,7 +435,7 @@ Three node compose example
     [Teardown]    Delete compose from    ../docker-compose/marklogic-multi-node.yaml
 
 Two node compose example with node joining enode group
-    [Tags]    compose    C05    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose example with node joining enode group.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-6.yaml
@@ -455,7 +455,7 @@ Two node compose example with node joining enode group
 
 # Tests for invalid certificate/CA, invalid    value for MARKLOGIC_JOIN_TLS_ENABLED 
 Compose example with node joining cluster using https with invalid parameter values
-    [Tags]    compose    C06    negative
+    [Tags]    compose    negative
     [Documentation]    Detailed scenario: Compose example with node joining cluster using https with invalid parameter values.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create invalid certificate file
@@ -464,7 +464,7 @@ Compose example with node joining cluster using https with invalid parameter val
     [Teardown]    Delete compose from    ./compose-test-10.yaml
 
 Compose example with node joining cluster using https and missing certificate parameter
-    [Tags]    compose    C07    negative
+    [Tags]    compose    negative
     [Documentation]    Detailed scenario: Compose example with node joining cluster using https and missing certificate parameter.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-11.yaml    readiness=False
@@ -472,7 +472,7 @@ Compose example with node joining cluster using https and missing certificate pa
     [Teardown]    Delete compose from    ./compose-test-11.yaml
 
 Two node compose example with bootstrap node without SSL enabled and node joining cluster using https
-    [Tags]    compose    C08    negative
+    [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with bootstrap node without SSL enabled and node joining cluster using https.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-1.yaml
@@ -490,7 +490,7 @@ Two node compose example with bootstrap node without SSL enabled and node joinin
     ...    AND    Delete compose from    ./compose-test-2.yaml
 
 Two node compose example with node joining cluster using invalid CAcertificate
-    [Tags]    compose    C09    negative
+    [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with node joining cluster using invalid CAcertificate.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-1.yaml
@@ -508,7 +508,7 @@ Two node compose example with node joining cluster using invalid CAcertificate
     ...    AND    Delete compose from    ./compose-test-2.yaml
 
 Two node compose example with node joining cluster using https
-    [Tags]    compose    C10    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose example with node joining cluster using https.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-1.yaml
@@ -525,7 +525,7 @@ Two node compose example with node joining cluster using https
     ...    AND    Delete compose from    ./compose-test-2.yaml
 
 Single node compose example with bootstrap node joining trying to itself
-    [Tags]    compose    C11    negative
+    [Tags]    compose    negative
     [Documentation]    Detailed scenario: Single node compose example with bootstrap node joining trying to itself.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${compose test file}=    Set Variable    ./compose-test-8.yaml
@@ -547,7 +547,7 @@ Single node compose example with bootstrap node joining trying to itself
     [Teardown]    Delete compose from    ${compose test file}
     
 Two node compose example with incorrect bootstrap host name
-    [Tags]    compose    C12    negative
+    [Tags]    compose    negative
     [Documentation]    Detailed scenario: Two node compose example with incorrect bootstrap host name.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${compose test file}=    Set Variable    ./compose-test-9.yaml
@@ -575,7 +575,7 @@ Two node compose example with incorrect bootstrap host name
     [Teardown]    Delete compose from    ${compose test file}
     
 Two node compose with credentials in env and verify restart logic
-    [Tags]    compose    C13    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with credentials in env and verify restart logic.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${compose test file}=    Set Variable    ./compose-test-3.yaml
@@ -615,7 +615,7 @@ Two node compose with credentials in env and verify restart logic
     [Teardown]    Delete compose from    ${compose test file}
 
 Two node compose with second node uncoupled
-    [Tags]    compose    C14    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with second node uncoupled.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-4.yaml
@@ -626,7 +626,7 @@ Two node compose with second node uncoupled
     [Teardown]    Delete compose from    ./compose-test-4.yaml
 
 Two node compose with second node uninitialized
-    [Tags]    compose    C15    positive
+    [Tags]    compose    positive
     [Documentation]    Detailed scenario: Two node compose with second node uninitialized.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Start compose from    ./compose-test-5.yaml
@@ -639,7 +639,7 @@ Two node compose with second node uninitialized
     [Teardown]    Delete compose from    ./compose-test-5.yaml
 
 Initialized MarkLogic Server with wallet password and realm
-    [Tags]    docker-run    D17    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic Server with wallet password and realm.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=true
@@ -656,7 +656,7 @@ Initialized MarkLogic Server with wallet password and realm
     [Teardown]    Delete container
 
 Initialized MarkLogic container with ML converters
-    [Tags]    docker-run    D18    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Initialized MarkLogic container with ML converters.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    MARKLOGIC_INIT=true
@@ -670,7 +670,7 @@ Initialized MarkLogic container with ML converters
     [Teardown]    Delete container
  
 Dynamic Host Cluster Test
-    [Tags]    compose    C16    positive    dynamic-hosts
+    [Tags]    compose    positive    dynamic-hosts
     [Documentation]    Detailed scenario: Dynamic Host Cluster Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
@@ -709,7 +709,7 @@ Dynamic Host Cluster Test
     [Teardown]    Delete compose from    ./compose-test-16.yaml
 
 Coupled Clusters Cross-Cluster API Test
-    [Tags]    compose    C17    positive    dynamic-hosts    coupled-clusters
+    [Tags]    compose    positive    dynamic-hosts    coupled-clusters
     [Documentation]    Tests that foreign cluster dynamic host endpoints return expected cross-cluster responses.
     ...                GET /dynamic-host-token=200(empty), POST /dynamic-host-token=400, and DELETE operations on foreign-cluster resources=404.
     ...                Detailed scenario: Coupled Clusters Cross-Cluster API Test.
@@ -748,7 +748,7 @@ Coupled Clusters Cross-Cluster API Test
     [Teardown]    Delete compose from    ./compose-test-17.yaml
 
 Dynamic Host Cluster Concurrecy Join Test
-    [Tags]    compose    C18    positive    dynamic-hosts
+    [Tags]    compose    positive    dynamic-hosts
     [Documentation]    Detailed scenario: Dynamic Host Cluster Concurrency Join Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     ${major_version}=    Set Variable    ${MARKLOGIC_VERSION.split('.')[0]}
@@ -764,7 +764,7 @@ Dynamic Host Cluster Concurrecy Join Test
     [Teardown]    Delete compose from    ./compose-test-16.yaml
 
 Verify parameter overrides
-    [Tags]    docker-run    D19    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Verify parameter overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    OVERWRITE_ML_CONF=true
@@ -786,7 +786,7 @@ Verify parameter overrides
     [Teardown]    Delete container
 
 Verify implicit parameter overrides
-    [Tags]    docker-run    D20    positive
+    [Tags]    docker-run    positive
     [Documentation]    Detailed scenario: Verify implicit parameter overrides.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with    -e    TZ=America/Los_Angeles

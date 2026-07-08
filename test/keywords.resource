@@ -141,7 +141,7 @@ Start compose from
         @{nodes}=    Split to lines    ${result.stdout}
         IF    @{nodes} == []    Fail    No containers detected in ${new path}!
         FOR        ${node}        IN        @{nodes}
-            ${node}=     Get Variable Value    ${node}
+            ${node}=    Get Variable Value    ${node}
             Compose logs should contain    ${new path}    *${node}*Cluster config complete, marking this container as ready.*
         END
     END
@@ -320,7 +320,7 @@ Apply certificate ${templateName} on App Server ${appServer} ${port}
 Get CAcertificate for ${templateName} ${port}
     [Documentation]    Uses eval endpoint to get the CA of Cert template
     ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
-    ${header}=    Create Dictionary    Content-type=application/x-www-form-urlencoded     Accept=multipart/mixed    boundary=BOUNDARY
+    ${header}=    Create Dictionary    Content-type=application/x-www-form-urlencoded    Accept=multipart/mixed    boundary=BOUNDARY
     ${xqy_data}=    Get File    get_ca_xquery.xqy
     ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}    disable_warnings=1
     ${response}=    POST On Session    RestSession    url=http://localhost:${port}/v1/eval?database=Security    data=${xqy_data}    headers=${header}
@@ -589,7 +589,7 @@ Verify Full Cluster Restart Removes Dynamic Host Configuration ${group}
     Should Be Equal As Integers    ${host_count}    2    Expected 2 dynamic hosts but found ${host_count}
     
     # Restart the entire cluster
-    Restart compose from    compose-test-16.yaml
+    Restart compose from    compose-3core-11dynamic-hosts.yaml
     Sleep    30s
 
     # Verify dynamic host information is removed

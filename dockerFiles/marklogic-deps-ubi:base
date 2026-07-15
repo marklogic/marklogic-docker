@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1775152441
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1778735208
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # MarkLogic version passed from build to enable conditional deps
@@ -19,11 +19,11 @@ RUN microdnf -y upgrade glibc \
     && microdnf clean all
 
 ###############################################################
-# install networking, base deps and tzdata for timezone
+# install gdb and dependencies for stack traces, networking, base deps and tzdata for timezone
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install --setopt install_weak_deps=0 gdb redhat-lsb-core initscripts tzdata glibc libstdc++ hostname \
+    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname redhat-lsb-core \
     && microdnf -y upgrade tzdata \
     && microdnf clean all
 

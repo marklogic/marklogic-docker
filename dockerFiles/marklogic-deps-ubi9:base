@@ -4,22 +4,27 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7-1775623882
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7-1778562320
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 ###############################################################
 # install libnsl rpm package
 ###############################################################
 
-RUN microdnf -y update \
-    && rpm -i https://repo.almalinux.org/almalinux/9.7/BaseOS/x86_64/os/Packages/libnsl-2.34-231.el9_7.10.x86_64.rpm
+# microdnf -y upgrade glibc brings the UBI9 glibc to el9_8 (currently 2.34-270.el9_8).
+# --nodeps is required because the AlmaLinux libnsl RPM declares a dependency on
+# AlmaLinux's glibc packaging; UBI9 provides the same ABI but different package provenance.
+# The AlmaLinux 9.8 libnsl version is kept in sync with the glibc version UBI9 pulls.
+RUN microdnf -y upgrade glibc \
+    && rpm -i --nodeps https://repo.almalinux.org/almalinux/9.8/BaseOS/x86_64/os/Packages/libnsl-2.34-270.el9_8.x86_64.rpm \
+    && microdnf clean all
 
 ###############################################################
-# install networking, base deps and tzdata for timezone
+# install gdb and dependencies for stack traces, networking, base deps and tzdata for timezone
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install --setopt install_weak_deps=0 gdb nss libtool-ltdl cpio tzdata util-linux hostname \
+    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname \
     && microdnf clean all
 
 

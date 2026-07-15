@@ -13,17 +13,17 @@ ${DOCKER_PLATFORM}    %{DOCKER_PLATFORM=linux/amd64}
 ${DEFAULT ADMIN USER}    test_admin
 ${DEFAULT ADMIN PASS}    test_admin_pass
 ${SPEC CHARS ADMIN PASS}    Admin@2$s%^&*!
-${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.1-ubi-rootless-2.2.5}
+${TEST_IMAGE}    %{DOCKER_TEST_IMAGE=progressofficial/marklogic-db:11.3.6-ubi-rootless-2.2.6}
 ${UPGRADE_TEST_IMAGE}    progressofficial/marklogic-db:${MARKLOGIC_VERSION}-${IMAGE_TYPE}-${MARKLOGIC_DOCKER_VERSION}
 ${DOCKER TIMEOUT}    300s
 ${LICENSE KEY}    %{QA_LICENSE_KEY=none}
 ${LICENSEE}    MarkLogic - Version 9 QA Test License
-${MARKLOGIC_VERSION}    11.3.1
-${BUILD_BRANCH}    release_2.2.1
+${MARKLOGIC_VERSION}    11.3.6
+${BUILD_BRANCH}    release_2.2.6
 ${IMAGE_TYPE}    ubi-rootless
 ${VOL_NAME}    MarkLogic_vol_1
 ${VOL_INFO}    src=${VOL_NAME},dst=/var/opt/MarkLogic
-${MARKLOGIC_DOCKER_VERSION}    2.2.5
+${MARKLOGIC_DOCKER_VERSION}    2.2.6
 ${TEST_RESULTS_DIR}    test_results
 
 *** Keywords ***
@@ -142,7 +142,7 @@ Start compose from
         @{nodes}=    Split to lines    ${result.stdout}
         IF    @{nodes} == []    Fail    No containers detected in ${new path}!
         FOR        ${node}        IN        @{nodes}
-            ${node}=     Get Variable Value    ${node}
+            ${node}=    Get Variable Value    ${node}
             Compose logs should contain    ${new path}    *${node}*Cluster config complete, marking this container as ready.*
         END
     END
@@ -321,7 +321,7 @@ Apply certificate ${templateName} on App Server ${appServer} ${port}
 Get CAcertificate for ${templateName} ${port}
     [Documentation]    Uses eval endpoint to get the CA of Cert template
     ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
-    ${header}=    Create Dictionary    Content-type=application/x-www-form-urlencoded     Accept=multipart/mixed    boundary=BOUNDARY
+    ${header}=    Create Dictionary    Content-type=application/x-www-form-urlencoded    Accept=multipart/mixed    boundary=BOUNDARY
     ${xqy_data}=    Get File    get_ca_xquery.xqy
     ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}    disable_warnings=1
     ${response}=    POST On Session    RestSession    url=http://localhost:${port}/v1/eval?database=Security    data=${xqy_data}    headers=${header}
@@ -590,7 +590,7 @@ Verify Full Cluster Restart Removes Dynamic Host Configuration ${group}
     Should Be Equal As Integers    ${host_count}    2    Expected 2 dynamic hosts but found ${host_count}
     
     # Restart the entire cluster
-    Restart compose from    compose-test-16.yaml
+    Restart compose from    compose-3core-11dynamic-hosts.yaml
     Sleep    30s
 
     # Verify dynamic host information is removed
@@ -609,6 +609,85 @@ Verify Dynamic Host Count on port ${port} for group ${group} equals ${expected_c
         Log    Found dynamic hosts: @{host_ids}
     END
     RETURN    ${host_ids}
+
+Get Decoded Tokens on port ${port}
+    [Documentation]    Gets all dynamic host tokens with decode=true to include decoded JWT fields (jti, group, exp)
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Accept=application/json
+    ${cluster_name}=    Get Local Cluster Name on port ${port}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    GET On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-host-token?decode=true&format=json    headers=${header}
+    RETURN    ${response}
+
+Verify Decoded Tokens Contain Fields on port ${port}
+    [Documentation]    Verifies that decoded tokens contain expected fields: jti, group, exp
+    ${response}=    Get Decoded Tokens on port ${port}
+    ${json}=    Set Variable    ${response.json()}
+    
+    # Check if response has the expected structure
+    ${has_tokens_key}=    Run Keyword And Return Status    Dictionary Should Contain Key    ${json}    dynamic-host-tokens
+    IF    not ${has_tokens_key}
+        Log    No dynamic-host-tokens in response. Available keys: ${json.keys()}
+        Fail    Response does not contain dynamic-host-tokens. This might mean no tokens exist.
+    END
+    
+    ${tokens}=    Set Variable    ${json["dynamic-host-tokens"]}
+    ${is_list}=    Evaluate    isinstance($tokens, list)
+    IF    not ${is_list}
+        Fail    dynamic-host-tokens is not a list: ${tokens}
+    END
+    
+    IF    len($tokens) == 0
+        Fail    No tokens found in response - expected tokens to exist at this point in the test
+    END
+    
+    FOR    ${token}    IN    @{tokens}
+        # Each token should be a dict with 'payload' containing jti, group, exp
+        ${payload}=    Set Variable    ${token["payload"]}
+        Dictionary Should Contain Key    ${payload}    jti
+        Dictionary Should Contain Key    ${payload}    group
+        Dictionary Should Contain Key    ${payload}    exp
+    END
+    Log    All decoded tokens contain required fields (jti, group, exp)
+
+Delete Token By JTI on port ${port} with jti ${jti}
+    [Documentation]    Deletes a specific dynamic host token by its JTI value
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${cluster_name}=    Get Local Cluster Name on port ${port}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    DELETE On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-host-token/${jti}    expected_status=204
+
+Delete Token By Invalid JTI on port ${port}
+    [Documentation]    Verifies that deleting a token with an invalid JTI returns 404
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${cluster_name}=    Get Local Cluster Name on port ${port}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    DELETE On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-host-token/invalid-jti-does-not-exist    expected_status=404
+    Log    Correctly received 404 for invalid JTI deletion
+
+Delete Token By Host ID on port ${port} with host-id ${host_id}
+    [Documentation]    Deletes all dynamic host tokens for a specific host-id using the /dynamic-hosts/{host-id} endpoint
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${cluster_name}=    Get Local Cluster Name on port ${port}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    DELETE On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-hosts/${host_id}    expected_status=204
+    Log    Successfully deleted tokens for host-id: ${host_id}
+
+Delete Token By Invalid Host ID on port ${port}
+    [Documentation]    Verifies that deleting tokens with an invalid host-id returns 404
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${cluster_name}=    Get Local Cluster Name on port ${port}
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    DELETE On Session    RestSession    url=/manage/v2/clusters/${cluster_name}/dynamic-hosts/99999999999999999999    expected_status=404
+    Log    Correctly received 404 for invalid host-id deletion
+
+Verify Invalid Cluster Name Returns 404 on port ${port}
+    [Documentation]    Verifies that using a nonexistent cluster name returns 404
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Accept=application/json
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:${port}    headers=${headers}    auth=${auth}
+    ${response}=    GET On Session    RestSession    url=/manage/v2/clusters/nonexistent-cluster-name/dynamic-host-token?format=json    headers=${header}    expected_status=404
+    Log    Correctly received 404 for nonexistent cluster name
 
 Dynamic Host Join Fails When Token Expires ${group}
     [Documentation]    Tests that a token cannot be reused after it expires
@@ -634,6 +713,93 @@ Dynamic Host Join Fails After Token Revoked ${group}
 
     ${status}=    Run Keyword And Return Status    Init dynamic host 8201 with token ${token}
     Should Be Equal    ${status}    ${FALSE}    Join succeeded with revoked token when it should have failed
+
+Delete Token By JTI Succeeds on ${group}
+    [Documentation]    Tests creating a token, extracting its JTI via decode=true, then deleting it by JTI
+
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT10M and comment "jti-delete-test"
+
+    # Get the JTI of the token using decode=true
+    ${decoded_response}=    Get Decoded Tokens on port 7102
+    ${json}=    Set Variable    ${decoded_response.json()}
+    
+    # Check if response has tokens
+    ${has_tokens_key}=    Run Keyword And Return Status    Dictionary Should Contain Key    ${json}    dynamic-host-tokens
+    IF    not ${has_tokens_key}
+        Fail    No dynamic-host-tokens in decoded response. Response keys: ${json.keys()}
+    END
+    
+    ${tokens}=    Set Variable    ${json["dynamic-host-tokens"]}
+    ${is_list}=    Evaluate    isinstance($tokens, list)
+    IF    not ${is_list}
+        Fail    dynamic-host-tokens is not a list. Response: ${tokens}
+    END
+    
+    IF    len($tokens) == 0
+        Fail    No tokens found after creating token. Response: ${json}
+    END
+    
+    # Get the last token (most recently created)
+    ${last_token}=    Set Variable    ${tokens[-1]}
+    ${payload}=    Set Variable    ${last_token["payload"]}
+    ${jti}=    Set Variable    ${payload["jti"]}
+
+    # Delete the token by JTI and verify
+    Delete Token By JTI on port 7102 with jti ${jti}
+
+    # Verify the join fails with the deleted token
+    ${status}=    Run Keyword And Return Status    Init dynamic host 8201 with token ${token}
+    Should Be Equal    ${status}    ${FALSE}    Join succeeded with JTI-deleted token when it should have failed
+
+Delete Token By Host ID Succeeds on ${group}
+    [Documentation]    Tests creating a token, initializing a dynamic host, then deleting token by host-id via query parameter
+
+    ${token}=    Create dynamic host token for group ${group} on host bootstrap_3n and port 8001 using docker port 7102 with duration PT10M and comment "host-id-delete-test"
+
+    # Initialize a dynamic host with the token
+    Init dynamic host 8201 with token ${token}
+    Sleep    5s    # Give the host time to fully initialize
+
+    # Get the host-id of dynamic8 (the container behind port 8201) by its known stable hostname
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Accept=application/json
+    ${response}=    Create Digest Session    RestSession    url=http://localhost:7102    headers=${headers}    auth=${auth}
+    ${response}=    GET On Session    RestSession    url=/manage/v2/hosts?format=json&group-id=${group}    headers=${header}
+    ${hosts}=    Set Variable    ${response.json()["host-default-list"]["list-items"]["list-item"]}
+
+    # Normalise to a list (API returns a dict when only one host exists)
+    ${is_list}=    Evaluate    isinstance($hosts, list)
+    IF    not ${is_list}
+        ${hosts}=    Create List    ${hosts}
+    END
+
+    # Find dynamic8 by its known hostname (stable identifier for the host on ports 8200-8210)
+    ${host_id}=    Set Variable    ${EMPTY}
+    FOR    ${h}    IN    @{hosts}
+        ${is_dynamic8}=    Run Keyword And Return Status    Should Contain    ${h["nameref"]}    dynamic8
+        IF    ${is_dynamic8}
+            ${host_id}=    Set Variable    ${h["idref"]}
+            BREAK
+        END
+    END
+
+    Should Not Be Empty    ${host_id}    Could not find dynamic8 host-id in group ${group}
+    Log    Found dynamic host-id for dynamic8
+
+    # Delete the token by host-id
+    Delete Token By Host ID on port 7102 with host-id ${host_id}
+
+    # Verify deletion: dynamic8 must no longer appear in the group's host list
+    ${response2}=    GET On Session    RestSession    url=/manage/v2/hosts?format=json&group-id=${group}    headers=${header}
+    ${hosts_after}=    Set Variable    ${response2.json()["host-default-list"]["list-items"]["list-item"]}
+    ${is_list2}=    Evaluate    isinstance($hosts_after, list)
+    IF    not ${is_list2}
+        ${hosts_after}=    Create List    ${hosts_after}
+    END
+    FOR    ${h}    IN    @{hosts_after}
+        Should Not Contain    ${h["nameref"]}    dynamic8    DELETE by host-id did not remove dynamic8 from the group
+    END
+    Log    Token deletion by host-id verified: dynamic8 no longer in group ${group}
 
 Verify Dynamic Host Can Execute Query ${group} ${port}
     [Documentation]    Verifies that a dynamic host can execute a query using the REST API.
@@ -695,3 +861,116 @@ Verify That marklogic.conf contains
         Log    STDOUT: ${output.stdout}
         Should Not Be Empty    ${output.stdout}    Variable ${variable} not found in /etc/marklogic.conf        
     END
+
+Couple Cluster on port ${local_port} with Foreign Cluster on port ${foreign_port}
+    [Documentation]    Couples the local cluster with a foreign cluster by running admin:foreign-cluster-create
+    ...    XQuery via /v1/eval. Uses admin library functions:
+    ...    admin:cluster-get-id, admin:cluster-get-name, admin:foreign-host, admin:foreign-cluster-create,
+    ...    admin:save-configuration-without-restart
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header_json}=    Create Dictionary    Accept=application/json
+
+    # --- Gather foreign cluster info via Management API (port = management port 8002) ---
+    ${foreign_mgmt}=    Create Digest Session    ForeignMgmt_${foreign_port}    url=http://localhost:${foreign_port}    headers=${headers}    auth=${auth}
+    ${props}=    GET On Session    ForeignMgmt_${foreign_port}    url=/manage/v2/properties?format=json    headers=${header_json}
+    ${foreign_cluster_id}=    Set Variable    ${props.json()["cluster-id"]}
+    ${foreign_cluster_name}=    Set Variable    ${props.json()["cluster-name"]}
+
+    # Get bootstrap host info - find host with 'bootstrap' in its hostname
+    ${hosts_resp}=    GET On Session    ForeignMgmt_${foreign_port}    url=/manage/v2/hosts?format=json    headers=${header_json}
+    ${hosts}=    Set Variable    ${hosts_resp.json()["host-default-list"]["list-items"]["list-item"]}
+    # Default to first host, then override if we find one named 'bootstrap'
+    ${foreign_host_id}=    Set Variable    ${hosts[0]["idref"]}
+    ${foreign_host_name}=    Set Variable    ${hosts[0]["nameref"]}
+    FOR    ${host}    IN    @{hosts}
+        ${is_bootstrap}=    Run Keyword And Return Status    Should Contain    ${host["nameref"]}    bootstrap
+        IF    ${is_bootstrap}
+            ${foreign_host_id}=    Set Variable    ${host["idref"]}
+            ${foreign_host_name}=    Set Variable    ${host["nameref"]}
+            BREAK
+        END
+    END
+    Log    Foreign cluster: id=${foreign_cluster_id} name=${foreign_cluster_name} bootstrap=${foreign_host_name} (id=${foreign_host_id})
+
+    # --- Run XQuery on local cluster to register foreign cluster ---
+    # /v1/eval is on port 8000; management API is on 8002; eval_port = local_port - 2
+    ${eval_port}=    Evaluate    int(${local_port}) - 2
+    # Build XQuery using admin:foreign-cluster-create - SSL disabled (fn:false()) so no cert exchange needed
+    ${xquery}=    Catenate    SEPARATOR=\n
+    ...    xquery version '1.0-ml';
+    ...    import module namespace admin = 'http://marklogic.com/xdmp/admin' at '/MarkLogic/admin.xqy';
+    ...    let $cfg := admin:get-configuration()
+    ...    let $host := admin:foreign-host(xs:unsignedLong('${foreign_host_id}'), '${foreign_host_name}', xs:unsignedInt('7998'))
+    ...    let $new-cfg := admin:foreign-cluster-create($cfg, xs:unsignedLong('${foreign_cluster_id}'), '${foreign_cluster_name}', xs:unsignedInt('10'), xs:unsignedInt('30'), (), fn:false(), (), (), (), $host)
+    ...    return admin:save-configuration-without-restart($new-cfg)
+
+    ${eval_session}=    Create Digest Session    LocalEval_${local_port}    url=http://localhost:${eval_port}    headers=${headers}    auth=${auth}
+    ${data}=    Create Dictionary    xquery=${xquery}
+    ${resp}=    POST On Session    LocalEval_${local_port}    url=/v1/eval    data=${data}    expected_status=200
+    Log    Registered foreign cluster '${foreign_cluster_name}' on local cluster (port ${local_port})
+    Sleep    2s    # Wait for configuration to propagate
+    RETURN    ${foreign_cluster_name}
+
+Verify Cross Cluster API Returns Error on port ${local_port} for cluster ${foreign_cluster_name}
+    [Documentation]    Verifies behaviour when accessing a coupled (foreign) cluster's dynamic host token API.
+    ...    Tested endpoints:
+    ...    GET  /dynamic-host-token             → 200 empty list (cluster known/coupled, no cross-cluster token visibility)
+    ...    POST /dynamic-host-token             → 400 Bad Request (cannot create tokens for foreign cluster)
+    ...    DELETE /dynamic-host-token/{jti}     → 404 Not Found (real JTI exists on foreign cluster but not visible cross-cluster)
+    ...    DELETE /dynamic-hosts/{real-host-id} → 404 Not Found (dynamic hosts not visible cross-cluster)
+    ${auth}    ${headers}=    Generate digest authorization for    ${DEFAULT ADMIN USER}    ${DEFAULT ADMIN PASS}
+    ${header}=    Create Dictionary    Accept=application/json
+    ${header_post}=    Create Dictionary    Content-type=application/json    Accept=application/json
+    ${response}=    Create Digest Session    CrossClusterSess_${local_port}    url=http://localhost:${local_port}    headers=${headers}    auth=${auth}
+
+    # Derive foreign management port: cluster2 = 7302, cluster1 = 7102
+    ${is_cluster2}=    Run Keyword And Return Status    Should Contain    ${foreign_cluster_name}    cluster2
+    ${foreign_mgmt_port}=    Set Variable If    ${is_cluster2}    7302    7102
+    ${foreign_session}=    Create Digest Session    ForeignSess_${foreign_mgmt_port}    url=http://localhost:${foreign_mgmt_port}    headers=${headers}    auth=${auth}
+
+    # --- /dynamic-host-token endpoint ---
+
+    # GET dynamic host tokens using foreign cluster name - returns 200 with empty list (cluster is known/coupled)
+    # This distinguishes from 404 (XDMP-NOSUCHCLUSTER) which would mean the clusters aren't coupled
+    ${response}=    GET On Session    CrossClusterSess_${local_port}    url=/manage/v2/clusters/${foreign_cluster_name}/dynamic-host-token?format=json    headers=${header}    expected_status=200
+    ${tokens}=    Set Variable    ${response.json().get("dynamic-host-tokens", [])}
+    Should Be Empty    ${tokens}    Expected no tokens visible on foreign cluster, got: ${tokens}
+    Log    Correctly received 200 with empty tokens - cluster is coupled/known
+
+    # POST (create) token for foreign cluster - should return 400 (Bad Request)
+    # Use the local cluster's own bootstrap host and container Admin port so the 400 is caused by
+    # the cross-cluster restriction, not an invalid/unreachable host-mapped port combination.
+    # is_cluster2=True means foreign=cluster2 → local=cluster1 → cluster1_bootstrap; else local=cluster2 → cluster2_bootstrap
+    ${local_bootstrap_name}=    Set Variable If    ${is_cluster2}    cluster1_bootstrap    cluster2_bootstrap
+    ${token_details}=    Create Dictionary    group=Default    host=${local_bootstrap_name}    port=8001    duration=PT10M    comment=test
+    ${token_body}=    Create Dictionary    dynamic-host-token=${token_details}
+    ${response}=    POST On Session    CrossClusterSess_${local_port}    url=/manage/v2/clusters/${foreign_cluster_name}/dynamic-host-token    json=${token_body}    headers=${header_post}    expected_status=400
+    Log    Correctly received 400 when POST-ing token on foreign cluster
+
+    # Create a real token on the foreign cluster (via its own API) and extract its JTI
+    ${foreign_cluster_name_local}=    Get Local Cluster Name on port ${foreign_mgmt_port}
+    ${foreign_bootstrap_name}=    Set Variable If    ${is_cluster2}    cluster2_bootstrap    cluster1_bootstrap
+    ${token_details_foreign}=    Create Dictionary    group=Default    host=${foreign_bootstrap_name}    port=8001    duration=PT10M    comment=cross-cluster-jti-test
+    ${token_body_foreign}=    Create Dictionary    dynamic-host-token=${token_details_foreign}
+    ${create_resp}=    POST On Session    ForeignSess_${foreign_mgmt_port}    url=/manage/v2/clusters/${foreign_cluster_name_local}/dynamic-host-token    json=${token_body_foreign}    headers=${header_post}    expected_status=201
+    # Decode to get the JTI of the newly created token
+    ${decoded}=    GET On Session    ForeignSess_${foreign_mgmt_port}    url=/manage/v2/clusters/${foreign_cluster_name_local}/dynamic-host-token?decode=true&format=json    headers=${header}
+    ${foreign_tokens}=    Set Variable    ${decoded.json()["dynamic-host-tokens"]}
+    ${real_jti}=    Set Variable    ${foreign_tokens[-1]["payload"]["jti"]}
+    # DELETE that real JTI cross-cluster from the local cluster - returns 404 (tokens not visible cross-cluster)
+    ${response}=    DELETE On Session    CrossClusterSess_${local_port}    url=/manage/v2/clusters/${foreign_cluster_name}/dynamic-host-token/${real_jti}    expected_status=404
+    Log    Correctly received 404 when DELETE-ing real foreign JTI cross-cluster
+    # Cleanup: delete the token on the foreign cluster directly
+    ${response}=    DELETE On Session    ForeignSess_${foreign_mgmt_port}    url=/manage/v2/clusters/${foreign_cluster_name_local}/dynamic-host-token/${real_jti}    expected_status=204
+
+    # --- /dynamic-hosts endpoint ---
+
+    # Get a real host-id from the foreign cluster's own Management API
+    ${fhosts_resp}=    GET On Session    ForeignSess_${foreign_mgmt_port}    url=/manage/v2/hosts?format=json    headers=${header}
+    ${fhosts}=    Set Variable    ${fhosts_resp.json()["host-default-list"]["list-items"]["list-item"]}
+    ${is_list}=    Evaluate    isinstance($fhosts, list)
+    ${real_host_id}=    Set Variable If    ${is_list}    ${fhosts[0]["idref"]}    ${fhosts["idref"]}
+    Log    Real foreign host-id to test: ${real_host_id}
+    # DELETE /dynamic-hosts/{real-host-id} cross-cluster - returns 404 (dynamic hosts not visible cross-cluster)
+    ${response}=    DELETE On Session    CrossClusterSess_${local_port}    url=/manage/v2/clusters/${foreign_cluster_name}/dynamic-hosts/${real_host_id}    expected_status=404
+    Log    Correctly received 404 when DELETE-ing real foreign host-id cross-cluster

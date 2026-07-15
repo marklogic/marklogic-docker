@@ -90,8 +90,14 @@ endif
 #***************************************************************************
 # docker image tests
 #***************************************************************************
+.PHONY: docker-test-ids
+docker-test-ids:
+	@echo "Docker test ID catalog (Robot test names):"
+	@awk 'BEGIN{in_tests=0} /^\*\*\* Test Cases \*\*\*/{in_tests=1;next} /^\*\*\*/{if(in_tests)exit} in_tests && /^[DC][0-9][0-9] /{print "  - " $$0}' ./test/docker-tests.robot
+
 docker-tests: 
 	cd test; \
+	$(MAKE) -s docker-test-ids; \
 	python3 -m venv python_env; \
 	source ./python_env/bin/activate; \
 	pip3 install -r requirements.txt; \

@@ -7,10 +7,6 @@
 @Library('shared-libraries@1.0-declarative')
 import groovy.json.JsonSlurperClassic
 
-// email list for scheduled builds (includes security vulnerability)
-emailList = 'vitaly.korolev@progress.com, Barkha.Choithani@progress.com, Sumanth.Ravipati@progress.com, Peng.Zhou@progress.com, romain.winieski@progress.com'
-// email list for security vulnerabilities only
-emailSecList = 'Mahalakshmi.Srinivasan@progress.com'
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
 pdcSbRegistry = 'sandboxpdc.azurecr.io'
@@ -37,6 +33,23 @@ upgradeDockerImage = ''
 @NonCPS
 def isArmImage() {
     return params.dockerImageType.toLowerCase().contains('arm')
+}
+/**
+ * Loads email configuration from the KUBE_NINJAS_PIPELINE_EMAILS Jenkins secret file credential.
+ * The credential file must contain key=value lines for 'emailList' and 'emailSecList'.
+ * @return A map with keys 'emailList' and 'emailSecList'.
+ */
+Map loadEmailConfig() {
+    def result = [emailList: '', emailSecList: '']
+    withCredentials([file(credentialsId: 'KUBE_NINJAS_PIPELINE_EMAILS', variable: 'emailConfigFile')]) {
+        def props = readProperties file: emailConfigFile
+        result.emailList = (props.emailList ?: '').trim()
+        result.emailSecList = (props.emailSecList ?: '').trim()
+        if (!result.emailList || !result.emailSecList) {
+            error("KUBE_NINJAS_PIPELINE_EMAILS must define non-empty 'emailList' and 'emailSecList' properties")
+        }
+    }
+    return result
 }
 
 /**
@@ -147,13 +160,18 @@ def getReviewState() {
  * @param status The build status string (e.g., 'Success', 'Failure').
  */
 void resultNotification(status) {
+    def paramEmailList = params.emailList?.trim()
+    def needSecList = params.SCAP_SCAN && BRANCH_NAME == 'develop'
+    def emailConfig = (!paramEmailList || needSecList) ? loadEmailConfig() : null
+    def baseEmailList = paramEmailList ?: emailConfig.emailList
+    def emailSecList = emailConfig?.emailSecList ?: ''
     def author, authorEmail, emailList
     if (env.CHANGE_AUTHOR) {
         author = env.CHANGE_AUTHOR.toString().trim().toLowerCase()
         authorEmail = getEmailFromGITUser author
-        emailList = params.emailList + ',' + authorEmail
+        emailList = baseEmailList + ',' + authorEmail
     } else {
-        emailList = params.emailList
+        emailList = baseEmailList
     }
     
     email_body = "<b>Build URL: </b><a href='${env.BUILD_URL}'>${env.BUILD_URL}</a><br/>" +
@@ -336,6 +354,7 @@ void structureTests() {
  * Runs Docker functional tests using the 'make docker-tests' target.
  */
 void dockerTests() {
+    sh "make docker-test-ids"
     sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType} DOCKER_TEST_LIST=\"${params.DOCKER_TEST_LIST}\""
 }
 
@@ -372,7 +391,8 @@ void vulnerabilityScan() {
     SCAN_OUTPUT = sh(returnStdout: true, script: "cat scan/report-${env.dockerImageType}.txt")
     sh 'echo "SCAN_OUTPUT: ${SCAN_OUTPUT}"'
     if (SCAN_OUTPUT.size()) {
-        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        def emailConfig = loadEmailConfig()
+        mail charset: 'UTF-8', mimeType: 'text/html', to: "${emailConfig.emailSecList}", body: "<br/>Jenkins pipeline for ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>Vulnerabilities: <pre><code>${SCAN_OUTPUT}</code></pre>", subject: "Critical or High Security Vulnerabilities Found: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
     archiveArtifacts artifacts: 'scan/*', onlyIfSuccessful: true
 }
@@ -420,7 +440,7 @@ void publishToInternalRegistry() {
     //         }
     // }
 
-    // Publish to private ACR repositories that are used by PDC. (only ML12)
+    // Publish to private ACR repositories that are used by PDC.
     if ( params.marklogicVersion == "12" ) {
         // Publish to Sandbox PDC registry
         withCredentials([usernamePassword(credentialsId: 'PDC_SANDBOX_USER', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
@@ -432,6 +452,8 @@ void publishToInternalRegistry() {
                 docker push ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
             """
         }
+    }
+    if ( params.marklogicVersion == "11" || params.marklogicVersion == "12" ) {
         // Publish to Dev PDC registry
         withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
             sh """
@@ -443,6 +465,27 @@ void publishToInternalRegistry() {
             """
         }
     }
+    if ( params.marklogicVersion == "12" ) {
+        // Publish to Kubernetes ECR for testing on EKS
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'KUBE_NINJAS_OPS_AWS_JENKINS',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            // Resolve account ID via STS — no account number is hardcoded in this file.
+            def awsAccountId = sh(returnStdout: true,
+                script: 'aws sts get-caller-identity --region us-west-1 --query Account --output text').trim()
+            def kubeNinjasEcrRegistry = "${awsAccountId}.dkr.ecr.us-west-1.amazonaws.com"
+            def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
+            sh """
+                aws ecr get-login-password --region us-west-1 | \\
+                docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}
+                docker tag ${builtImage} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${builtImage} ${ecrRepo}:latest-${mlVerShort}
+                docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${ecrRepo}:latest-${mlVerShort}
+            """
+        }
+	}
 
     currentBuild.description = "Published"
 }
@@ -502,38 +545,31 @@ pipeline {
         // Trigger nightly builds on the develop branch for every supported version of MarkLogic
         // and for every supported image type.
         // Include SCAP scan for rootless images
-        parameterizedCron( 
-            env.BRANCH_NAME == 'develop' ? '''  
-                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
-                00 04 * * * % marklogicVersion=11;dockerImageType=ubi9-arm-rootless;SCAP_SCAN=true
-                00 04 * * * % marklogicVersion=10;dockerImageType=ubi
-                00 04 * * * % marklogicVersion=10;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                00 03 * * * % marklogicVersion=11;dockerImageType=ubi
-                00 03 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                00 02 * * * % marklogicVersion=12;dockerImageType=ubi
-                00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
-                00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                00 10 * * 7 % marklogicVersion=10;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
-                00 10 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
-                00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' :
-            env.BRANCH_NAME == 'Docker-ARM-support' ? '''
-                00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
-                00 06 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;PUBLISH_IMAGE=true
-                00 07 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;PUBLISH_IMAGE=true
-                00 08 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;PUBLISH_IMAGE=true''' : '')
-    }
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % marklogicVersion=11;dockerImageType=ubi
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
+                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
+                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             00 07 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                                                             00 08 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                                                             00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
+                                                             30 05 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true
+                                                             00 06 * * * % marklogicVersion=12;dockerImageType=ubi9-arm
+                                                             30 06 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true
+                                                             00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                                                             00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' : '')
+                                                }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
     }
 
     parameters {
-        string(name: 'emailList', defaultValue: emailList, description: 'List of email for build notification', trim: true)
         string(name: 'dockerVersion', defaultValue: '2.2.6', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
-        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
-        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rotless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
+        choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9', description: 'Platform type for Docker image. Will be made part of the docker image tag')
+        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rootless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '12\n11', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
@@ -543,6 +579,7 @@ pipeline {
         string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g Test one, Test two). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
         booleanParam(name: 'GRAVITON3_AGENT', defaultValue: true, description: '[ARM only] Run ARM-only stages on Graviton3 agent')
+        string(name: 'emailList', defaultValue: '', description: 'Optional override for the build notification email list. If left blank, the list is loaded from the KUBE_NINJAS_PIPELINE_EMAILS Jenkins credential file. Specify a comma-separated list only to send notifications to additional or different recipients for a specific build run.', trim: true)
     }
 
     stages {

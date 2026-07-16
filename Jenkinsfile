@@ -859,16 +859,24 @@ pipeline {
             }
         }
         success {
-            resultNotification('✅ Success')
+            node('cld-docker') {
+                resultNotification('✅ Success')
+            }
         }
         failure {
-            resultNotification('❌ Failure')
+            node('cld-docker') {
+                resultNotification('❌ Failure')
+            }
         }
         unstable {
-            resultNotification('⚠️ Unstable')
+            node('cld-docker') {
+                resultNotification('⚠️ Unstable')
+            }
         }
         aborted {
-            resultNotification('🚫 Aborted')
+            node('cld-docker') {
+                resultNotification('🚫 Aborted')
+            }
         }
             }
 }

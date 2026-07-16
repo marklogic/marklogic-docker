@@ -261,9 +261,6 @@ void copyRPMs() {
         fi
         if [ -n "${env.ML_CONVERTERS}" ]; then
             wget --no-verbose "${env.ML_CONVERTERS}"
-        elif [ "${env.marklogicVersion}" = "11" ] && [ "${archSuffix}" = "aarch64" ]; then
-            # Temporary exception: remove once the default ML11 ARM converters package is published.
-            touch MarkLogicConverters-placeholder.rpm
         else
             if [ "${archSuffix}" = "aarch64" ]; then
                 wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/converters-arm/MarkLogicConverters-${RPMversion}.\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm

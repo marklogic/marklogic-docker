@@ -533,12 +533,12 @@ pipeline {
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
                                                              00 07 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
                                                              00 08 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
-                                                             00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
-                                                             30 05 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true
-                                                             00 06 * * * % marklogicVersion=12;dockerImageType=ubi9-arm
-                                                             30 06 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true
-                                                             00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
-                                                             00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false''' : '')
+                                                             00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
+                                                             30 05 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
+                                                             00 06 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
+                                                             30 06 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
+                                                             00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true
+                                                             00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true''' : '')
                                                 }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')
@@ -556,7 +556,7 @@ pipeline {
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
         string(name: 'DOCKER_TEST_LIST', defaultValue: '', description: 'Comma separated list of test names to run (e.g Test one, Test two). Leave empty to run all tests.', trim: true)
         booleanParam(name: 'SCAP_SCAN', defaultValue: false, description: 'Run Open SCAP scan on the image.')
-        booleanParam(name: 'GRAVITON3_AGENT', defaultValue: true, description: '[ARM only] Run ARM-only stages on Graviton3 agent')
+        booleanParam(name: 'GRAVITON3_AGENT', defaultValue: false, description: '[ARM only] Run ARM-only stages on Graviton3 agent')
         string(name: 'emailList', defaultValue: '', description: 'Optional override for the build notification email list. If left blank, the list is loaded from the KUBE_NINJAS_PIPELINE_EMAILS Jenkins credential file. Specify a comma-separated list only to send notifications to additional or different recipients for a specific build run.', trim: true)
     }
 

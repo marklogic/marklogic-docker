@@ -63,11 +63,6 @@ void preBuildCheck() {
     // Initialize parameters as env variables (workaround for https://issues.jenkins-ci.org/browse/JENKINS-41929)
     evaluate """${ def script = ''; params.each { k, v -> script += "env.${k} = '''${v}'''\n" }; return script}"""
 
-    // Validate ARM images are only supported for MarkLogic 11 and 12
-    if (env.dockerImageType.contains('arm') && !(env.marklogicVersion in ['11', '12'])) {
-        error "ARM images (${env.dockerImageType}) are only supported for MarkLogic 11 and 12. Current version: ${env.marklogicVersion}"
-    }
-
     JIRA_ID = extractJiraID()
     echo 'Jira ticket number: ' + JIRA_ID
 
@@ -878,5 +873,5 @@ pipeline {
                 resultNotification('🚫 Aborted')
             }
         }
-            }
+    }
 }

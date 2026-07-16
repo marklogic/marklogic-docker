@@ -421,24 +421,6 @@ void publishToInternalRegistry() {
         """
         
     }
-    // Publish to private ECR repository that is used by the performance team. (only ML11)
-    // (disabled since it's not needed)
-    // if ( params.marklogicVersion == "11" ) {
-    //     withCredentials( [[
-    //         $class: 'AmazonWebServicesCredentialsBinding',
-    //         credentialsId: "aws-engineering-ct-ecr",
-    //         accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-    //         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-    //         ]]) {
-    //             sh """
-    //                 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 713759029616.dkr.ecr.us-west-2.amazonaws.com
-    //                 docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-    //                 docker tag ${builtImage} 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
-	//                 docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-    //                 docker push 713759029616.dkr.ecr.us-west-2.amazonaws.com/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
-    //             """
-    //         }
-    // }
 
     // Publish to private ACR repositories that are used by PDC.
     if ( params.marklogicVersion == "12" ) {
@@ -453,42 +435,41 @@ void publishToInternalRegistry() {
             """
         }
     }
-    if ( params.marklogicVersion == "11" || params.marklogicVersion == "12" ) {
-        // Publish to Dev PDC registry
-        withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
-            sh """
-                echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcDevRegistry}
-                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
-                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
-            """
-        }
+
+    // Publish to Dev PDC registry
+    withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+        sh """
+            echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcDevRegistry}
+            docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+            docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
+            docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+            docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
+        """
     }
-    if ( params.marklogicVersion == "12" ) {
-        // Publish to Kubernetes ECR for testing on EKS
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'KUBE_NINJAS_OPS_AWS_JENKINS',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            // Resolve account ID via STS — no account number is hardcoded in this file.
-            def awsAccountId = sh(returnStdout: true,
-                script: 'aws sts get-caller-identity --region us-west-1 --query Account --output text').trim()
-            def kubeNinjasEcrRegistry = "${awsAccountId}.dkr.ecr.us-west-1.amazonaws.com"
-            def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
-            sh """
-                aws ecr get-login-password --region us-west-1 | \\
-                docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}
-                docker tag ${builtImage} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker tag ${builtImage} ${ecrRepo}:latest-${mlVerShort}
-                docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker push ${ecrRepo}:latest-${mlVerShort}
-            """
-        }
-	}
+
+    // Publish to Kubernetes ECR for testing on EKS
+    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'KUBE_NINJAS_OPS_AWS_JENKINS',
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+        // Resolve account ID via STS - no account number is hardcoded in this file.
+        def awsAccountId = sh(returnStdout: true,
+            script: 'aws sts get-caller-identity --region us-west-1 --query Account --output text').trim()
+        def kubeNinjasEcrRegistry = "${awsAccountId}.dkr.ecr.us-west-1.amazonaws.com"
+        def ecrRepo = "${kubeNinjasEcrRegistry}/jenkins-kube-ninjas/marklogic-server-${dockerImageType}"
+        sh """
+            aws ecr get-login-password --region us-west-1 | \\
+            docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}
+            docker tag ${builtImage} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+            docker tag ${builtImage} ${ecrRepo}:latest-${mlVerShort}
+            docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+            docker push ${ecrRepo}:latest-${mlVerShort}
+        """
+    }
 
     currentBuild.description = "Published"
 }
+
 /**
  * Triggers a BlackDuck scan job for the published image.
  * Runs asynchronously (wait: false).
@@ -553,14 +534,14 @@ pipeline {
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 07 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
-                                                             00 08 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
+                                                             00 07 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
+                                                             00 08 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
                                                              00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm
                                                              30 05 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true
                                                              00 06 * * * % marklogicVersion=12;dockerImageType=ubi9-arm
                                                              30 06 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true
-                                                             00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency
-                                                             00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency''' : '')
+                                                             00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
+                                                             00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false''' : '')
                                                 }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

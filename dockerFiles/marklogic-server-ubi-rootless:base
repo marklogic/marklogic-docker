@@ -168,6 +168,16 @@ RUN microdnf -y install libcap \
     && microdnf clean all
 
 ###############################################################
+# Configure GDB for debugging and set capabilities for non-root usage
+###############################################################
+RUN microdnf -y install libcap \
+    && setcap cap_sys_ptrace+ep $(readlink -f /usr/bin/gdb) \
+    && echo "set auto-load safe-path /" > /home/${ML_USER}/.gdbinit \
+    && chown ${ML_USER}:users /home/${ML_USER}/.gdbinit \
+    && chmod 644 /home/${ML_USER}/.gdbinit \
+    && microdnf clean all
+
+###############################################################
 # Remove optional packages that have known vulnerabilities
 # (Excluding python/gdb dependencies needed for stack traces)
 ###############################################################

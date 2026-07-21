@@ -217,13 +217,8 @@ void copyRPMs() {
     // Determine architecture suffix based on image type
     def archSuffix = dockerImageType.contains('arm') ? 'aarch64' : 'x86_64'
     def armRhelSuffix = (marklogicVersion == "12") ? 'rhel' : 'rhel9'
-    
-    if (marklogicVersion == "10") {
-        RPMsuffix = "-nightly"
-        RPMbranch = "b10"
-        RPMversion = "10.0"
-    }
-    else if (marklogicVersion == "11") {
+
+    if (marklogicVersion == "11") {
         //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
         if (dockerImageType.contains("ubi9")) {
             RPMsuffix = ".nightly-rhel9"

@@ -521,14 +521,14 @@ pipeline {
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
                                                              00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 07 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
-                                                             00 08 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
+                                                             00 07 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
+                                                             00 08 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
                                                              00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
                                                              30 05 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
                                                              00 06 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
                                                              30 06 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
-                                                             00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true
-                                                             00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true''' : '')
+                                                             00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true
+                                                             00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true''' : '')
                                                 }
     environment {
         QA_LICENSE_KEY = credentials('QA_LICENSE_KEY')

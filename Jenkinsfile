@@ -27,7 +27,7 @@ upgradeDockerImage = ''
 
 /**
  * Determines if the current build is for an ARM image type.
- * ARM workers (e.g., Graviton3) are only available for MarkLogic 11.
+ * ARM workers (e.g., Graviton3) are only available for selected MarkLogic versions (currently 11 and 12).
  * @return true if dockerImageType contains 'arm', false otherwise.
  */
 @NonCPS

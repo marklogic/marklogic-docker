@@ -447,8 +447,8 @@ void publishToInternalRegistry() {
         sh """
             aws ecr get-login-password --region us-west-1 | \\
             docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}
-            docker tag ${builtImage} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-            docker tag ${builtImage} ${ecrRepo}:latest-${mlVerShort}
+            docker tag ${imageToPublish} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+            docker tag ${imageToPublish} ${ecrRepo}:latest-${mlVerShort}
             docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
             docker push ${ecrRepo}:latest-${mlVerShort}
         """

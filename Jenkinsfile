@@ -53,6 +53,20 @@ Map loadEmailConfig() {
 }
 
 /**
+ * Returns the build branch value used in image metadata and tests.
+ * PR builds use PR-<id>; non-PR builds use the branch name.
+ */
+String getBuildBranchValue() {
+    if (env.CHANGE_ID?.trim()) {
+        return "PR-${env.CHANGE_ID.trim()}"
+    }
+    if (env.BRANCH_NAME?.trim()) {
+        return env.BRANCH_NAME.trim()
+    }
+    return (env.GIT_BRANCH ?: 'local').toString().trim()
+}
+
+/**
  * Performs pre-build checks:
  * - Initializes parameters as environment variables.
  * - Extracts Jira ID from branch name or PR title.
@@ -285,7 +299,8 @@ void buildDockerImage() {
     // Use Los Angeles time (same as ARM_DATE in copyRPMs) to ensure consistency across UTC/PST boundaries
     timeStamp = sh(returnStdout: true, script: "TZ=America/Los_Angeles date +%Y%m%d").trim()
     timestamptedTag = builtImage.replace('nightly', timeStamp)
-    sh "make build docker_image_type=${dockerImageType} dockerTag=${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${env.BRANCH_NAME} package=${RPM} converters=${CONVERTERS}"
+    def buildBranchValue = getBuildBranchValue()
+    sh "make build docker_image_type=${dockerImageType} dockerTag=${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${buildBranchValue} package=${RPM} converters=${CONVERTERS}"
     currentBuild.displayName = "#${BUILD_NUMBER}: ${marklogicVersion}-${env.dockerImageType} (${env.dockerVersion})"
     echo "Built image: ${builtImage}"
 }
@@ -324,6 +339,7 @@ void pullUpgradeDockerImage() {
  * Runs container structure tests using the 'make structure-test' target.
  */
 void structureTests() {
+    def buildBranchValue = getBuildBranchValue()
     sh """
         #install container-structure-test 1.16.0 binary (detect architecture)
         ARCH=\$(uname -m)
@@ -333,7 +349,7 @@ void structureTests() {
             PLATFORM="amd64"
         fi
         curl -s -LO https://storage.googleapis.com/container-structure-test/v1.16.0/container-structure-test-linux-\${PLATFORM} && chmod +x container-structure-test-linux-\${PLATFORM} && mv container-structure-test-linux-\${PLATFORM} container-structure-test
-        make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${env.BRANCH_NAME} docker_image_type=${env.dockerImageType} Jenkins=true
+        make structure-test current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${buildBranchValue} docker_image_type=${env.dockerImageType} Jenkins=true
     """
 }
 
@@ -341,8 +357,9 @@ void structureTests() {
  * Runs Docker functional tests using the 'make docker-tests' target.
  */
 void dockerTests() {
+    def buildBranchValue = getBuildBranchValue()
     sh "make docker-test-ids"
-    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${env.BRANCH_NAME} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType} DOCKER_TEST_LIST=\"${params.DOCKER_TEST_LIST}\""
+    sh "make docker-tests current_image=marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} upgrade_image=${upgradeDockerImage} marklogicVersion=${marklogicVersion} build_branch=${buildBranchValue} dockerVersion=${env.dockerVersion} docker_image_type=${dockerImageType} DOCKER_TEST_LIST=\"${params.DOCKER_TEST_LIST}\""
 }
 
 /**

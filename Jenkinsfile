@@ -623,7 +623,8 @@ pipeline {
             when {
                 anyOf {
                         branch 'develop'
-                        expression { return params.PUBLISH_IMAGE }
+                        branch 'master'
+                        branch 'release*'
                     }
             }
             steps {

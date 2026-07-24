@@ -622,9 +622,7 @@ pipeline {
         stage('BlackDuck-Scan') {
             when {
                 anyOf {
-                        branch 'develop'
-                        branch 'master'
-                        branch 'release*'
+                        branch pattern: '^(develop|master|release.*)$', comparator: 'REGEXP'
                     }
             }
             steps {

@@ -622,8 +622,7 @@ pipeline {
         stage('BlackDuck-Scan') {
             when {
                 anyOf {
-                        branch 'develop'
-                        expression { return params.PUBLISH_IMAGE }
+                        branch pattern: '^(develop|master|release.*)$', comparator: 'REGEXP'
                     }
             }
             steps {

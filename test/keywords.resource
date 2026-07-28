@@ -88,13 +88,13 @@ Create upgrade container with
     Skip If    'arm' in '${IMAGE_TYPE}'    msg=Skipping upgrade test for ARM image (no previous ARM upgrade image is available).
     Should Not Be Empty    ${UPGRADE_TEST_IMAGE}    msg=UPGRADE_TEST_IMAGE is empty; cannot run upgrade container.
     ${container name}=    Remove spaces from    ${TEST NAME}
-    Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}    
+    ${result}=    Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}    
     ...            --name    ${container name}-2
     ...            --mount    ${VOL_INFO}    ${UPGRADE_TEST_IMAGE}  
     ...            stderr=test_results/stderr-${container name}-2.txt    
     ...            stdout=test_results/stdout-${container name}-2.txt    
     ...            timeout=${DOCKER TIMEOUT}
-    File Should Be Empty    test_results/stderr-${container name}-2.txt
+    Should Be Equal As Integers    ${result.rc}    0
     Docker log should contain    *Cluster config complete, marking this container as ready.*    True
 
 Stop container

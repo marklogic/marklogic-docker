@@ -51,7 +51,7 @@ Create container with latency
     ...            --name    ${container name}
     ...            --cap-add    NET_ADMIN    --entrypoint    /bin/bash
     ...            ${TEST_IMAGE}
-    ...            -c    sudo microdnf -y install iproute iptables iproute-tc || sudo microdnf -y install iproute iptables; (command -v tc >/dev/null && sudo tc qdisc add dev lo root netem delay 30000ms && sudo tc qdisc show dev lo) || ([ -x /usr/sbin/tc ] && sudo /usr/sbin/tc qdisc add dev lo root netem delay 30000ms && sudo /usr/sbin/tc qdisc show dev lo) || ([ -x /sbin/tc ] && sudo /sbin/tc qdisc add dev lo root netem delay 30000ms && sudo /sbin/tc qdisc show dev lo) || (echo "tc command not found"; exit 1); /tini -- /usr/local/bin/start-marklogic.sh
+    ...            -c    sudo microdnf -y install iproute iptables && (sudo microdnf -y install iproute-tc || (sudo curl -fsS -O https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/i/iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo rpm -Uvh --replacepkgs iproute-tc-6.2.0-6.el8_10.x86_64.rpm)) && ((command -v tc >/dev/null && sudo tc qdisc add dev lo root netem delay 30000ms && sudo tc qdisc show dev lo) || ([ -x /usr/sbin/tc ] && sudo /usr/sbin/tc qdisc add dev lo root netem delay 30000ms && sudo /usr/sbin/tc qdisc show dev lo) || ([ -x /sbin/tc ] && sudo /sbin/tc qdisc add dev lo root netem delay 30000ms && sudo /sbin/tc qdisc show dev lo)) && /tini -- /usr/local/bin/start-marklogic.sh
     ...            stderr=test_results/stderr-${container name}.txt
     ...            stdout=test_results/stdout-${container name}.txt
     ...            timeout=15000

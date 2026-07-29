@@ -8,7 +8,8 @@ Library    Collections
 Library    DateTime
 
 *** Variables ***
-@{DOCKER DEFAULTS}    -it    -d    -p    8000:8000    -p    8001:8001    -p    8002:8002    -p7997:7997    --platform    linux/amd64
+${DOCKER_PLATFORM}    %{DOCKER_PLATFORM=linux/amd64}
+@{DOCKER DEFAULTS}    -it    -d    -p    8000:8000    -p    8001:8001    -p    8002:8002    -p7997:7997    --platform    ${DOCKER_PLATFORM}
 ${DEFAULT ADMIN USER}    test_admin
 ${DEFAULT ADMIN PASS}    test_admin_pass
 ${SPEC CHARS ADMIN PASS}    Admin@2$s%^&*!
@@ -50,7 +51,7 @@ Create container with latency
     ...            --name    ${container name}
     ...            --cap-add    NET_ADMIN    --entrypoint    /bin/bash
     ...            ${TEST_IMAGE}
-    ...            -c    sudo microdnf -y install iproute iptables && sudo curl -s -O https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/i/iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo rpm -i iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo tc qdisc add dev lo root netem delay 30000ms && sudo tc qdisc show dev lo && /tini -- /usr/local/bin/start-marklogic.sh
+    ...            -c    sudo microdnf -y install iproute iptables && (sudo microdnf -y install iproute-tc || (sudo curl -fsS -O https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/i/iproute-tc-6.2.0-6.el8_10.x86_64.rpm && sudo rpm -Uvh --replacepkgs iproute-tc-6.2.0-6.el8_10.x86_64.rpm)) && ((command -v tc >/dev/null && sudo tc qdisc add dev lo root netem delay 30000ms && sudo tc qdisc show dev lo) || ([ -x /usr/sbin/tc ] && sudo /usr/sbin/tc qdisc add dev lo root netem delay 30000ms && sudo /usr/sbin/tc qdisc show dev lo) || ([ -x /sbin/tc ] && sudo /sbin/tc qdisc add dev lo root netem delay 30000ms && sudo /sbin/tc qdisc show dev lo)) && /tini -- /usr/local/bin/start-marklogic.sh
     ...            stderr=test_results/stderr-${container name}.txt
     ...            stdout=test_results/stdout-${container name}.txt
     ...            timeout=15000
@@ -84,14 +85,16 @@ Create test container with
 Create upgrade container with
     [Arguments]    @{input parameters}
     [Documentation]    Creates a second test container for upgrade testing.
+    Skip If    'arm' in '${IMAGE_TYPE}'    msg=Skipping upgrade test for ARM image (no previous ARM upgrade image is available).
+    Should Not Be Empty    ${UPGRADE_TEST_IMAGE}    msg=UPGRADE_TEST_IMAGE is empty; cannot run upgrade container.
     ${container name}=    Remove spaces from    ${TEST NAME}
-    Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}    
+    ${result}=    Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}    
     ...            --name    ${container name}-2
     ...            --mount    ${VOL_INFO}    ${UPGRADE_TEST_IMAGE}  
     ...            stderr=test_results/stderr-${container name}-2.txt    
     ...            stdout=test_results/stdout-${container name}-2.txt    
     ...            timeout=${DOCKER TIMEOUT}
-    File Should Be Empty    test_results/stderr-${container name}-2.txt
+    Should Be Equal As Integers    ${result.rc}    0
     Docker log should contain    *Cluster config complete, marking this container as ready.*    True
 
 Stop container

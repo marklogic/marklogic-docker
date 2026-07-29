@@ -1,0 +1,30 @@
+###############################################################
+#
+#   Copyright © 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+#
+###############################################################
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.7-1775623882
+LABEL "com.marklogic.maintainer"="docker@marklogic.com"
+
+###############################################################
+# install libnsl rpm package
+###############################################################
+
+RUN microdnf -y upgrade glibc \
+    && rpm -i --nodeps https://download.rockylinux.org/pub/rocky/9.8/BaseOS/aarch64/os/Packages/l/libnsl-2.34-270.el9_8.aarch64.rpm \
+    && microdnf clean all
+
+###############################################################
+# install gdb and dependencies for stack traces, networking, base deps and tzdata for timezone
+###############################################################
+# hadolint ignore=DL3006
+RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
+    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname \
+    && microdnf clean all
+
+
+###############################################################
+# Enable FIPS Mode
+###############################################################
+RUN update-crypto-policies --set FIPS

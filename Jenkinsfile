@@ -767,6 +767,9 @@ pipeline {
                 script {
                     unstash 'built-image-archive'
                     // Load image from tar if not already available (applies to all build types)
+                    // Node's Docker daemon is shared with other concurrent builds, so only ever
+                    // trust the exact, fully-qualified tag - never a loose repo/type match, which
+                    // could resolve to a different build's image (e.g. a different marklogicVersion).
                     sh """
                         if ! docker image inspect ${builtImage} &>/dev/null; then
                             echo "Image not found locally, loading from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
@@ -774,23 +777,11 @@ pipeline {
                         else
                             echo "Image ${builtImage} already available locally"
                         fi
+                        docker image inspect ${builtImage} >/dev/null
                     """
-                    
-                    // If builtImage doesn't exist, find the loaded image by repo pattern
-                    def actualImage = sh(
-                        returnStdout: true,
-                        script: """docker images --format 'table {{.Repository}}:{{.Tag}}' | grep "marklogic/marklogic-server-${dockerImageType}:" | head -1"""
-                    ).trim()
-                    
-                    if (!actualImage) {
-                        actualImage = builtImage
-                        echo "Using builtImage tag: ${actualImage}"
-                    } else {
-                        echo "Found loaded image: ${actualImage}"
-                    }
-                    
+
                     // Store for use in publishToInternalRegistry
-                    env.IMAGE_TO_PUBLISH = actualImage
+                    env.IMAGE_TO_PUBLISH = builtImage
                 }
                 publishToInternalRegistry()
                 // Trigger downstream QA image build job

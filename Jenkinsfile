@@ -274,12 +274,28 @@ void copyRPMs() {
         fi
     """
     script {
-        // Get the RPM and Converters file names for the correct architecture (archSuffix already defined above)
-        // Use newest files so we don't accidentally pick a stale RPM left from a previous run.
-        RPM = sh(returnStdout: true, script: "cd src; ls -1t MarkLogic-*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
-        CONVERTERS = sh(returnStdout: true, script: "cd src; (ls -1t MarkLogicConverters-*.${archSuffix}.rpm 2>/dev/null || ls -1t MarkLogicConverters-*.rpm 2>/dev/null) | head -1").trim()
+        // Select RPMs using version-specific patterns first to avoid picking another concurrent build's artifacts.
+        RPM = sh(returnStdout: true, script: "cd src; ls -1t MarkLogic-${RPMversion}*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+        if (!RPM) {
+            RPM = sh(returnStdout: true, script: "cd src; ls -1t MarkLogic-*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+        }
+
+        CONVERTERS = sh(returnStdout: true, script: "cd src; ls -1t MarkLogicConverters-${RPMversion}*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+        if (!CONVERTERS) {
+            CONVERTERS = sh(returnStdout: true, script: "cd src; (ls -1t MarkLogicConverters-*.${archSuffix}.rpm 2>/dev/null || ls -1t MarkLogicConverters-*.rpm 2>/dev/null) | head -1").trim()
+        }
+
+        if (!RPM) {
+            error "No MarkLogic RPM found in src/ for architecture ${archSuffix}"
+        }
+
         // Extract MarkLogic version from RPM file name (handle both x86_64 and aarch64)
         marklogicVersion = sh(returnStdout: true, script: "echo ${RPM} | awk -F 'MarkLogic-' '{print \$2;}' | awk -F '.x86_64.rpm' '{print \$1;}' | awk -F '.aarch64.rpm' '{print \$1;}' | awk -F '-rhel' '{print \$1;}'").trim()
+
+        if (!marklogicVersion.startsWith("${params.marklogicVersion}.")) {
+            error "Resolved RPM version '${marklogicVersion}' does not match requested marklogicVersion '${params.marklogicVersion}'"
+        }
+
         echo "Selected server RPM: ${RPM}"
         echo "Selected converters RPM: ${CONVERTERS}"
         echo "Derived MarkLogic version from RPM: ${marklogicVersion}"

@@ -492,10 +492,13 @@ void publishToInternalRegistry() {
 
 /**
  * Triggers a BlackDuck scan job for the published image.
+ * Scans the rolling latest-<majorVersion> tag (not the per-build version tag) so each
+ * scan overwrites the same BlackDuck code location instead of accumulating a new one
+ * per MarkLogic minor version release.
  * Runs asynchronously (wait: false).
  */
 void scanWithBlackDuck() {
-    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${publishImage}"), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}") ]
+    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${latestTag}"), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}") ]
 }
 
 /**

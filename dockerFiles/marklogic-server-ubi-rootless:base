@@ -125,6 +125,8 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     BUILD_BRANCH=${BUILD_BRANCH} \
     MARKLOGIC_JOIN_TLS_ENABLED=false \
     MARKLOGIC_EC2_HOST=0 \
+    MARKLOGIC_AZURE_HOST=0 \
+    MARKLOGIC_CLOUD_HOST=0 \
     TZ=UTC
 
 ################################################################

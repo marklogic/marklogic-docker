@@ -443,7 +443,6 @@ void publishToInternalRegistry() {
     }
 
     // Publish to private ACR repositories that are used by PDC.
-    if ( params.marklogicVersion == "12" ) {
         // Publish to Sandbox PDC registry
         withCredentials([usernamePassword(credentialsId: 'PDC_SANDBOX_USER', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
             sh """
@@ -454,7 +453,6 @@ void publishToInternalRegistry() {
                 docker push ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
             """
         }
-    }
 
     // Publish to Dev PDC registry
     withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {

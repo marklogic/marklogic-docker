@@ -11,7 +11,7 @@ LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 # install libnsl rpm package
 ###############################################################
 
-# microdnf -y upgrade glibc brings the UBI9 glibc to el9_8.
+# microdnf -y upgrade glibc ensures glibc is updated to the patch level required by the pinned libnsl RPM.
 # The Rocky Linux 9.8 libnsl version is kept in sync with the glibc version UBI9 pulls.
 RUN microdnf -y upgrade glibc \
     && rpm -i https://download.rockylinux.org/pub/rocky/9.8/BaseOS/x86_64/os/Packages/l/libnsl-2.34-275.el9_8.x86_64.rpm \

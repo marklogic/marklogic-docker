@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Copyright (c) 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 #Docker compose file sample to setup a three node cluster
 version: '3.6'
 services:

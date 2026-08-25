@@ -1,4 +1,4 @@
-# Copyright © 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Copyright (c) 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 # Compose scenario: Two-node deployment where second node is initialized but does not join the cluster.
 version: '3.6'
 services:

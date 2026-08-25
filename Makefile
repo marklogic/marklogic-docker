@@ -1,4 +1,4 @@
-# Copyright © 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Copyright (c) 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 dockerTag?=internal
 package?=MarkLogic.rpm
 repo_dir=marklogic

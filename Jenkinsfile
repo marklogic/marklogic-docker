@@ -9,7 +9,6 @@ import groovy.json.JsonSlurperClassic
 
 gitCredID = 'marklogic-builder-github'
 dockerRegistry = 'ml-docker-db-dev-tierpoint.bed-artifactory.bedford.progress.com'
-pdcSbRegistry = 'sandboxpdc.azurecr.io'
 pdcDevRegistry = 'marklogicclouddev.azurecr.io'
 JIRA_ID_PATTERN = /(?i)(MLE)-\d{3,6}/
 JIRA_ID = ''
@@ -419,7 +418,7 @@ void vulnerabilityScan() {
 
 /**
  * Publishes the built Docker image to the internal Artifactory registry.
- * Also publishes ML12 images to private Azure ACR repositories (PDC).
+ * Also publishes ML images to private Azure ACR repositories (PDC).
  * Tags the image with multiple tags (version-specific, branch-specific, latest).
  * Requires Artifactory and Azure ACR credentials.
  */
@@ -443,26 +442,17 @@ void publishToInternalRegistry() {
     }
 
     // Publish to private ACR repositories that are used by PDC.
-        // Publish to Sandbox PDC registry
-        withCredentials([usernamePassword(credentialsId: 'PDC_SANDBOX_USER', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
+    // Publish to Dev PDC registry (ARM images are excluded)
+    if (!isArmImage()) {
+        withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
             sh """
-                echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcSbRegistry}
-                docker tag ${imageToPublish} ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker tag ${imageToPublish} ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
-                docker push ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker push ${pdcSbRegistry}/ml-docker-nightly:${marklogicVersion}-${env.dockerImageType}
+                echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcDevRegistry}
+                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
+                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
             """
         }
-
-    // Publish to Dev PDC registry
-    withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
-        sh """
-            echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcDevRegistry}
-            docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-            docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
-            docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-            docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
-        """
     }
 
     // Publish to Kubernetes ECR for testing on EKS

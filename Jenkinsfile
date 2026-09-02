@@ -527,7 +527,10 @@ void scapScan() {
 }
 
 pipeline {
-    agent none
+    // Single agent for the whole pipeline (except the dedicated ARM/graviton stages below).
+    // Stages that don't declare their own `agent` inherit this one, so a normal build
+    // acquires exactly one 'cld-docker' node instead of re-queuing for a fresh node per stage.
+    agent { node { label 'cld-docker' } }
     options {
         checkoutToSubdirectory '.'
         buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
@@ -577,7 +580,6 @@ pipeline {
     stages {
         // Stage: Remove stale test results from previous builds
         stage('Clean-Previous-Results') {
-            agent { node { label 'cld-docker' } }
             steps {
                 sh '''
                     rm -f container-structure-test.xml
@@ -588,7 +590,6 @@ pipeline {
 
         // Stage: Perform initial checks (PR status, Jira ID)
         stage('Pre-Build-Check') {
-            agent { node { label 'cld-docker' } }
             steps {
                 preBuildCheck()
             }
@@ -596,7 +597,6 @@ pipeline {
 
         // Stage: Download MarkLogic Server and Converters RPMs (ARM builds on x86)
         stage('Copy-RPMs') {
-            agent { node { label 'cld-docker' } }
             steps {
                 copyRPMs()
 				stash name: 'rpms', includes: 'src/*.rpm'
@@ -606,7 +606,6 @@ pipeline {
         // Stage: Build the Docker image
         // Save image archive to workspace and stash for cross-agent stages.
         stage('Build-Image') {
-            agent { node { label 'cld-docker' } }
             steps {
 				unstash 'rpms'
                 buildDockerImage()
@@ -624,7 +623,6 @@ pipeline {
 
         // Stage: Pull the base image needed for upgrade testing
         stage('Pull-Upgrade-Image') {
-            agent { node { label 'cld-docker' } }
             steps {
                 pullUpgradeDockerImage()
             }
@@ -632,7 +630,6 @@ pipeline {
 
         // Stage: Lint Dockerfile and startup scripts (x86 only)
         stage('Lint') {
-            agent { node { label 'cld-docker' } }
             steps {
                 lint()
             }
@@ -640,7 +637,6 @@ pipeline {
 
         // Stage: Scan the image for vulnerabilities (x86 only)
         stage('Scan') {
-            agent { node { label 'cld-docker' } }
             steps {
                 echo 'Skipping vulnerability scan due to compatibility issues.'
                 // vulnerabilityScan()
@@ -762,7 +758,6 @@ pipeline {
 
         // Stage: Publish image to internal registries (conditional)
         stage('Publish-Image') {
-            agent { node { label 'cld-docker' } }
             when {
                     beforeAgent true
                     anyOf {
@@ -798,7 +793,6 @@ pipeline {
 
         // Stage: Trigger BlackDuck security scan (conditional)
         stage('BlackDuck-Scan') {
-            agent { node { label 'cld-docker' } }
             when {
                 anyOf {
                         branch pattern: '^(develop|master|release.*)$', comparator: 'REGEXP'
@@ -830,57 +824,49 @@ pipeline {
 
     }
 
+    // Post steps reuse the pipeline's top-level agent/workspace automatically; no need
+    // to re-allocate a node here (that used to cost 2 extra node acquisitions per build).
     post {
         always {
-            node('cld-docker') {
-                // Clean up the workspace and Docker resources
-                sh """
-                    # Remove any stale test artifacts before unstash
-                    rm -rf test/test_results scap container-structure-test.xml
-                    # Remove ARM image tar archive
-                    rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
-                    # Remove ARM image if it was built
-                    if [ -n "${builtImage}" ]; then
-                        docker rmi ${builtImage} || true
-                    fi
-                    # Clean up RPMs
-                    if [ -d src ]; then
-                        cd src
-                        rm -rf *.rpm NOTICE.txt
-                        cd ..
-                    fi
-                    # Docker cleanup applies to both agents
-                    docker stop \$(docker ps -a -q) || true
-                    docker system prune --force --all --volumes
-                    docker system df
-                """
-                script {
-                    try { unstash 'structure-test-results' } catch (e) { echo 'No structure test results to unstash.' }
-                    try { unstash 'docker-test-results' } catch (e) { echo 'No docker test results to unstash.' }
-                    try { unstash 'scap-results' } catch (e) { echo 'No SCAP results to unstash.' }
-                }
-                publishTestResults()
+            // Clean up the workspace and Docker resources
+            sh """
+                # Remove any stale test artifacts before unstash
+                rm -rf test/test_results scap container-structure-test.xml
+                # Remove ARM image tar archive
+                rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                # Remove ARM image if it was built
+                if [ -n "${builtImage}" ]; then
+                    docker rmi ${builtImage} || true
+                fi
+                # Clean up RPMs
+                if [ -d src ]; then
+                    cd src
+                    rm -rf *.rpm NOTICE.txt
+                    cd ..
+                fi
+                # Docker cleanup applies to both agents
+                docker stop \$(docker ps -a -q) || true
+                docker system prune --force --all --volumes
+                docker system df
+            """
+            script {
+                try { unstash 'structure-test-results' } catch (e) { echo 'No structure test results to unstash.' }
+                try { unstash 'docker-test-results' } catch (e) { echo 'No docker test results to unstash.' }
+                try { unstash 'scap-results' } catch (e) { echo 'No SCAP results to unstash.' }
             }
+            publishTestResults()
         }
         success {
-            node('cld-docker') {
-                resultNotification('✅ Success')
-            }
+            resultNotification('✅ Success')
         }
         failure {
-            node('cld-docker') {
-                resultNotification('❌ Failure')
-            }
+            resultNotification('❌ Failure')
         }
         unstable {
-            node('cld-docker') {
-                resultNotification('⚠️ Unstable')
-            }
+            resultNotification('⚠️ Unstable')
         }
         aborted {
-            node('cld-docker') {
-                resultNotification('🚫 Aborted')
-            }
+            resultNotification('🚫 Aborted')
         }
     }
 }

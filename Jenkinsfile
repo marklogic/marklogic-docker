@@ -488,8 +488,10 @@ void publishToInternalRegistry() {
  * Runs asynchronously (wait: false).
  */
 void scanWithBlackDuck() {
-    def depsDockerfile = params.dockerImageType.contains('ubi9-arm') ? 'dockerFiles/marklogic-deps-ubi9-arm:base' :
-        params.dockerImageType.contains('ubi9') ? 'dockerFiles/marklogic-deps-ubi9:base' : 'dockerFiles/marklogic-deps-ubi:base'
+    def isUbi9 = params.dockerImageType.contains('ubi9')
+    def isArm = params.dockerImageType.contains('arm')
+    def depsDockerfile = (isUbi9 && isArm) ? 'dockerFiles/marklogic-deps-ubi9-arm:base' :
+        isUbi9 ? 'dockerFiles/marklogic-deps-ubi9:base' : 'dockerFiles/marklogic-deps-ubi:base'
     def baseImageToExclude = sh(returnStdout: true, script: "grep -m1 '^FROM' ${depsDockerfile} | awk '{print \$2}'").trim()
     build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${latestTag}"), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}"), string(name: 'BASE_IMAGE_TO_EXCLUDE', value: "${baseImageToExclude}") ]
 }

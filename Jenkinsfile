@@ -527,10 +527,10 @@ void scapScan() {
 }
 
 pipeline {
-    // Single agent for the whole pipeline (except the dedicated ARM/graviton stages below).
-    // Stages that don't declare their own `agent` inherit this one, so a normal build
-    // acquires exactly one 'cld-docker' node instead of re-queuing for a fresh node per stage.
-    agent { node { label 'cld-docker' } }
+    // No pipeline-wide agent: stages that need a different label (graviton) must not
+    // overlap with a persistently-held top-level agent, or two nodes of the same scarce
+    // label pool can be double-booked at once (risking queue deadlock under load).
+    agent none
     options {
         checkoutToSubdirectory '.'
         buildDiscarder logRotator(artifactDaysToKeepStr: '7', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '')
@@ -578,68 +578,76 @@ pipeline {
     }
 
     stages {
-        // Stage: Remove stale test results from previous builds
-        stage('Clean-Previous-Results') {
-            steps {
-                sh '''
-                    rm -f container-structure-test.xml
-                    rm -rf test/test_results
-                '''
-            }
-        }
-
-        // Stage: Perform initial checks (PR status, Jira ID)
-        stage('Pre-Build-Check') {
-            steps {
-                preBuildCheck()
-            }
-        }
-
-        // Stage: Download MarkLogic Server and Converters RPMs (ARM builds on x86)
-        stage('Copy-RPMs') {
-            steps {
-                copyRPMs()
-				stash name: 'rpms', includes: 'src/*.rpm'
-            }
-        }
-
-        // Stage: Build the Docker image
-        // Save image archive to workspace and stash for cross-agent stages.
-        stage('Build-Image') {
-            steps {
-				unstash 'rpms'
-                buildDockerImage()
-                script {
-                    // Always save image for cases where agents might differ
-                    sh """
-                        echo "Saving ${builtImage} to ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
-                        docker image save ${builtImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
-                        ls -lh ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
-                    """
-                    stash name: 'built-image-archive', includes: "${GRAVITON3_IMAGE_ARCHIVE}", allowEmpty: false
+        // Grouped under one agent (held only for this group's duration, then released)
+        // so these sequential, always-'cld-docker' stages don't each re-queue for a
+        // fresh node, without holding a node open while later stages need graviton.
+        stage('Prepare-Build-Lint-Scan') {
+            agent { node { label 'cld-docker' } }
+            stages {
+                // Stage: Remove stale test results from previous builds
+                stage('Clean-Previous-Results') {
+                    steps {
+                        sh '''
+                            rm -f container-structure-test.xml
+                            rm -rf test/test_results
+                        '''
+                    }
                 }
-            }
-        }
 
-        // Stage: Pull the base image needed for upgrade testing
-        stage('Pull-Upgrade-Image') {
-            steps {
-                pullUpgradeDockerImage()
-            }
-        }
+                // Stage: Perform initial checks (PR status, Jira ID)
+                stage('Pre-Build-Check') {
+                    steps {
+                        preBuildCheck()
+                    }
+                }
 
-        // Stage: Lint Dockerfile and startup scripts (x86 only)
-        stage('Lint') {
-            steps {
-                lint()
-            }
-        }
+                // Stage: Download MarkLogic Server and Converters RPMs (ARM builds on x86)
+                stage('Copy-RPMs') {
+                    steps {
+                        copyRPMs()
+                        stash name: 'rpms', includes: 'src/*.rpm'
+                    }
+                }
 
-        // Stage: Scan the image for vulnerabilities (x86 only)
-        stage('Scan') {
-            steps {
-                echo 'Skipping vulnerability scan due to compatibility issues.'
-                // vulnerabilityScan()
+                // Stage: Build the Docker image
+                // Save image archive to workspace and stash for cross-agent stages.
+                stage('Build-Image') {
+                    steps {
+                        unstash 'rpms'
+                        buildDockerImage()
+                        script {
+                            // Always save image for cases where agents might differ
+                            sh """
+                                echo "Saving ${builtImage} to ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
+                                docker image save ${builtImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                                ls -lh ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                            """
+                            stash name: 'built-image-archive', includes: "${GRAVITON3_IMAGE_ARCHIVE}", allowEmpty: false
+                        }
+                    }
+                }
+
+                // Stage: Pull the base image needed for upgrade testing
+                stage('Pull-Upgrade-Image') {
+                    steps {
+                        pullUpgradeDockerImage()
+                    }
+                }
+
+                // Stage: Lint Dockerfile and startup scripts (x86 only)
+                stage('Lint') {
+                    steps {
+                        lint()
+                    }
+                }
+
+                // Stage: Scan the image for vulnerabilities (x86 only)
+                stage('Scan') {
+                    steps {
+                        echo 'Skipping vulnerability scan due to compatibility issues.'
+                        // vulnerabilityScan()
+                    }
+                }
             }
         }
 
@@ -756,50 +764,57 @@ pipeline {
             }
         }
 
-        // Stage: Publish image to internal registries (conditional)
-        stage('Publish-Image') {
-            when {
-                    beforeAgent true
-                    anyOf {
-                        branch 'develop'
-                        expression { return params.PUBLISH_IMAGE }
+        // Grouped under one agent for the same reason as Prepare-Build-Lint-Scan above:
+        // both always want 'cld-docker' and never overlap with the graviton stages.
+        stage('Publish-And-Scan') {
+            agent { node { label 'cld-docker' } }
+            stages {
+                // Stage: Publish image to internal registries (conditional)
+                stage('Publish-Image') {
+                    when {
+                            beforeAgent true
+                            anyOf {
+                                branch 'develop'
+                                expression { return params.PUBLISH_IMAGE }
+                            }
                     }
-            }
-            steps {
-                script {
-                    unstash 'built-image-archive'
-                    // Load image from tar if not already available (applies to all build types)
-                    // Node's Docker daemon is shared with other concurrent builds, so only ever
-                    // trust the exact, fully-qualified tag - never a loose repo/type match, which
-                    // could resolve to a different build's image (e.g. a different marklogicVersion).
-                    sh """
-                        if ! docker image inspect ${builtImage} &>/dev/null; then
-                            echo "Image not found locally, loading from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
-                            docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
-                        else
-                            echo "Image ${builtImage} already available locally"
-                        fi
-                        docker image inspect ${builtImage} >/dev/null
-                    """
+                    steps {
+                        script {
+                            unstash 'built-image-archive'
+                            // Load image from tar if not already available (applies to all build types)
+                            // Node's Docker daemon is shared with other concurrent builds, so only ever
+                            // trust the exact, fully-qualified tag - never a loose repo/type match, which
+                            // could resolve to a different build's image (e.g. a different marklogicVersion).
+                            sh """
+                                if ! docker image inspect ${builtImage} &>/dev/null; then
+                                    echo "Image not found locally, loading from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
+                                    docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                                else
+                                    echo "Image ${builtImage} already available locally"
+                                fi
+                                docker image inspect ${builtImage} >/dev/null
+                            """
 
-                    // Store for use in publishToInternalRegistry
-                    env.IMAGE_TO_PUBLISH = builtImage
+                            // Store for use in publishToInternalRegistry
+                            env.IMAGE_TO_PUBLISH = builtImage
+                        }
+                        publishToInternalRegistry()
+                        // Trigger downstream QA image build job
+                        build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+                    }
                 }
-                publishToInternalRegistry()
-                // Trigger downstream QA image build job
-                build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
-            }
-        }
 
-        // Stage: Trigger BlackDuck security scan (conditional)
-        stage('BlackDuck-Scan') {
-            when {
-                anyOf {
-                        branch pattern: '^(develop|master|release.*)$', comparator: 'REGEXP'
+                // Stage: Trigger BlackDuck security scan (conditional)
+                stage('BlackDuck-Scan') {
+                    when {
+                        anyOf {
+                                branch pattern: '^(develop|master|release.*)$', comparator: 'REGEXP'
+                            }
                     }
-            }
-            steps {
-                scanWithBlackDuck()
+                    steps {
+                        scanWithBlackDuck()
+                    }
+                }
             }
         }
 
@@ -824,49 +839,59 @@ pipeline {
 
     }
 
-    // Post steps reuse the pipeline's top-level agent/workspace automatically; no need
-    // to re-allocate a node here (that used to cost 2 extra node acquisitions per build).
+    // Post has no implicit agent (top-level agent is none), so each branch explicitly
+    // grabs its own short-lived 'cld-docker' node for cleanup/notification.
     post {
         always {
-            // Clean up the workspace and Docker resources
-            sh """
-                # Remove any stale test artifacts before unstash
-                rm -rf test/test_results scap container-structure-test.xml
-                # Remove ARM image tar archive
-                rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
-                # Remove ARM image if it was built
-                if [ -n "${builtImage}" ]; then
-                    docker rmi ${builtImage} || true
-                fi
-                # Clean up RPMs
-                if [ -d src ]; then
-                    cd src
-                    rm -rf *.rpm NOTICE.txt
-                    cd ..
-                fi
-                # Docker cleanup applies to both agents
-                docker stop \$(docker ps -a -q) || true
-                docker system prune --force --all --volumes
-                docker system df
-            """
-            script {
-                try { unstash 'structure-test-results' } catch (e) { echo 'No structure test results to unstash.' }
-                try { unstash 'docker-test-results' } catch (e) { echo 'No docker test results to unstash.' }
-                try { unstash 'scap-results' } catch (e) { echo 'No SCAP results to unstash.' }
+            node('cld-docker') {
+                // Clean up the workspace and Docker resources
+                sh """
+                    # Remove any stale test artifacts before unstash
+                    rm -rf test/test_results scap container-structure-test.xml
+                    # Remove ARM image tar archive
+                    rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                    # Remove ARM image if it was built
+                    if [ -n "${builtImage}" ]; then
+                        docker rmi ${builtImage} || true
+                    fi
+                    # Clean up RPMs
+                    if [ -d src ]; then
+                        cd src
+                        rm -rf *.rpm NOTICE.txt
+                        cd ..
+                    fi
+                    # Docker cleanup applies to both agents
+                    docker stop \$(docker ps -a -q) || true
+                    docker system prune --force --all --volumes
+                    docker system df
+                """
+                script {
+                    try { unstash 'structure-test-results' } catch (e) { echo 'No structure test results to unstash.' }
+                    try { unstash 'docker-test-results' } catch (e) { echo 'No docker test results to unstash.' }
+                    try { unstash 'scap-results' } catch (e) { echo 'No SCAP results to unstash.' }
+                }
+                publishTestResults()
             }
-            publishTestResults()
         }
         success {
-            resultNotification('✅ Success')
+            node('cld-docker') {
+                resultNotification('✅ Success')
+            }
         }
         failure {
-            resultNotification('❌ Failure')
+            node('cld-docker') {
+                resultNotification('❌ Failure')
+            }
         }
         unstable {
-            resultNotification('⚠️ Unstable')
+            node('cld-docker') {
+                resultNotification('⚠️ Unstable')
+            }
         }
         aborted {
-            resultNotification('🚫 Aborted')
+            node('cld-docker') {
+                resultNotification('🚫 Aborted')
+            }
         }
     }
 }

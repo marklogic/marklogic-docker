@@ -569,7 +569,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'dockerVersion', defaultValue: '2.2.6', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '2.3.0', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
         string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rootless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
         choice(name: 'marklogicVersion', choices: '12\n11', description: 'MarkLogic Server Branch. used to pick appropriate rpm')

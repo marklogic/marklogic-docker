@@ -1,6 +1,6 @@
 ###############################################################
 #
-#   Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+#   Copyright (c) 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 #
 ###############################################################
 
@@ -59,9 +59,15 @@ RUN touch /etc/marklogic.conf \
 # Add TINI to serve as PID 1 process
 ###############################################################
 ENV TINI_VERSION=v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chown ${ML_USER}:users /tini \
-    && chmod +x /tini
+ARG ML_DOCKER_TYPE=ubi
+RUN if [ "${ML_DOCKER_TYPE}" = "ubi9-rootless-arm" ]; then \
+        TINI_BIN="tini-arm64"; \
+    else \
+        TINI_BIN="tini"; \
+    fi && \
+    curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/${TINI_BIN} -o /tini && \
+    chown ${ML_USER}:users /tini && \
+    chmod +x /tini
 
 ###############################################################
 # second stage for flattening layers
@@ -119,6 +125,8 @@ ENV MARKLOGIC_INSTALL_DIR=/opt/MarkLogic  \
     BUILD_BRANCH=${BUILD_BRANCH} \
     MARKLOGIC_JOIN_TLS_ENABLED=false \
     MARKLOGIC_EC2_HOST=0 \
+    MARKLOGIC_AZURE_HOST=0 \
+    MARKLOGIC_CLOUD_HOST=0 \
     TZ=UTC
 
 ################################################################
@@ -149,12 +157,23 @@ RUN touch /.dockerenv \
 ###############################################################
 WORKDIR /
 COPY ${ML_CONVERTERS} /tmp/converters.rpm
-RUN chown ${ML_USER}:users /tmp/converters.rpm
+RUN if [ -s /tmp/converters.rpm ]; then chown ${ML_USER}:users /tmp/converters.rpm; else rm -f /tmp/converters.rpm; fi
+
+###############################################################
+# Configure GDB for debugging and set capabilities for non-root usage
+###############################################################
+RUN microdnf -y install libcap \
+    && setcap cap_sys_ptrace+ep "$(readlink -f /usr/bin/gdb)" \
+    && echo "set auto-load safe-path /" > /home/${ML_USER}/.gdbinit \
+    && chown ${ML_USER}:users /home/${ML_USER}/.gdbinit \
+    && chmod 644 /home/${ML_USER}/.gdbinit \
+    && microdnf clean all
 
 ###############################################################
 # Remove optional packages that have known vulnerabilities
+# (Excluding python/gdb dependencies needed for stack traces)
 ###############################################################
-RUN for package in vim-minimal cups-client cups-libs tar python3-pip-wheel platform-python python3-libs platform-python-setuptools avahi-libs binutils expat libarchive python3 python3-libs python-unversioned-command binutils-gold; \
+RUN for package in vim-minimal cups-client cups-libs tar avahi-libs binutils libarchive binutils-gold; \
     do rpm -e --nodeps $package || true; \
     done;
 

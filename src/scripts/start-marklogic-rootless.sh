@@ -1,7 +1,7 @@
 #! /bin/bash
 ###############################################################
 #
-#   Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+#   Copyright (c) 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
 #
 ###############################################################
 #   Initialise and start MarkLogic server
@@ -70,6 +70,8 @@ ENV_VARS=(
     "JAVA_HOME"
     "CLASSPATH"
     "MARKLOGIC_EC2_HOST"
+    "MARKLOGIC_CLOUD_HOST"
+    "MARKLOGIC_AZURE_HOST"
 )
 
 for var in "${ENV_VARS[@]}"; do

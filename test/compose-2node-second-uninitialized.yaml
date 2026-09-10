@@ -1,48 +1,48 @@
-# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
-#Docker compose file sample to setup a two node cluster
+# Copyright (c) 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Compose scenario: Two-node deployment where second node remains uninitialized.
 version: '3.6'
 services:
-    bootstrap:
+    testbootstrap:
       image: progressofficial/marklogic-db
-      hostname: bootstrap
-      container_name: bootstrap
-      dns_search: ""
-      environment:
-        - MARKLOGIC_INIT=True
-        - MARKLOGIC_ADMIN_USERNAME=test_admin
-        - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
-        - TZ=America/Los_Angeles
-      volumes:
-        - MarkLogic_2n_vol1:/var/opt/MarkLogic
-      ports:
-        - 7100-7110:8000-8010
-        - 7197:7997
-      networks:
-      - external_net
-    node2:
-      image: progressofficial/marklogic-db
-      hostname: node2
-      container_name: node2
+      hostname: testbootstrap
+      container_name: testbootstrap
       dns_search: ""
       environment:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME=test_admin
         - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
-        - MARKLOGIC_JOIN_CLUSTER=True
-        - MARKLOGIC_BOOTSTRAP_HOST=node1
-        - MARKLOGIC_GROUP=Default
         - TZ=America/Los_Angeles
       volumes:
-        - MarkLogic_2n_vol2:/var/opt/MarkLogic
+        - MarkLogic_3n_vol1:/var/opt/MarkLogic
+      ports:
+        - 7100-7110:8000-8010
+        - 7197:7997
+      networks:
+      - external_net
+    testnode:
+      image: progressofficial/marklogic-db
+      hostname: testnode
+      container_name: testnode
+      dns_search: ""
+      environment:
+        - MARKLOGIC_INIT=false
+        - MARKLOGIC_ADMIN_USERNAME=test_admin
+        - MARKLOGIC_ADMIN_PASSWORD=test_admin_pass
+        - MARKLOGIC_JOIN_CLUSTER=False
+        - MARKLOGIC_BOOTSTRAP_HOST=bootstrap
+        - TZ=America/Los_Angeles
+      volumes:
+        - MarkLogic_3n_vol2:/var/opt/MarkLogic
       ports:
         - 7200-7210:8000-8010
         - 7297:7997
       depends_on:
-      - bootstrap
+      - testbootstrap
       networks:
       - external_net
 networks:
   external_net: {}
 volumes:
-  MarkLogic_2n_vol1:
-  MarkLogic_2n_vol2:
+  MarkLogic_3n_vol1:
+  MarkLogic_3n_vol2:
+  

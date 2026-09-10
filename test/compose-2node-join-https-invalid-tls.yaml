@@ -1,4 +1,5 @@
-# Copyright © 2018-2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Copyright (c) 2018-2026 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+# Compose scenario: HTTPS join with invalid MARKLOGIC_JOIN_TLS_ENABLED value.
 version: '3.6'
 services:
     node2:
@@ -10,7 +11,7 @@ services:
         - MARKLOGIC_INIT=true
         - MARKLOGIC_ADMIN_USERNAME_FILE=mldb_admin_username
         - MARKLOGIC_ADMIN_PASSWORD_FILE=mldb_admin_password
-        - MARKLOGIC_JOIN_TLS_ENABLED=true
+        - MARKLOGIC_JOIN_TLS_ENABLED=yes
         - MARKLOGIC_JOIN_CACERT_FILE=certificate.cer
         - MARKLOGIC_JOIN_CLUSTER=true
         - MARKLOGIC_BOOTSTRAP_HOST=bootstrap_3n

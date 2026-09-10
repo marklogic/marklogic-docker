@@ -4,18 +4,15 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1787081751
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1786987521
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
-# MarkLogic version passed from build to enable conditional deps
-ARG ML_VERSION
-
 ###############################################################
-# install libnsl rpm package from trusted repositories
+# install libnsl rpm package
 ###############################################################
 
 RUN microdnf -y upgrade glibc \
-    && rpm -i https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/l/libnsl-2.28-251.el8_10.40.x86_64.rpm \
+    && rpm -i https://download.rockylinux.org/pub/rocky/9.8/BaseOS/aarch64/os/Packages/l/libnsl-2.34-275.el9_8.aarch64.rpm \
     && microdnf clean all
 
 ###############################################################
@@ -23,17 +20,8 @@ RUN microdnf -y upgrade glibc \
 ###############################################################
 # hadolint ignore=DL3006
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname redhat-lsb-core \
-    && microdnf -y upgrade tzdata \
+    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname \
     && microdnf clean all
-
-###############################################################
-# MarkLogic 10 requires 32-bit libstdc++ runtime
-###############################################################
-RUN if [ -n "$ML_VERSION" ] && [ "${ML_VERSION%%.*}" = "10" ]; then \
-        microdnf -y install --setopt install_weak_deps=0 libstdc++.i686 && \
-        microdnf clean all; \
-    fi
 
 
 ###############################################################

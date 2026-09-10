@@ -28,6 +28,7 @@ If you are using Copilot/AI to modify this repo, follow the **How Copilot Should
   - Keep the multi-stage + flattened final stage pattern (`COPY --from=builder / /`).
   - Keep ownership/permissions correct for rootless (`marklogic_user:users`, UID 1000).
   - If you add/remove files, update `test/structure-test.yaml` accordingly.
+  - **External RPM pinning**: When pinning external RPMs (e.g., libnsl from AlmaLinux), avoid broad `microdnf -y update` in the same RUN layer, as it can advance glibc and break version compatibility. Use targeted upgrades instead (e.g., `microdnf -y upgrade tzdata`). Test both the dependency image build AND downstream MarkLogic RPM installation.
 - **Env vars / secrets**
   - Keep naming consistent across `README.md`, `docker-compose/*.yaml`, Dockerfiles, and tests.
   - Canonical secret targets: `mldb_admin_username`, `mldb_admin_password`, `mldb_wallet_password`.
@@ -41,6 +42,7 @@ If you are using Copilot/AI to modify this repo, follow the **How Copilot Should
 - Use `make test` for `structure-test` + Robot tests.
 - This repo builds images for `linux/amd64` by default.
 - macOS note: `make structure-test` uses GNU-style `sed -i` (GNU sed syntax); on macOS you may need GNU sed (`gsed`) or run the build/test in a Linux container/VM.
+- **Dependency image changes**: When modifying `marklogic-deps-ubi*:base` Dockerfiles, validate both the dependency image build and the downstream server image RPM installation locally before pushing.
 
 ## Project Overview
 

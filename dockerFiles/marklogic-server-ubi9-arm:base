@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-ARG BASE_IMAGE=marklogic-ubi/marklogic-deps-ubi:11-internal
+ARG BASE_IMAGE=marklogic-ubi/marklogic-deps-ubi9-arm:11-internal
 FROM ${BASE_IMAGE} AS builder
 
 ###############################################################
@@ -36,7 +36,7 @@ RUN rpm -i /tmp/marklogic-server.rpm \
 # Add TINI to serve as PID 1 process
 ###############################################################
 ENV TINI_VERSION=v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-arm64 /tini
 RUN chmod +x /tini
 
 ###############################################################
@@ -118,7 +118,6 @@ RUN microdnf -y reinstall tzdata
 ###############################################################
 # Remove optional packages that have known vulnerabilities
 # (Excluding python/gdb dependencies needed for stack traces)
-###############################################################
 RUN for package in vim-minimal cups-client cups-libs tar avahi-libs binutils libarchive binutils-gold; \
     do rpm -e --nodeps $package || true; \
     done;

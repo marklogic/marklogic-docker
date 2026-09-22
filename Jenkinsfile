@@ -20,6 +20,7 @@ GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
 builtImage = ''
 publishImage = ''
 latestTag = ''
+mlVerShort = ''
 upgradeDockerImage = ''
 
 // Define local funtions
@@ -244,7 +245,7 @@ void copyRPMs() {
     else if (marklogicVersion == "12") {
         RPMsuffix = ".nightly-rhel"
         RPMbranch = "b12"
-        RPMversion = "12.1"
+        RPMversion = "12.2"
     }
     else {
         error "Invalid value in marklogicVersion parameter."
@@ -322,7 +323,8 @@ void buildDockerImage() {
 
 /**
  * Pulls the Docker image required for upgrade testing.
- * Uses the 'upgradeDockerImage' parameter or defaults to a corresponding 'ubi' image.
+ * Uses the 'upgradeDockerImage' parameter or defaults to the last published
+ * 'latest-<majorVersion>' ubi image (a previously published, stable tag) for upgrade-from testing.
  * Skips the pull if the target image is 'ubi-rootless' and DOCKER_TESTS is false.
  */
 void pullUpgradeDockerImage() {
@@ -341,10 +343,10 @@ void pullUpgradeDockerImage() {
                 docker pull ${upgradeDockerImage}
             """
         } else {
-            upgradeDockerImage = "${dockerRegistry}/marklogic/marklogic-server-ubi:${marklogicVersion}-ubi-${env.dockerVersion}"
+            upgradeDockerImage = "${dockerRegistry}/marklogic/marklogic-server-ubi:latest-${mlVerShort}"
             sh """
                 echo 'upgradeDockerImage is not specified, using ${upgradeDockerImage} for upgrade test.'
-                docker pull ${dockerRegistry}/marklogic/marklogic-server-ubi:${marklogicVersion}-ubi-${env.dockerVersion}
+                docker pull ${upgradeDockerImage}
             """
         }
     }

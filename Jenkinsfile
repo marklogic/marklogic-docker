@@ -17,6 +17,7 @@ SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
 GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
+UPGRADE_IMAGE_ARCHIVE = 'marklogic-upgrade-image.tar'
 builtImage = ''
 publishImage = ''
 latestTag = ''
@@ -346,6 +347,15 @@ void pullUpgradeDockerImage() {
                 docker pull ${upgradeDockerImage}
             """
         }
+        // Save and stash the pulled image so Docker-Run-Tests (which may run on a
+        // different agent, e.g. cld-docker-graviton) can load it without relying on
+        // another docker pull (which may fail against a private registry).
+        sh """
+            echo "Saving ${upgradeDockerImage} to ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}..."
+            docker image save ${upgradeDockerImage} -o ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
+            ls -lh ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
+        """
+        stash name: 'upgrade-image-archive', includes: "${UPGRADE_IMAGE_ARCHIVE}", allowEmpty: false
     }
 }
 
@@ -764,6 +774,18 @@ pipeline {
                             echo "Image ${builtImage} already available locally"
                         fi
                     """
+                    unstash 'upgrade-image-archive'
+                    // Load the upgrade image from tar since this stage may run on a
+                    // different agent than the one that pulled it (e.g. cld-docker-graviton)
+                    def upgradeImageSource = "${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}"
+                    sh """
+                        if ! docker image inspect ${upgradeDockerImage} &>/dev/null; then
+                            echo "Loading image from ${upgradeImageSource} for Docker-Run-Tests..."
+                            docker image load -i ${upgradeImageSource}
+                        else
+                            echo "Image ${upgradeDockerImage} already available locally"
+                        fi
+                    """
                 }
                 dockerTests()
                 stash name: 'docker-test-results', includes: 'test/test_results/**', allowEmpty: true
@@ -856,6 +878,8 @@ pipeline {
                     rm -rf test/test_results scap container-structure-test.xml
                     # Remove ARM image tar archive
                     rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                    # Remove upgrade image tar archive
+                    rm -f ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
                     # Remove ARM image if it was built
                     if [ -n "${builtImage}" ]; then
                         docker rmi ${builtImage} || true

@@ -775,16 +775,13 @@ pipeline {
                         fi
                     """
                     unstash 'upgrade-image-archive'
-                    // Load the upgrade image from tar since this stage may run on a
-                    // different agent than the one that pulled it (e.g. cld-docker-graviton)
+                    // Always load from the archive: upgradeDockerImage defaults to the
+                    // mutable 'latest-<majorVersion>' tag, which a shared agent may already
+                    // have from a stale prior build, so a conditional skip could use it instead.
                     def upgradeImageSource = "${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}"
                     sh """
-                        if ! docker image inspect ${upgradeDockerImage} &>/dev/null; then
-                            echo "Loading image from ${upgradeImageSource} for Docker-Run-Tests..."
-                            docker image load -i ${upgradeImageSource}
-                        else
-                            echo "Image ${upgradeDockerImage} already available locally"
-                        fi
+                        echo "Loading image from ${upgradeImageSource} for Docker-Run-Tests..."
+                        docker image load -i ${upgradeImageSource}
                     """
                 }
                 dockerTests()

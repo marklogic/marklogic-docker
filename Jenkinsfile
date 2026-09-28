@@ -170,7 +170,7 @@ def getReviewState() {
  */
 void resultNotification(status) {
     def paramEmailList = params.emailList?.trim()
-    def needSecList = params.SCAP_SCAN && BRANCH_NAME == 'develop'
+    def needSecList = params.SCAP_SCAN && env.BRANCH_NAME == 'develop'
     def emailConfig = (!paramEmailList || needSecList) ? loadEmailConfig() : null
     def baseEmailList = paramEmailList ?: emailConfig.emailList
     def emailSecList = emailConfig?.emailSecList ?: ''
@@ -198,7 +198,7 @@ void resultNotification(status) {
     }
     if (params.SCAP_SCAN) {
         email_body = "${email_body} <b><a href='${env.BUILD_URL}Open_20SCAP_20Report'>SCAP Scan Report</a></b><br/>"
-        if ( BRANCH_NAME == 'develop' ) {
+        if ( env.BRANCH_NAME == 'develop' ) {
             emailList = emailList+','+emailSecList
         }
     } else {

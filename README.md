@@ -78,11 +78,10 @@ With this image, you have the option to either create an initialized or an unini
 ## Initialized MarkLogic Server
 For an initialized MarkLogic Server, admin credentials are required to be passed in while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized, and databases and app servers created. A security database will be created to store user data, roles, and other security information. MarkLogic Server credentials, passed in as environment variable parameters while running a container, will be stored as part of the admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with their respective ports.
 
-To create an initialized MarkLogic Server, pass in the environment variables MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD, and replace {insert admin username}/{insert admin password} with actual values for admin credentials. Use the optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set the wallet password and authentication realm of the admin user. If not provided, the wallet-password will default to the value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command: 
+To create an initialized MarkLogic Server, pass in the environment variables MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD, and replace {insert admin username}/{insert admin password} with actual values for admin credentials. Use the optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set the wallet password and authentication realm of the admin user. If not provided, the wallet-password will default to the value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details):
 
 ```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -93,11 +92,10 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      progressofficial/marklogic-db
 ```
 
-Example run:
+Example run (optionally add the `--cap-add=SYS_PTRACE` flag as described in the "Enabling Stack Trace Generation" section below):
 
 ```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \ 
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME='admin' \
      -e MARKLOGIC_ADMIN_PASSWORD='Areally!PowerfulPassword1337' \
@@ -109,11 +107,10 @@ Wait about a minute for MarkLogic Server to initialize before checking the ports
 ## Uninitialized MarkLogic Server
 For an uninitialized MarkLogic Server, admin credentials or license information are not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access the MarkLogic Admin Interface at http://localhost:8001 and manually initialize the MarkLogic Server, create the admin user, databases, and install the license. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
 
-To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command:
+To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details):
 
 ```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      progressofficial/marklogic-db
 ```
 The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
@@ -139,11 +136,10 @@ local     0f111f7336a5dd1f63fbd7dc07740bba8df684d70fdbcd748899091307c85019
 local     1b65575a84be319222a4ff9ba9eecdff06ffb3143edbd03720f4b808be0e6d18
 ```
 
-The following command uses a named volume and named container in order to make management easier:
+The following command uses a named volume and named container in order to make management easier. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details):
 
 ```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name MarkLogic_cont_1 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      -e MARKLOGIC_INIT=true \
@@ -695,11 +691,10 @@ $ docker network ls
 ```
 The `network ls` command will list all the networks on the host.
 
-Run this command to start the Docker container, adding your username and password to the command. It will start the Docker container (named "bootstrap") with MarkLogic Server initialized.
+Run this command to start the Docker container, adding your username and password to the command. It will start the Docker container (named "bootstrap") with MarkLogic Server initialized. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details).
 
 ```bash
 $ docker run -d -it -p 7100:8000 -p 7101:8001 -p 7102:8002 \
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name bootstrap -h bootstrap.marklogic.com \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -722,11 +717,10 @@ $ docker swarm join --token xxxxxxxxxxxxx {VM1_IP}:2377
 ```
 This command adds the current node to the swarm initialized earlier. 
 
-Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join the container to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows. To join this host to a specific MarkLogic Group, use the MARKLOGIC_GROUP environment parameter as below.
+Start the Docker container (ml2.marklogic.com) with MarkLogic Server initialized, and join the container to the same cluster as you started/initialized on VM#1. Be sure to add your admin username and password for the bootstrap host in the Docker start up command that follows. To join this host to a specific MarkLogic Group, use the MARKLOGIC_GROUP environment parameter as below. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details).
 
 ```bash
 $ docker run -d -it -p 7200:8000 -p 7201:8001 -p 7202:8002 \
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name ml2 -h ml2.marklogic.com \
      -e MARKLOGIC_ADMIN_USERNAME={insert admin username} \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
@@ -875,10 +869,9 @@ Use following command to stop the container:
 ```bash
 $ docker stop container_id
 ```
-3. To upgrade MarkLogic, create a new container with the latest Docker image while using the same volume mounted to the container that was running the older release. To prevent conflicts, you should either remove the old container or assign a distinct name to the new container. The following commands use a unique name for the new container with the existing volume.
+3. To upgrade MarkLogic, create a new container with the latest Docker image while using the same volume mounted to the container that was running the older release. To prevent conflicts, you should either remove the old container or assign a distinct name to the new container. The following commands use a unique name for the new container with the existing volume. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details).
 ```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --name MarkLogic_cont_2 \
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
     progressofficial/marklogic-db
@@ -891,10 +884,9 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 
 When creating a backup for a database on a MarkLogic Docker container, verify that the directory used for the backup is mounted to a directory on the Docker host machine or Docker volume. This is so that the database backup persists even after the container is stopped.
 
-This command is an example of mounting the directory /space used for backup on a Docker volume, while running the MarkLogic Docker container.
+This command is an example of mounting the directory /space used for backup on a Docker volume, while running the MarkLogic Docker container. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details).
 ```bash
 $ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
-     # --cap-add=SYS_PTRACE \ (see "Enabling Stack Trace Generation" section below for details)
      --mount src=MarkLogic_vol_1,dst=/var/opt/MarkLogic \
      --mount src=MarkLogic_vol_1,dst=/space \
      -e MARKLOGIC_INIT=true \

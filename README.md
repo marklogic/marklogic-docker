@@ -78,7 +78,7 @@ With this image, you have the option to either create an initialized or an unini
 ## Initialized MarkLogic Server
 For an initialized MarkLogic Server, admin credentials are required to be passed in while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized, and databases and app servers created. A security database will be created to store user data, roles, and other security information. MarkLogic Server credentials, passed in as environment variable parameters while running a container, will be stored as part of the admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with their respective ports.
 
-To create an initialized MarkLogic Server, pass in the environment variables MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD, and replace {insert admin username}/{insert admin password} with actual values for admin credentials. Use the optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set the wallet password and authentication realm of the admin user. If not provided, the wallet-password will default to the value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this this command. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details):
+To create an initialized MarkLogic Server, pass in the environment variables MARKLOGIC_ADMIN_USERNAME and MARKLOGIC_ADMIN_PASSWORD, and replace {insert admin username}/{insert admin password} with actual values for admin credentials. Use the optional environment variable MARKLOGIC_WALLET_PASSWORD and REALM to set the wallet password and authentication realm of the admin user. If not provided, the wallet-password will default to the value set for admin-password and realm will be set to public. Optionally, you can pass license information in `{insert license}`/`{insert licensee}` to apply your MarkLogic license. To do this, run this command. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details):
 
 ```bash
 $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
@@ -95,7 +95,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 Example run (optionally add the `--cap-add=SYS_PTRACE` flag as described in the "Enabling Stack Trace Generation" section below):
 
 ```bash
-$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \ 
+$ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      -e MARKLOGIC_INIT=true \
      -e MARKLOGIC_ADMIN_USERNAME='admin' \
      -e MARKLOGIC_ADMIN_PASSWORD='Areally!PowerfulPassword1337' \

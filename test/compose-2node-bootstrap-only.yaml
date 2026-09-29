@@ -2,7 +2,7 @@
 # Compose scenario: Bootstrap-only node used as base for follow-up join tests.
 version: '3.6'
 services:
-  bootstrap_2n:
+    bootstrap_2n:
       image: progressofficial/marklogic-db
       hostname: bootstrap_2n
       container_name: bootstrap_2n

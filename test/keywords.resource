@@ -85,7 +85,6 @@ Create test container with
 Create upgrade container with
     [Arguments]    @{input parameters}
     [Documentation]    Creates a second test container for upgrade testing.
-    Skip If    'arm' in '${IMAGE_TYPE}'    msg=Skipping upgrade test for ARM image (no previous ARM upgrade image is available).
     Should Not Be Empty    ${UPGRADE_TEST_IMAGE}    msg=UPGRADE_TEST_IMAGE is empty; cannot run upgrade container.
     ${container name}=    Remove spaces from    ${TEST NAME}
     ${result}=    Run Process    docker    run    @{DOCKER DEFAULTS}    @{input parameters}    

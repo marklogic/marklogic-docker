@@ -17,6 +17,7 @@ SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
 GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
+UPGRADE_IMAGE_ARCHIVE = 'marklogic-upgrade-image.tar'
 builtImage = ''
 publishImage = ''
 latestTag = ''
@@ -323,18 +324,14 @@ void buildDockerImage() {
 
 /**
  * Pulls the Docker image required for upgrade testing.
- * Uses the 'upgradeDockerImage' parameter or defaults to the last published
- * 'latest-<majorVersion>' ubi image (a previously published, stable tag) for upgrade-from testing.
- * Skips the pull if the target image is 'ubi-rootless' and DOCKER_TESTS is false.
+ * Uses the 'upgradeDockerImage' parameter or defaults to the last published 'latest-<majorVersion>'
+ * ubi image for x86 builds or matching ARM image type for ARM upgrade-from testing.
+ * Skips the pull for rootless image types when Docker tests are disabled.
  */
 void pullUpgradeDockerImage() {
-    if (dockerImageType == "ubi-rootless" && params.DOCKER_TESTS != "true") {
+    if (dockerImageType.contains("rootless") && !params.DOCKER_TESTS) {
         sh """
-            echo 'dockerImageType is set to ubi-rootless, skipping this stage and Docker upgrade test.'
-        """
-    } else if (isArmImage()) {
-        sh """
-            echo 'ARM image type detected. Skipping upgrade test (no previous ARM images available for upgrade testing).'
+            echo 'dockerImageType is set to ${dockerImageType}, skipping this stage and Docker upgrade test because DOCKER_TESTS is false.'
         """
     } else {
         if (upgradeDockerImage != "" ) {
@@ -343,12 +340,22 @@ void pullUpgradeDockerImage() {
                 docker pull ${upgradeDockerImage}
             """
         } else {
-            upgradeDockerImage = "${dockerRegistry}/marklogic/marklogic-server-ubi:latest-${mlVerShort}"
+            def upgradeImageType = isArmImage() ? dockerImageType : "ubi"
+            upgradeDockerImage = "${dockerRegistry}/marklogic/marklogic-server-${upgradeImageType}:latest-${mlVerShort}"
             sh """
                 echo 'upgradeDockerImage is not specified, using ${upgradeDockerImage} for upgrade test.'
                 docker pull ${upgradeDockerImage}
             """
         }
+        // Save and stash the pulled image so Docker-Run-Tests (which may run on a
+        // different agent, e.g. cld-docker-graviton) can load it without relying on
+        // another docker pull (which may fail against a private registry).
+        sh """
+            echo "Saving ${upgradeDockerImage} to ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}..."
+            docker image save ${upgradeDockerImage} -o ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
+            ls -lh ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
+        """
+        stash name: 'upgrade-image-archive', includes: "${UPGRADE_IMAGE_ARCHIVE}", allowEmpty: false
     }
 }
 
@@ -573,7 +580,7 @@ pipeline {
     parameters {
         string(name: 'dockerVersion', defaultValue: '2.3.0', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
-        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rootless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
+        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to the ubi image for x86 builds or matching ARM image type for ARM builds if left blank.\n Upgrade image pulls for rootless image types are skipped when DOCKER_TESTS is false.', trim: true)
         choice(name: 'marklogicVersion', choices: '12\n11', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
@@ -767,6 +774,15 @@ pipeline {
                             echo "Image ${builtImage} already available locally"
                         fi
                     """
+                    unstash 'upgrade-image-archive'
+                    // Always load from the archive: upgradeDockerImage defaults to the
+                    // mutable 'latest-<majorVersion>' tag, which a shared agent may already
+                    // have from a stale prior build, so a conditional skip could use it instead.
+                    def upgradeImageSource = "${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}"
+                    sh """
+                        echo "Loading image from ${upgradeImageSource} for Docker-Run-Tests..."
+                        docker image load -i ${upgradeImageSource}
+                    """
                 }
                 dockerTests()
                 stash name: 'docker-test-results', includes: 'test/test_results/**', allowEmpty: true
@@ -859,6 +875,8 @@ pipeline {
                     rm -rf test/test_results scap container-structure-test.xml
                     # Remove ARM image tar archive
                     rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                    # Remove upgrade image tar archive
+                    rm -f ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
                     # Remove ARM image if it was built
                     if [ -n "${builtImage}" ]; then
                         docker rmi ${builtImage} || true

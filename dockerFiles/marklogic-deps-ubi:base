@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1787081751
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1791395196
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # MarkLogic version passed from build to enable conditional deps
@@ -15,7 +15,10 @@ ARG ML_VERSION
 ###############################################################
 
 RUN microdnf -y upgrade glibc \
-    && rpm -i https://download.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/l/libnsl-2.28-251.el8_10.40.x86_64.rpm \
+    && curl -fsSL https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/Packages/libnsl-2.28-251.el8_10.43.x86_64.rpm -o /tmp/libnsl.rpm \
+    && printf '%s  %s\n' '41c4bd0044e347b5cc223c1ab7b49611b181b7afdabac7ab680fcb5f1959b5de' /tmp/libnsl.rpm | sha256sum -c - \
+    && rpm -Uvh /tmp/libnsl.rpm \
+    && rm -f /tmp/libnsl.rpm \
     && microdnf clean all
 
 ###############################################################

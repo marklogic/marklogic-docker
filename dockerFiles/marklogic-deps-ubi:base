@@ -4,29 +4,27 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1791395196
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1787081751 AS platform
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # MarkLogic version passed from build to enable conditional deps
 ARG ML_VERSION
+# Extra UBI-repo packages for the platform image, space separated
+ARG PLATFORM_EXTRA_PACKAGES=""
 
 ###############################################################
-# install libnsl rpm package from trusted repositories
+# update glibc from UBI repositories
 ###############################################################
 
 RUN microdnf -y upgrade glibc \
-    && curl -fsSL https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/Packages/libnsl-2.28-251.el8_10.43.x86_64.rpm -o /tmp/libnsl.rpm \
-    && printf '%s  %s\n' '41c4bd0044e347b5cc223c1ab7b49611b181b7afdabac7ab680fcb5f1959b5de' /tmp/libnsl.rpm | sha256sum -c - \
-    && rpm -Uvh /tmp/libnsl.rpm \
-    && rm -f /tmp/libnsl.rpm \
     && microdnf clean all
 
 ###############################################################
 # install gdb and dependencies for stack traces, networking, base deps and tzdata for timezone
 ###############################################################
-# hadolint ignore=DL3006
+# hadolint ignore=DL3006,SC2086
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
-    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname redhat-lsb-core \
+    && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname redhat-lsb-core ${PLATFORM_EXTRA_PACKAGES} \
     && microdnf -y upgrade tzdata \
     && microdnf clean all
 
@@ -43,3 +41,11 @@ RUN if [ -n "$ML_VERSION" ] && [ "${ML_VERSION%%.*}" = "10" ]; then \
 # Enable FIPS Mode
 ###############################################################
 RUN update-crypto-policies --set FIPS
+
+###############################################################
+# deps image: platform plus non-UBI content
+# install libnsl rpm package from trusted repositories
+###############################################################
+FROM platform AS deps
+
+RUN rpm -i https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/l/libnsl-2.28-251.el8_10.43.x86_64.rpm

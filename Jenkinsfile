@@ -19,6 +19,8 @@ RPMversion = ''
 GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
 UPGRADE_IMAGE_ARCHIVE = 'marklogic-upgrade-image.tar'
 builtImage = ''
+platformBuiltImage = ''
+platformLatestTag = ''
 publishImage = ''
 latestTag = ''
 mlVerShort = ''
@@ -305,7 +307,7 @@ void copyRPMs() {
 
 /**
  * Builds the Docker image using the 'make build' target.
- * Sets various image tag variables (builtImage, publishImage, latestTag).
+ * Sets various image tag variables (builtImage, publishImage, latestTag, platformBuiltImage, platformLatestTag).
  * Updates the Jenkins build display name.
  */
 void buildDockerImage() {
@@ -313,6 +315,9 @@ void buildDockerImage() {
     publishImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}"
     mlVerShort=marklogicVersion.split("\\.")[0]
     latestTag="marklogic/marklogic-server-${dockerImageType}:latest-${mlVerShort}"
+    // platform image = UBI base + all UBI-repo packages; built by 'make build' as a layer prefix of the server image
+    platformBuiltImage="marklogic/marklogic-platform-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}"
+    platformLatestTag="marklogic/marklogic-platform-${dockerImageType}:latest-${mlVerShort}"
     // Use Los Angeles time (same as ARM_DATE in copyRPMs) to ensure consistency across UTC/PST boundaries
     timeStamp = sh(returnStdout: true, script: "TZ=America/Los_Angeles date +%Y%m%d").trim()
     timestamptedTag = builtImage.replace('nightly', timeStamp)
@@ -443,9 +448,11 @@ void publishToInternalRegistry() {
             docker tag ${imageToPublish} ${dockerRegistry}/${publishImage}
             docker tag ${imageToPublish} ${dockerRegistry}/${latestTag}
             docker tag ${imageToPublish} ${dockerRegistry}/${timestamptedTag}
+            docker tag ${platformBuiltImage} ${dockerRegistry}/${platformLatestTag}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
             docker push ${dockerRegistry}/${timestamptedTag}
+            docker push ${dockerRegistry}/${platformLatestTag}
         """
         
     }
@@ -492,16 +499,13 @@ void publishToInternalRegistry() {
  * Scans the rolling latest-<majorVersion> tag (not the per-build version tag) so each
  * scan overwrites the same BlackDuck code location instead of accumulating a new one
  * per MarkLogic minor version release.
- * Passes the pinned UBI base image (read from the matching marklogic-deps Dockerfile's FROM
- * line) so BlackDuck can run an additional scan excluding base image components.
+ * Passes the published marklogic-platform image (UBI base + all UBI-repo packages, an exact
+ * layer prefix of the server image) as BASE_IMAGE_TO_EXCLUDE so BlackDuck can run an additional
+ * scan excluding the UBI base and UBI-repo components. Non-UBI content (e.g. libnsl) is not excluded.
  * Runs asynchronously (wait: false).
  */
 void scanWithBlackDuck() {
-    def isUbi9 = params.dockerImageType.contains('ubi9')
-    def isArm = params.dockerImageType.contains('arm')
-    def depsDockerfile = (isUbi9 && isArm) ? 'dockerFiles/marklogic-deps-ubi9-arm:base' :
-        isUbi9 ? 'dockerFiles/marklogic-deps-ubi9:base' : 'dockerFiles/marklogic-deps-ubi:base'
-    def baseImageToExclude = sh(returnStdout: true, script: "grep -m1 '^FROM' ${depsDockerfile} | awk '{print \$2}'").trim()
+    def baseImageToExclude = "${dockerRegistry}/${platformLatestTag}"
     build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${latestTag}"), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}"), string(name: 'BASE_IMAGE_TO_EXCLUDE', value: "${baseImageToExclude}") ]
 }
 
@@ -634,8 +638,8 @@ pipeline {
                         script {
                             // Always save image for cases where agents might differ
                             sh """
-                                echo "Saving ${builtImage} to ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
-                                docker image save ${builtImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                                echo "Saving ${builtImage} and ${platformBuiltImage} to ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
+                                docker image save ${builtImage} ${platformBuiltImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                                 ls -lh ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                             """
                             stash name: 'built-image-archive', includes: "${GRAVITON3_IMAGE_ARCHIVE}", allowEmpty: false
@@ -811,13 +815,14 @@ pipeline {
                             // trust the exact, fully-qualified tag - never a loose repo/type match, which
                             // could resolve to a different build's image (e.g. a different marklogicVersion).
                             sh """
-                                if ! docker image inspect ${builtImage} &>/dev/null; then
+                                if ! docker image inspect ${builtImage} &>/dev/null || ! docker image inspect ${platformBuiltImage} &>/dev/null; then
                                     echo "Image not found locally, loading from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
                                     docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                                 else
-                                    echo "Image ${builtImage} already available locally"
+                                    echo "Images ${builtImage} and ${platformBuiltImage} already available locally"
                                 fi
                                 docker image inspect ${builtImage} >/dev/null
+                                docker image inspect ${platformBuiltImage} >/dev/null
                             """
 
                             // Store for use in publishToInternalRegistry
@@ -880,6 +885,11 @@ pipeline {
                     # Remove ARM image if it was built
                     if [ -n "${builtImage}" ]; then
                         docker rmi ${builtImage} || true
+                    fi
+                    # Remove platform image and its pushed tag if they were built
+                    if [ -n "${platformBuiltImage}" ]; then
+                        docker rmi ${platformBuiltImage} || true
+                        docker rmi ${dockerRegistry}/${platformLatestTag} || true
                     fi
                     # Clean up RPMs
                     if [ -d src ]; then

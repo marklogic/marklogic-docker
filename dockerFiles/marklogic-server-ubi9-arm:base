@@ -22,13 +22,11 @@ ARG ML_CONVERTERS=marklogic.converters
 COPY scripts/start-marklogic.sh /usr/local/bin/start-marklogic.sh
 
 ###############################################################
-# install MarkLogic server, sudo, and remove mlcmd packages
+# install MarkLogic server and remove mlcmd packages (sudo comes from the platform image)
 ###############################################################
 COPY ${ML_RPM} /tmp/marklogic-server.rpm
 RUN rpm -i /tmp/marklogic-server.rpm \
     && rm /tmp/marklogic-server.rpm \
-    && microdnf -y install --setopt install_weak_deps=0 sudo \
-    && microdnf -y clean all \
     && rm -rf ./opt/MarkLogic/mlcmd/lib/* \
     && rm -rf ./opt/MarkLogic/mlcmd/ext/*
 

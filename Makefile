@@ -23,6 +23,15 @@ else
 endif
 
 #***************************************************************************
+# extra UBI-repo packages for the platform image (sudo must never be in rootless images)
+#***************************************************************************
+ifeq ($(findstring rootless,$(docker_image_type)),rootless)
+	platform_extra_packages=
+else
+	platform_extra_packages=sudo
+endif
+
+#***************************************************************************
 # build docker image
 #***************************************************************************
 build:
@@ -64,7 +73,9 @@ endif
 
 
 # build the image
-	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag}" --build-arg ML_VERSION=${marklogicVersion} -f ../dockerFiles/marklogic-deps-${docker_image_type}:base .
+# platform (UBI base + all UBI-repo packages) is an exact layer prefix of deps; build args must stay identical for both
+	cd src/; docker build ${docker_build_options} --target platform -t "${repo_dir}/marklogic-platform-${docker_image_type}:${dockerTag}" --build-arg ML_VERSION=${marklogicVersion} --build-arg PLATFORM_EXTRA_PACKAGES="${platform_extra_packages}" -f ../dockerFiles/marklogic-deps-${docker_image_type}:base .
+	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag}" --build-arg ML_VERSION=${marklogicVersion} --build-arg PLATFORM_EXTRA_PACKAGES="${platform_extra_packages}" -f ../dockerFiles/marklogic-deps-${docker_image_type}:base .
 	cd src/; docker build ${docker_build_options} -t "${repo_dir}/marklogic-server-${docker_image_type}:${dockerTag}" --build-arg BASE_IMAGE=${repo_dir}/marklogic-deps-${docker_image_type}:${dockerTag} --build-arg ML_RPM=${package} --build-arg ML_USER=marklogic_user --build-arg ML_DOCKER_VERSION=${dockerVersion} --build-arg ML_VERSION=${marklogicVersion} --build-arg ML_CONVERTERS=${converters} --build-arg BUILD_BRANCH=${build_branch} --build-arg ML_DOCKER_TYPE=${docker_image_type} -f ../dockerFiles/marklogic-server-${docker_image_type}:base .
 
 # remove temporary files

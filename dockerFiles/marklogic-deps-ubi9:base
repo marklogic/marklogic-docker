@@ -25,6 +25,9 @@ RUN microdnf -y upgrade glibc \
 # hadolint ignore=DL3006,SC2086
 RUN echo "NETWORKING=yes" > /etc/sysconfig/network \
     && microdnf -y install --setopt install_weak_deps=0 gdb python3-rpm nss libcap procps-ng python3 libtool-ltdl cpio initscripts tzdata glibc libstdc++ util-linux hostname ${PLATFORM_EXTRA_PACKAGES} \
+    && sed -i '/eventlog/s/2775/0775/' /usr/lib/tmpfiles.d/tpm2-tss-fapi.conf \
+    && grep -Eq '^[[:space:]]*d[[:space:]]+/run/tpm2-tss/eventlog[[:space:]]+0775[[:space:]]+tss[[:space:]]+tss' /usr/lib/tmpfiles.d/tpm2-tss-fapi.conf \
+    && chmod a-s /run/tpm2-tss/eventlog \
     && microdnf clean all
 
 

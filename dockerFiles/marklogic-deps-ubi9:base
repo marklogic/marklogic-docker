@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1791279563 AS platform
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1791898448 AS platform
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # Extra UBI-repo packages for the platform image, space separated

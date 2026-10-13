@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1787081751 AS platform
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.10-1791896186 AS platform
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # MarkLogic version passed from build to enable conditional deps
@@ -48,4 +48,4 @@ RUN update-crypto-policies --set FIPS
 ###############################################################
 FROM platform AS deps
 
-RUN rpm -i https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/l/libnsl-2.28-251.el8_10.43.x86_64.rpm
+RUN rpm -i https://download.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/Packages/l/libnsl-2.28-251.el8_10.48.x86_64.rpm

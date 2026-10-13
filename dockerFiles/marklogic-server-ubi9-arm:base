@@ -120,6 +120,11 @@ RUN for package in vim-minimal cups-client cups-libs tar avahi-libs binutils lib
     do rpm -e --nodeps $package || true; \
     done;
 
+RUN for file in /usr/sbin/unix_chkpwd /usr/bin/su /usr/bin/umount /var/lib/tpm2-tss/system/keystore; do \
+        if [ -e "$file" ]; then chmod u-s "$file"; fi; \
+    done \
+    && if [ -e /usr/bin/write ]; then chmod g-s /usr/bin/write; fi
+
 ###############################################################
 # expose MarkLogic server ports
 ###############################################################

@@ -13,6 +13,12 @@ D01 Smoke Test
     [Documentation]    Detailed scenario: Smoke Test.
     ...                Covers setup, execution, and expected outcome validation for this scenario.
     Create container with
+    IF    'ubi9' in '${IMAGE_TYPE}'
+        ${container name}=    Remove spaces from    ${TEST NAME}
+        ${result}=    Run Process    docker    exec    ${container name}    find    /run/tpm2-tss/eventlog    -maxdepth    0    -perm    /6000    -print    -quit
+        Should Be Equal As Integers    ${result.rc}    0    eventlog directory must exist
+        Should Be Empty    ${result.stdout}    eventlog directory must not have setuid/setgid bits
+    END
     Docker log should contain    *MARKLOGIC_INIT is set to false or not defined, not initializing.*
     [Teardown]    Delete container
 

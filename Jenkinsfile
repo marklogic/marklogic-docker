@@ -17,9 +17,13 @@ SCAN_OUTPUT = ''
 IMAGE_SIZE = 0
 RPMversion = ''
 GRAVITON3_IMAGE_ARCHIVE = 'marklogic-image.tar'
+UPGRADE_IMAGE_ARCHIVE = 'marklogic-upgrade-image.tar'
 builtImage = ''
+platformBuiltImage = ''
+platformLatestTag = ''
 publishImage = ''
 latestTag = ''
+mlVerShort = ''
 upgradeDockerImage = ''
 
 // Define local funtions
@@ -169,7 +173,7 @@ def getReviewState() {
  */
 void resultNotification(status) {
     def paramEmailList = params.emailList?.trim()
-    def needSecList = params.SCAP_SCAN && BRANCH_NAME == 'develop'
+    def needSecList = params.SCAP_SCAN && env.BRANCH_NAME == 'develop'
     def emailConfig = (!paramEmailList || needSecList) ? loadEmailConfig() : null
     def baseEmailList = paramEmailList ?: emailConfig.emailList
     def emailSecList = emailConfig?.emailSecList ?: ''
@@ -197,7 +201,7 @@ void resultNotification(status) {
     }
     if (params.SCAP_SCAN) {
         email_body = "${email_body} <b><a href='${env.BUILD_URL}Open_20SCAP_20Report'>SCAP Scan Report</a></b><br/>"
-        if ( BRANCH_NAME == 'develop' ) {
+        if ( env.BRANCH_NAME == 'develop' ) {
             emailList = emailList+','+emailSecList
         }
     } else {
@@ -244,7 +248,7 @@ void copyRPMs() {
     else if (marklogicVersion == "12") {
         RPMsuffix = ".nightly-rhel"
         RPMbranch = "b12"
-        RPMversion = "12.1"
+        RPMversion = "12.2"
     }
     else {
         error "Invalid value in marklogicVersion parameter."
@@ -303,7 +307,7 @@ void copyRPMs() {
 
 /**
  * Builds the Docker image using the 'make build' target.
- * Sets various image tag variables (builtImage, publishImage, latestTag).
+ * Sets various image tag variables (builtImage, publishImage, latestTag, platformBuiltImage, platformLatestTag).
  * Updates the Jenkins build display name.
  */
 void buildDockerImage() {
@@ -311,6 +315,9 @@ void buildDockerImage() {
     publishImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}"
     mlVerShort=marklogicVersion.split("\\.")[0]
     latestTag="marklogic/marklogic-server-${dockerImageType}:latest-${mlVerShort}"
+    // platform image = UBI base + all UBI-repo packages; built by 'make build' as a layer prefix of the server image
+    platformBuiltImage="marklogic/marklogic-platform-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}"
+    platformLatestTag="marklogic/marklogic-platform-${dockerImageType}:latest-${mlVerShort}"
     // Use Los Angeles time (same as ARM_DATE in copyRPMs) to ensure consistency across UTC/PST boundaries
     timeStamp = sh(returnStdout: true, script: "TZ=America/Los_Angeles date +%Y%m%d").trim()
     timestamptedTag = builtImage.replace('nightly', timeStamp)
@@ -322,17 +329,14 @@ void buildDockerImage() {
 
 /**
  * Pulls the Docker image required for upgrade testing.
- * Uses the 'upgradeDockerImage' parameter or defaults to a corresponding 'ubi' image.
- * Skips the pull if the target image is 'ubi-rootless' and DOCKER_TESTS is false.
+ * Uses the 'upgradeDockerImage' parameter or defaults to the last published 'latest-<majorVersion>'
+ * ubi image for x86 builds or matching ARM image type for ARM upgrade-from testing.
+ * Skips the pull for rootless image types when Docker tests are disabled.
  */
 void pullUpgradeDockerImage() {
-    if (dockerImageType == "ubi-rootless" && params.DOCKER_TESTS != "true") {
+    if (dockerImageType.contains("rootless") && !params.DOCKER_TESTS) {
         sh """
-            echo 'dockerImageType is set to ubi-rootless, skipping this stage and Docker upgrade test.'
-        """
-    } else if (isArmImage()) {
-        sh """
-            echo 'ARM image type detected. Skipping upgrade test (no previous ARM images available for upgrade testing).'
+            echo 'dockerImageType is set to ${dockerImageType}, skipping this stage and Docker upgrade test because DOCKER_TESTS is false.'
         """
     } else {
         if (upgradeDockerImage != "" ) {
@@ -341,12 +345,22 @@ void pullUpgradeDockerImage() {
                 docker pull ${upgradeDockerImage}
             """
         } else {
-            upgradeDockerImage = "${dockerRegistry}/marklogic/marklogic-server-ubi:${marklogicVersion}-ubi-${env.dockerVersion}"
+            def upgradeImageType = isArmImage() ? dockerImageType : "ubi"
+            upgradeDockerImage = "${dockerRegistry}/marklogic/marklogic-server-${upgradeImageType}:latest-${mlVerShort}"
             sh """
                 echo 'upgradeDockerImage is not specified, using ${upgradeDockerImage} for upgrade test.'
-                docker pull ${dockerRegistry}/marklogic/marklogic-server-ubi:${marklogicVersion}-ubi-${env.dockerVersion}
+                docker pull ${upgradeDockerImage}
             """
         }
+        // Save and stash the pulled image so Docker-Run-Tests (which may run on a
+        // different agent, e.g. cld-docker-graviton) can load it without relying on
+        // another docker pull (which may fail against a private registry).
+        sh """
+            echo "Saving ${upgradeDockerImage} to ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}..."
+            docker image save ${upgradeDockerImage} -o ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
+            ls -lh ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
+        """
+        stash name: 'upgrade-image-archive', includes: "${UPGRADE_IMAGE_ARCHIVE}", allowEmpty: false
     }
 }
 
@@ -434,9 +448,11 @@ void publishToInternalRegistry() {
             docker tag ${imageToPublish} ${dockerRegistry}/${publishImage}
             docker tag ${imageToPublish} ${dockerRegistry}/${latestTag}
             docker tag ${imageToPublish} ${dockerRegistry}/${timestamptedTag}
+            docker tag ${platformBuiltImage} ${dockerRegistry}/${platformLatestTag}
             docker push ${dockerRegistry}/${publishImage}
             docker push ${dockerRegistry}/${latestTag}
             docker push ${dockerRegistry}/${timestamptedTag}
+            docker push ${dockerRegistry}/${platformLatestTag}
         """
         
     }
@@ -483,16 +499,13 @@ void publishToInternalRegistry() {
  * Scans the rolling latest-<majorVersion> tag (not the per-build version tag) so each
  * scan overwrites the same BlackDuck code location instead of accumulating a new one
  * per MarkLogic minor version release.
- * Passes the pinned UBI base image (read from the matching marklogic-deps Dockerfile's FROM
- * line) so BlackDuck can run an additional scan excluding base image components.
+ * Passes the published marklogic-platform image (UBI base + all UBI-repo packages, an exact
+ * layer prefix of the server image) as BASE_IMAGE_TO_EXCLUDE so BlackDuck can run an additional
+ * scan excluding the UBI base and UBI-repo components. Non-UBI content (e.g. libnsl) is not excluded.
  * Runs asynchronously (wait: false).
  */
 void scanWithBlackDuck() {
-    def isUbi9 = params.dockerImageType.contains('ubi9')
-    def isArm = params.dockerImageType.contains('arm')
-    def depsDockerfile = (isUbi9 && isArm) ? 'dockerFiles/marklogic-deps-ubi9-arm:base' :
-        isUbi9 ? 'dockerFiles/marklogic-deps-ubi9:base' : 'dockerFiles/marklogic-deps-ubi:base'
-    def baseImageToExclude = sh(returnStdout: true, script: "grep -m1 '^FROM' ${depsDockerfile} | awk '{print \$2}'").trim()
+    def baseImageToExclude = "${dockerRegistry}/${platformLatestTag}"
     build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${latestTag}"), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}"), string(name: 'BASE_IMAGE_TO_EXCLUDE', value: "${baseImageToExclude}") ]
 }
 
@@ -569,9 +582,9 @@ pipeline {
     }
 
     parameters {
-        string(name: 'dockerVersion', defaultValue: '2.3.0', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
+        string(name: 'dockerVersion', defaultValue: '2.3.1', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
-        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to ubi image if left blank.\n Currently upgrading to ubi-rootless is not supported hence the test is skipped when ubi-rootless image is provided.', trim: true)
+        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to the ubi image for x86 builds or matching ARM image type for ARM builds if left blank.\n Upgrade image pulls for rootless image types are skipped when DOCKER_TESTS is false.', trim: true)
         choice(name: 'marklogicVersion', choices: '12\n11', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
@@ -625,8 +638,8 @@ pipeline {
                         script {
                             // Always save image for cases where agents might differ
                             sh """
-                                echo "Saving ${builtImage} to ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
-                                docker image save ${builtImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                                echo "Saving ${builtImage} and ${platformBuiltImage} to ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
+                                docker image save ${builtImage} ${platformBuiltImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                                 ls -lh ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                             """
                             stash name: 'built-image-archive', includes: "${GRAVITON3_IMAGE_ARCHIVE}", allowEmpty: false
@@ -765,6 +778,15 @@ pipeline {
                             echo "Image ${builtImage} already available locally"
                         fi
                     """
+                    unstash 'upgrade-image-archive'
+                    // Always load from the archive: upgradeDockerImage defaults to the
+                    // mutable 'latest-<majorVersion>' tag, which a shared agent may already
+                    // have from a stale prior build, so a conditional skip could use it instead.
+                    def upgradeImageSource = "${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}"
+                    sh """
+                        echo "Loading image from ${upgradeImageSource} for Docker-Run-Tests..."
+                        docker image load -i ${upgradeImageSource}
+                    """
                 }
                 dockerTests()
                 stash name: 'docker-test-results', includes: 'test/test_results/**', allowEmpty: true
@@ -793,13 +815,14 @@ pipeline {
                             // trust the exact, fully-qualified tag - never a loose repo/type match, which
                             // could resolve to a different build's image (e.g. a different marklogicVersion).
                             sh """
-                                if ! docker image inspect ${builtImage} &>/dev/null; then
+                                if ! docker image inspect ${builtImage} &>/dev/null || ! docker image inspect ${platformBuiltImage} &>/dev/null; then
                                     echo "Image not found locally, loading from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
                                     docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                                 else
-                                    echo "Image ${builtImage} already available locally"
+                                    echo "Images ${builtImage} and ${platformBuiltImage} already available locally"
                                 fi
                                 docker image inspect ${builtImage} >/dev/null
+                                docker image inspect ${platformBuiltImage} >/dev/null
                             """
 
                             // Store for use in publishToInternalRegistry
@@ -857,9 +880,16 @@ pipeline {
                     rm -rf test/test_results scap container-structure-test.xml
                     # Remove ARM image tar archive
                     rm -f ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
+                    # Remove upgrade image tar archive
+                    rm -f ${WORKSPACE}/${UPGRADE_IMAGE_ARCHIVE}
                     # Remove ARM image if it was built
                     if [ -n "${builtImage}" ]; then
                         docker rmi ${builtImage} || true
+                    fi
+                    # Remove platform image and its pushed tag if they were built
+                    if [ -n "${platformBuiltImage}" ]; then
+                        docker rmi ${platformBuiltImage} || true
+                        docker rmi ${dockerRegistry}/${platformLatestTag} || true
                     fi
                     # Clean up RPMs
                     if [ -d src ]; then

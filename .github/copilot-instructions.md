@@ -26,6 +26,7 @@ If you are using Copilot/AI to modify this repo, follow the **How Copilot Should
   - Preserve the root vs rootless behavioral differences (sudo usage, config write mode, converter install).
 - **Dockerfile templates (`dockerFiles/*`)**
   - Keep the multi-stage + flattened final stage pattern (`COPY --from=builder / /`).
+  - UBI-repo (microdnf) installs belong in the `platform` stage of the deps Dockerfiles; non-UBI content (libnsl, MarkLogic rpm, tini, scripts) goes after it. The `marklogic-platform-<type>` image must stay an exact layer prefix of the server image (used for the Black Duck NOTICE scan), and `sudo` must never be installed in rootless images.
   - Keep ownership/permissions correct for rootless (`marklogic_user:users`, UID 1000).
   - If you add/remove files, update `test/structure-test.yaml` accordingly.
   - **External RPM pinning**: When pinning external RPMs (e.g., libnsl from AlmaLinux), avoid broad `microdnf -y update` in the same RUN layer, as it can advance glibc and break version compatibility. Use targeted upgrades instead (e.g., `microdnf -y upgrade tzdata`). Test both the dependency image build AND downstream MarkLogic RPM installation.

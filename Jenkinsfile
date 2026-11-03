@@ -344,7 +344,7 @@ void copyRPMs() {
         }
 
         if (NIGHTLY_RPM) {
-            marklogicVersion = RPMversion
+            marklogicVersion = RPMversion + '.' + rpmDate
             if (!RPM.startsWith("MarkLogic-${RPMversion}.${rpmDate}")) {
                 error "Server RPM '${RPM}' does not match RPM date ${rpmDate}"
             }

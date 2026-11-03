@@ -25,6 +25,12 @@ publishImage = ''
 latestTag = ''
 mlVerShort = ''
 upgradeDockerImage = ''
+ML_MAJOR_MINOR = ''
+NIGHTLY_RPM = false
+PUBLISH_ALLOWED = false
+rpmDate = ''
+rollingBase = ''
+platformNightlyTag = ''
 
 // Define local funtions
 
@@ -193,7 +199,7 @@ void resultNotification(status) {
                  "<b>Vulnerabilities: </b><pre><code>${SCAN_OUTPUT}</code></pre><br/>" +
                  "<b><a href='${env.BUILD_URL}artifact/scan/report-${env.dockerImageType}.json'>Full scan report.</a></b><br/>" +
                  "<b>Image Size:  <br/></b>${IMAGE_SIZE} <br/>" +
-                 "<pre><code>docker pull ${dockerRegistry}/${latestTag}</code></pre><br/><br/>"
+                 "<pre><code>docker pull ${dockerRegistry}/${latestTag ?: publishImage}</code></pre><br/><br/>"
     if (params.DOCKER_TESTS) {
         email_body = "${email_body} <b><a href='${env.BUILD_URL}Docker_20Tests_20Report'>Docker Tests Report</a></b><br/>"
     } else {
@@ -226,77 +232,134 @@ void resultNotification(status) {
 
 /**
  * Copies the MarkLogic Server and Converters RPMs.
- * Determines the correct RPM version/branch based on marklogicVersion parameter.
- * Downloads nightly builds from Artifactory unless specific RPM URLs are provided via ML_RPM/ML_CONVERTERS parameters.
- * Sets RPM, CONVERTERS, and marklogicVersion global variables.
+ * Downloads today's dated nightly (or the RPM_DATE build) and waits up to 4 hours; overridden URLs skip the wait.
  */
 void copyRPMs() {
     // Determine architecture suffix based on image type
     def archSuffix = dockerImageType.contains('arm') ? 'aarch64' : 'x86_64'
-    def armRhelSuffix = (marklogicVersion == "12") ? 'rhel' : 'rhel9'
-
-    if (marklogicVersion == "11") {
-        //if dockerImageType contains "ubi9" then use nightly-rhel9 suffix
-        if (dockerImageType.contains("ubi9")) {
-            RPMsuffix = ".nightly-rhel9"
-        } else {
-            RPMsuffix = ".nightly-rhel"
-        }
-        RPMbranch = "b11"
-        RPMversion = "11.3"
+    def isArm = archSuffix == 'aarch64'
+    if (params.marklogicVersion == '11') {
+        RPMversion = '11.3'
+        RPMbranch = 'b11'
     }
-    else if (marklogicVersion == "12") {
-        RPMsuffix = ".nightly-rhel"
-        RPMbranch = "b12"
-        RPMversion = "12.2"
+    else if (params.marklogicVersion == '12') {
+        RPMversion = '12.2'
+        RPMbranch = 'b12'
+    }
+    else if (params.marklogicVersion == '12.1') {
+        RPMversion = '12.1'
+        RPMbranch = 'b12'
     }
     else {
         error "Invalid value in marklogicVersion parameter."
     }
+    def versionParts = RPMversion.split("\\.")
+    ML_MAJOR_MINOR = versionParts[0] + '.' + versionParts[1]
+    def rhel = (RPMbranch == 'b11' && dockerImageType.contains('ubi9')) ? 'rhel9' : 'rhel'
+    def nightlyFile = { String kind, String date ->
+        return (kind == 'server' ? 'MarkLogic' : 'MarkLogicConverters') + "-${RPMversion}.${date}-${rhel}.${archSuffix}.rpm"
+    }
+    def nightlyUrl = { String kind, String date ->
+        def folder = (kind == 'server' ? 'server' : 'converters') + (isArm ? '-arm' : '')
+        return "https://bed-artifactory.bedford.progress.com:443/artifactory/${isArm ? 'ml-rpm-dev-tierpoint' : 'ml-rpm-tierpoint'}/${RPMbranch}/${folder}/${nightlyFile(kind, date)}"
+    }
 
+    NIGHTLY_RPM = (params.ML_RPM ?: '').trim() == ''
+    def serverOverridden = !NIGHTLY_RPM
+    def converterOverridden = (params.ML_CONVERTERS ?: '').trim() != ''
+    def rpmDateParam = (params.RPM_DATE ?: '').trim()
+    if (rpmDateParam && !(rpmDateParam ==~ /\d{8}/)) {
+        error "RPM_DATE must be blank or YYYYMMDD."
+    }
+    if (rpmDateParam && (serverOverridden || converterOverridden)) {
+        error "RPM_DATE cannot be combined with ML_RPM or ML_CONVERTERS"
+    }
+    def today = sh(returnStdout: true, script: 'TZ=America/Los_Angeles date +%Y%m%d').trim()
+    if (env.BRANCH_NAME ==~ /develop|master|release.*/ && rpmDateParam && rpmDateParam != today) {
+        error "protected branches (develop, master, release) must leave RPM_DATE blank or use today (${today})"
+    }
+
+    rpmDate = rpmDateParam ?: today
+    def pendingUrls = []
+    if (!serverOverridden) {
+        pendingUrls << nightlyUrl('server', rpmDate)
+    }
+    if (!converterOverridden) {
+        pendingUrls << nightlyUrl('converters', rpmDate)
+    }
+    if (rpmDate == today) {
+        if (pendingUrls) {
+            sh """
+                end=\$(( \$(date +%s) + 14400 ))
+                for url in ${pendingUrls.join(' ')}; do
+                  until curl -sfI --max-time 30 -o /dev/null "\$url"; do
+                    [ "\$(date +%s)" -lt "\$end" ] || { echo "Not published after 4 hours: \$url"; exit 1; }
+                    echo "waiting: \$url"; sleep 60
+                  done
+                done
+            """
+        }
+    }
+    else {
+        for (url in pendingUrls) {
+            if (sh(returnStatus: true, script: "curl -sfI --max-time 30 -o /dev/null '${url}'") != 0) {
+                error "RPM_DATE ${rpmDate} is not published: ${url}"
+            }
+        }
+    }
+
+    def serverName = nightlyFile('server', rpmDate)
+    def converterName = nightlyFile('converters', rpmDate)
+    def serverFetch = serverOverridden ? "wget --no-verbose \"${env.ML_RPM}\"" : "wget --no-verbose -O ${serverName} ${nightlyUrl('server', rpmDate)}"
+    def converterFetch = converterOverridden ? "wget --no-verbose \"${env.ML_CONVERTERS}\"" : "wget --no-verbose -O ${converterName} ${nightlyUrl('converters', rpmDate)}"
     sh """
         cd src
-        ARM_DATE=\$(TZ=America/Los_Angeles date +%Y%m%d)
-        if [ -z "${env.ML_RPM}" ]; then
-            if [ "${archSuffix}" = "aarch64" ]; then
-                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/server-arm/MarkLogic-${RPMversion}.\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm
-            else
-                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/server/MarkLogic-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
-            fi
-        else
-            wget --no-verbose "${env.ML_RPM}"
-        fi
-        if [ -n "${env.ML_CONVERTERS}" ]; then
-            wget --no-verbose "${env.ML_CONVERTERS}"
-        else
-            if [ "${archSuffix}" = "aarch64" ]; then
-                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-dev-tierpoint/${RPMbranch}/converters-arm/MarkLogicConverters-${RPMversion}.\${ARM_DATE}-${armRhelSuffix}.aarch64.rpm
-            else
-                wget --no-verbose https://bed-artifactory.bedford.progress.com:443/artifactory/ml-rpm-tierpoint/${RPMbranch}/converters/MarkLogicConverters-${RPMversion}${RPMsuffix}.${archSuffix}.rpm
-            fi
-        fi
+        rm -f MarkLogic*.rpm
+        ${serverFetch}
+        ${converterFetch}
     """
     script {
-        // Select RPMs using version-specific patterns first to avoid picking another concurrent build's artifacts.
-        RPM = sh(returnStdout: true, script: "cd src; ls -1t MarkLogic-${RPMversion}*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
-        if (!RPM) {
-            RPM = sh(returnStdout: true, script: "cd src; ls -1t MarkLogic-*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+        if (serverOverridden) {
+            // Select RPMs using version-specific patterns first to avoid picking another concurrent build's artifacts.
+            RPM = sh(returnStdout: true, script: "cd src; ls -1t MarkLogic-${RPMversion}*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+            if (!RPM) {
+                RPM = sh(returnStdout: true, script: "cd src; ls -1t MarkLogic-*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+            }
         }
-
-        CONVERTERS = sh(returnStdout: true, script: "cd src; ls -1t MarkLogicConverters-${RPMversion}*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
-        if (!CONVERTERS) {
-            CONVERTERS = sh(returnStdout: true, script: "cd src; (ls -1t MarkLogicConverters-*.${archSuffix}.rpm 2>/dev/null || ls -1t MarkLogicConverters-*.rpm 2>/dev/null) | head -1").trim()
+        else {
+            RPM = serverName
+        }
+        if (converterOverridden) {
+            CONVERTERS = sh(returnStdout: true, script: "cd src; ls -1t MarkLogicConverters-${RPMversion}*.${archSuffix}.rpm 2>/dev/null | head -1").trim()
+            if (!CONVERTERS) {
+                CONVERTERS = sh(returnStdout: true, script: "cd src; (ls -1t MarkLogicConverters-*.${archSuffix}.rpm 2>/dev/null || ls -1t MarkLogicConverters-*.rpm 2>/dev/null) | head -1").trim()
+            }
+        }
+        else {
+            CONVERTERS = converterName
         }
 
         if (!RPM) {
             error "No MarkLogic RPM found in src/ for architecture ${archSuffix}"
         }
 
-        // Extract MarkLogic version from RPM file name (handle both x86_64 and aarch64)
-        marklogicVersion = sh(returnStdout: true, script: "echo ${RPM} | awk -F 'MarkLogic-' '{print \$2;}' | awk -F '.x86_64.rpm' '{print \$1;}' | awk -F '.aarch64.rpm' '{print \$1;}' | awk -F '-rhel' '{print \$1;}'").trim()
+        if (NIGHTLY_RPM) {
+            marklogicVersion = RPMversion
+            if (!RPM.startsWith("MarkLogic-${RPMversion}.${rpmDate}")) {
+                error "Server RPM '${RPM}' does not match RPM date ${rpmDate}"
+            }
+        }
+        else {
+            // Extract MarkLogic version from RPM file name (handle both x86_64 and aarch64)
+            marklogicVersion = sh(returnStdout: true, script: "echo ${RPM} | awk -F 'MarkLogic-' '{print \$2;}' | awk -F '.x86_64.rpm' '{print \$1;}' | awk -F '.aarch64.rpm' '{print \$1;}' | awk -F '-rhel' '{print \$1;}'").trim()
 
-        if (!marklogicVersion.startsWith("${params.marklogicVersion}.")) {
-            error "Resolved RPM version '${marklogicVersion}' does not match requested marklogicVersion '${params.marklogicVersion}'"
+            if (!marklogicVersion.startsWith("${RPMversion}.")) {
+                error "Resolved RPM version '${marklogicVersion}' does not match requested version '${RPMversion}'"
+            }
+        }
+        PUBLISH_ALLOWED = rpmDate == today
+        if (!PUBLISH_ALLOWED) {
+            echo "WARNING: RPM date ${rpmDate} is not today (${today}). This build is test-only and will not publish."
         }
 
         echo "Selected server RPM: ${RPM}"
@@ -312,15 +375,17 @@ void copyRPMs() {
  */
 void buildDockerImage() {
     builtImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}"
-    publishImage="marklogic/marklogic-server-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}"
+    rollingBase = NIGHTLY_RPM ? "${RPMversion}.nightly" : marklogicVersion
+    publishImage="marklogic/marklogic-server-${dockerImageType}:${rollingBase}-${dockerImageType}"
     mlVerShort=marklogicVersion.split("\\.")[0]
-    latestTag="marklogic/marklogic-server-${dockerImageType}:latest-${mlVerShort}"
+    latestTag = ML_MAJOR_MINOR == '12.1' ? '' : "marklogic/marklogic-server-${dockerImageType}:latest-${mlVerShort}"
     // platform image = UBI base + all UBI-repo packages; built by 'make build' as a layer prefix of the server image
     platformBuiltImage="marklogic/marklogic-platform-${dockerImageType}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}"
-    platformLatestTag="marklogic/marklogic-platform-${dockerImageType}:latest-${mlVerShort}"
-    // Use Los Angeles time (same as ARM_DATE in copyRPMs) to ensure consistency across UTC/PST boundaries
+    platformLatestTag = ML_MAJOR_MINOR == '12.1' ? '' : "marklogic/marklogic-platform-${dockerImageType}:latest-${mlVerShort}"
+    platformNightlyTag = NIGHTLY_RPM ? "marklogic/marklogic-platform-${dockerImageType}:${rollingBase}-${dockerImageType}" : ''
+    // Use Los Angeles time (same as copyRPMs) to ensure consistency across UTC/PST boundaries
     timeStamp = sh(returnStdout: true, script: "TZ=America/Los_Angeles date +%Y%m%d").trim()
-    timestamptedTag = builtImage.replace('nightly', timeStamp)
+    timestamptedTag = NIGHTLY_RPM ? "marklogic/marklogic-server-${dockerImageType}:${RPMversion}.${rpmDate}-${dockerImageType}-${env.dockerVersion}" : builtImage.replace('nightly', timeStamp)
     def buildBranchValue = getBuildBranchValue()
     sh "make build docker_image_type=${dockerImageType} dockerTag=${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion} marklogicVersion=${marklogicVersion} dockerVersion=${env.dockerVersion} build_branch=${buildBranchValue} package=${RPM} converters=${CONVERTERS}"
     currentBuild.displayName = "#${BUILD_NUMBER}: ${marklogicVersion}-${env.dockerImageType} (${env.dockerVersion})"
@@ -329,8 +394,7 @@ void buildDockerImage() {
 
 /**
  * Pulls the Docker image required for upgrade testing.
- * Uses the 'upgradeDockerImage' parameter or defaults to the last published 'latest-<majorVersion>'
- * ubi image for x86 builds or matching ARM image type for ARM upgrade-from testing.
+ * Uses the 'upgradeDockerImage' parameter, else 'latest-<majorVersion>' (ubi for x86, matching type for ARM); 12.1 uses 12.1.nightly-ubi for x86 and 12.1.nightly-<type> for ARM.
  * Skips the pull for rootless image types when Docker tests are disabled.
  */
 void pullUpgradeDockerImage() {
@@ -346,7 +410,7 @@ void pullUpgradeDockerImage() {
             """
         } else {
             def upgradeImageType = isArmImage() ? dockerImageType : "ubi"
-            upgradeDockerImage = "${dockerRegistry}/marklogic/marklogic-server-${upgradeImageType}:latest-${mlVerShort}"
+            upgradeDockerImage = ML_MAJOR_MINOR == '12.1' ? "${dockerRegistry}/marklogic/marklogic-server-${upgradeImageType}:12.1.nightly-${upgradeImageType}" : "${dockerRegistry}/marklogic/marklogic-server-${upgradeImageType}:latest-${mlVerShort}"
             sh """
                 echo 'upgradeDockerImage is not specified, using ${upgradeDockerImage} for upgrade test.'
                 docker pull ${upgradeDockerImage}
@@ -433,7 +497,7 @@ void vulnerabilityScan() {
 /**
  * Publishes the built Docker image to the internal Artifactory registry.
  * Also publishes ML images to private Azure ACR repositories (PDC).
- * Tags the image with multiple tags (version-specific, branch-specific, latest).
+ * Tags the image with version, timestamp, rolling, and (except for 12.1) latest tags.
  * Requires Artifactory and Azure ACR credentials.
  */
 void publishToInternalRegistry() {
@@ -446,14 +510,28 @@ void publishToInternalRegistry() {
             docker logout ${dockerRegistry}
             echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${dockerRegistry}
             docker tag ${imageToPublish} ${dockerRegistry}/${publishImage}
-            docker tag ${imageToPublish} ${dockerRegistry}/${latestTag}
             docker tag ${imageToPublish} ${dockerRegistry}/${timestamptedTag}
-            docker tag ${platformBuiltImage} ${dockerRegistry}/${platformLatestTag}
             docker push ${dockerRegistry}/${publishImage}
-            docker push ${dockerRegistry}/${latestTag}
             docker push ${dockerRegistry}/${timestamptedTag}
-            docker push ${dockerRegistry}/${platformLatestTag}
         """
+        if (latestTag) {
+            sh """
+                docker tag ${imageToPublish} ${dockerRegistry}/${latestTag}
+                docker push ${dockerRegistry}/${latestTag}
+            """
+        }
+        if (platformLatestTag) {
+            sh """
+                docker tag ${platformBuiltImage} ${dockerRegistry}/${platformLatestTag}
+                docker push ${dockerRegistry}/${platformLatestTag}
+            """
+        }
+        if (platformNightlyTag) {
+            sh """
+                docker tag ${platformBuiltImage} ${dockerRegistry}/${platformNightlyTag}
+                docker push ${dockerRegistry}/${platformNightlyTag}
+            """
+        }
         
     }
 
@@ -463,10 +541,10 @@ void publishToInternalRegistry() {
         withCredentials([usernamePassword(credentialsId: 'pdc-azure-cr', passwordVariable: 'docker_password', usernameVariable: 'docker_user')]) {
             sh """
                 echo "${docker_password}" | docker login --username ${docker_user} --password-stdin ${pdcDevRegistry}
-                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
-                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-                docker push ${pdcDevRegistry}/marklogicdb-custom:${marklogicVersion}-${env.dockerImageType}
+                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${rollingBase}-${env.dockerImageType}-${env.dockerVersion}
+                docker tag ${imageToPublish} ${pdcDevRegistry}/marklogicdb-custom:${rollingBase}-${env.dockerImageType}
+                docker push ${pdcDevRegistry}/marklogicdb-custom:${rollingBase}-${env.dockerImageType}-${env.dockerVersion}
+                docker push ${pdcDevRegistry}/marklogicdb-custom:${rollingBase}-${env.dockerImageType}
             """
         }
     }
@@ -484,11 +562,15 @@ void publishToInternalRegistry() {
         sh """
             aws ecr get-login-password --region us-west-1 | \\
             docker login --username AWS --password-stdin ${kubeNinjasEcrRegistry}
-            docker tag ${imageToPublish} ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-            docker tag ${imageToPublish} ${ecrRepo}:latest-${mlVerShort}
-            docker push ${ecrRepo}:${marklogicVersion}-${env.dockerImageType}-${env.dockerVersion}
-            docker push ${ecrRepo}:latest-${mlVerShort}
+            docker tag ${imageToPublish} ${ecrRepo}:${rollingBase}-${env.dockerImageType}-${env.dockerVersion}
+            docker push ${ecrRepo}:${rollingBase}-${env.dockerImageType}-${env.dockerVersion}
         """
+        if (latestTag) {
+            sh """
+                docker tag ${imageToPublish} ${ecrRepo}:latest-${mlVerShort}
+                docker push ${ecrRepo}:latest-${mlVerShort}
+            """
+        }
     }
 
     currentBuild.description = "Published"
@@ -502,11 +584,17 @@ void publishToInternalRegistry() {
  * Passes the published marklogic-platform image (UBI base + all UBI-repo packages, an exact
  * layer prefix of the server image) as BASE_IMAGE_TO_EXCLUDE so BlackDuck can run an additional
  * scan excluding the UBI base and UBI-repo components. Non-UBI content (e.g. libnsl) is not excluded.
+ * For 12.1 (no latest tag), scans the rolling 12.1 nightly image and excludes its platform nightly image.
  * Runs asynchronously (wait: false).
  */
 void scanWithBlackDuck() {
+    def containerImage = "${dockerRegistry}/${latestTag}"
     def baseImageToExclude = "${dockerRegistry}/${platformLatestTag}"
-    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: "${dockerRegistry}/${latestTag}"), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}"), string(name: 'BASE_IMAGE_TO_EXCLUDE', value: "${baseImageToExclude}") ]
+    if (ML_MAJOR_MINOR == '12.1') {
+        containerImage = "${dockerRegistry}/${publishImage}"
+        baseImageToExclude = "${dockerRegistry}/${platformNightlyTag}"
+    }
+    build job: 'securityscans/Blackduck/KubeNinjas/docker', wait: false, parameters: [ string(name: 'BRANCH', value: "${env.BRANCH_NAME}"), string(name: 'CONTAINER_IMAGES', value: containerImage), string(name: 'ML_VER', value: "${params.marklogicVersion}"), string(name: 'DOCKER_TYPE', value: "${params.dockerImageType}"), string(name: 'BASE_IMAGE_TO_EXCLUDE', value: baseImageToExclude) ]
 }
 
 /**
@@ -560,20 +648,27 @@ pipeline {
         // Trigger nightly builds on the develop branch for every supported version of MarkLogic
         // and for every supported image type.
         // Include SCAP scan for rootless images
-        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''00 03 * * * % marklogicVersion=11;dockerImageType=ubi
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9
-                                                             00 03 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
-                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi
-                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
-                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9
-                                                             00 02 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+        // Cron times are Pacific (America/Los_Angeles); all Jenkins machines run Pacific time.
+        parameterizedCron( env.BRANCH_NAME == 'develop' ? '''05 01 * * * % marklogicVersion=12;dockerImageType=ubi
+                                                             25 01 * * * % marklogicVersion=12.1;dockerImageType=ubi
+                                                             45 01 * * * % marklogicVersion=12;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             05 02 * * * % marklogicVersion=12.1;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             25 02 * * * % marklogicVersion=12;dockerImageType=ubi9
+                                                             45 02 * * * % marklogicVersion=12.1;dockerImageType=ubi9
+                                                             05 03 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             25 03 * * * % marklogicVersion=12.1;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             45 03 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
+                                                             05 04 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
+                                                             25 04 * * * % marklogicVersion=12.1;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
+                                                             45 04 * * * % marklogicVersion=12.1;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
+                                                             00 05 * * * % marklogicVersion=11;dockerImageType=ubi
+                                                             20 05 * * * % marklogicVersion=11;dockerImageType=ubi-rootless;SCAP_SCAN=true
+                                                             40 05 * * * % marklogicVersion=11;dockerImageType=ubi9
+                                                             00 06 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless;SCAP_SCAN=true
+                                                             20 06 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
+                                                             40 06 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
                                                              00 07 * * 7 % marklogicVersion=11;dockerImageType=ubi;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
                                                              00 08 * * 7 % marklogicVersion=12;dockerImageType=ubi;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false
-                                                             00 05 * * * % marklogicVersion=11;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
-                                                             30 05 * * * % marklogicVersion=11;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
-                                                             00 06 * * * % marklogicVersion=12;dockerImageType=ubi9-arm;GRAVITON3_AGENT=true
-                                                             30 06 * * * % marklogicVersion=12;dockerImageType=ubi9-rootless-arm;SCAP_SCAN=true;GRAVITON3_AGENT=true
                                                              00 09 * * 7 % marklogicVersion=11;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true
                                                              00 10 * * 7 % marklogicVersion=12;dockerImageType=ubi9-arm;DOCKER_TEST_LIST=D05 Initialized MarkLogic container with latency;PUBLISH_IMAGE=false;GRAVITON3_AGENT=true''' : '')
                                                 }
@@ -584,10 +679,11 @@ pipeline {
     parameters {
         string(name: 'dockerVersion', defaultValue: '2.3.1', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
-        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to the ubi image for x86 builds or matching ARM image type for ARM builds if left blank.\n Upgrade image pulls for rootless image types are skipped when DOCKER_TESTS is false.', trim: true)
-        choice(name: 'marklogicVersion', choices: '12\n11', description: 'MarkLogic Server Branch. used to pick appropriate rpm')
-        string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank nightly ML rpm will be used.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
-        string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank the nightly ML Converters Package will be used.', trim: true)
+        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to the ubi image for x86 builds or matching ARM image type for ARM builds if left blank. 12.1 defaults to <registry>/marklogic/marklogic-server-ubi:12.1.nightly-ubi for x86 and <registry>/marklogic/marklogic-server-<type>:12.1.nightly-<type> for ARM.\n Upgrade image pulls for rootless image types are skipped when DOCKER_TESTS is false.', trim: true)
+        choice(name: 'marklogicVersion', choices: '12\n12.1\n11', description: 'MarkLogic Server branch used to pick the RPM. 12 means 12.2.')
+        string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank, today\'s dated nightly ML rpm will be used; waits up to 4 hours unless set.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
+        string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank, today\'s dated nightly ML Converters Package will be used; waits up to 4 hours unless set.', trim: true)
+        string(name: 'RPM_DATE', defaultValue: '', description: 'YYYYMMDD of the dated nightly RPM. Blank = today (Pacific) and waits up to 4 hours. A past date is test-only and does not publish. Protected branches (develop, master, release) accept only blank or today.', trim: true)
         booleanParam(name: 'PUBLISH_IMAGE', defaultValue: false, description: 'Publish image to internal registry')
         booleanParam(name: 'TEST_STRUCTURE', defaultValue: true, description: 'Run container structure tests')
         booleanParam(name: 'DOCKER_TESTS', defaultValue: true, description: 'Run docker tests')
@@ -802,6 +898,7 @@ pipeline {
                 stage('Publish-Image') {
                     when {
                             beforeAgent true
+                            expression { return PUBLISH_ALLOWED }
                             anyOf {
                                 branch 'develop'
                                 expression { return params.PUBLISH_IMAGE }
@@ -830,7 +927,13 @@ pipeline {
                         }
                         publishToInternalRegistry()
                         // Trigger downstream QA image build job
-                        build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [string(name: 'dockerImageType', value: "${dockerImageType}"), string(name: 'marklogicVersion', value: "${RPMversion}")]
+                        build job: 'KubeNinjas/docker/docker-nightly-builds-qa', wait: false, parameters: [
+                            string(name: 'dockerImageType', value: "${dockerImageType}"),
+                            string(name: 'marklogicVersion', value: "${RPMversion}"),
+                            string(name: 'qaDockerVersion', value: "${env.dockerVersion}"),
+                            // exact published tag; QA would otherwise derive a date from its own clock
+                            string(name: 'qaDockerTag', value: timestamptedTag.toString().tokenize(':').last())
+                        ]
                     }
                 }
 
@@ -840,6 +943,7 @@ pipeline {
                         anyOf {
                                 branch pattern: '^(develop|master|release.*)$', comparator: 'REGEXP'
                             }
+                        expression { return PUBLISH_ALLOWED && (ML_MAJOR_MINOR != '12.1' || NIGHTLY_RPM) }
                     }
                     steps {
                         scanWithBlackDuck()

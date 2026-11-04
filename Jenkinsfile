@@ -395,15 +395,17 @@ void buildDockerImage() {
 /**
  * Pulls the Docker image required for upgrade testing.
  * Uses the 'upgradeDockerImage' parameter, else 'latest-<majorVersion>' (ubi for x86, matching type for ARM); 12.1 uses 12.1.nightly-ubi for x86 and 12.1.nightly-<type> for ARM.
- * Skips the pull for rootless image types when Docker tests are disabled.
+ * Skips the pull when Docker tests are disabled.
  */
 void pullUpgradeDockerImage() {
-    if (dockerImageType.contains("rootless") && !params.DOCKER_TESTS) {
+    if (!params.DOCKER_TESTS) {
         sh """
             echo 'dockerImageType is set to ${dockerImageType}, skipping this stage and Docker upgrade test because DOCKER_TESTS is false.'
         """
     } else {
-        if (upgradeDockerImage != "" ) {
+        def requestedUpgradeImage = (params.upgradeDockerImage ?: '').trim()
+        if (requestedUpgradeImage != '') {
+            upgradeDockerImage = requestedUpgradeImage
             sh """
                 echo 'upgradeDockerImage: ${upgradeDockerImage}'
                 docker pull ${upgradeDockerImage}
@@ -679,7 +681,7 @@ pipeline {
     parameters {
         string(name: 'dockerVersion', defaultValue: '2.3.1', description: 'ML Docker version. This value is used as part of the Docker image tag, which is built as ${marklogicVersion}-${dockerImageType}-${dockerVersion}', trim: true)
         choice(name: 'dockerImageType', choices: 'ubi-rootless\nubi\nubi9-rootless\nubi9\nubi9-arm\nubi9-rootless-arm', description: 'Platform type for Docker image. Will be made part of the docker image tag')
-        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to the ubi image for x86 builds or matching ARM image type for ARM builds if left blank. 12.1 defaults to <registry>/marklogic/marklogic-server-ubi:12.1.nightly-ubi for x86 and <registry>/marklogic/marklogic-server-<type>:12.1.nightly-<type> for ARM.\n Upgrade image pulls for rootless image types are skipped when DOCKER_TESTS is false.', trim: true)
+        string(name: 'upgradeDockerImage', defaultValue: '', description: 'Docker image for testing upgrades. Defaults to the ubi image for x86 builds or matching ARM image type for ARM builds if left blank. 12.1 defaults to <registry>/marklogic/marklogic-server-ubi:12.1.nightly-ubi for x86 and <registry>/marklogic/marklogic-server-<type>:12.1.nightly-<type> for ARM.\n Upgrade image pulls are skipped when DOCKER_TESTS is false.', trim: true)
         choice(name: 'marklogicVersion', choices: '12\n12.1\n11', description: 'MarkLogic Server branch used to pick the RPM. 12 means 12.2.')
         string(name: 'ML_RPM', defaultValue: '', description: 'URL for RPM to be used for Image creation. \n If left blank, today\'s dated nightly ML rpm will be used; waits up to 4 hours unless set.\n Please provide Jenkins accessible path e.g. /project/engineering or /project/qa', trim: true)
         string(name: 'ML_CONVERTERS', defaultValue: '', description: 'URL for the converters RPM to be included in the image creation \n If left blank, today\'s dated nightly ML Converters Package will be used; waits up to 4 hours unless set.', trim: true)

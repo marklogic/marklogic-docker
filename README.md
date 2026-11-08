@@ -773,7 +773,7 @@ volumes:
 ```
 docker stack deploy -c bootstrap-compose.yaml mlstack
 ```
-3. Once the bootstrap host is up and running, enable HTTPS on the Admin and Manage app servers (ports 8001 and 8002) using the procedures from the MarkLogic documentation https://docs.progress.com/bundle/marklogic-server-secure-12/page/topics/introduction-to-security.html.
+3. Once the bootstrap host is up and running, enable HTTPS on the Admin and Manage app servers (ports 8001 and 8002) using the procedures from the MarkLogic documentation https://docs.progress.com/bundle/marklogic-server-secure-12/page/topics/configuring-ssl-on-app-servers.html.
 4. Obtain the CA certificate for SSL enabled app servers on the bootstrap host and store it in the same directory as the compose file. The CA certificate/certificate chain used to join the cluster will be stored as Docker secret.
 5. Create files `mldb_admin_username.txt` and `mldb_admin_password.txt` to set the admin username/password used for joining the bootstrap host.
 6. Use the compose file below to create node2. Please note the {MARKLOGIC_JOIN_TLS_ENABLED} parameter is set to true and the {MARKLOGIC_JOIN_CACERT_FILE} is set as a Docker secret with the value set to the CA certificate/certificate chain file path. Please see the [Configuration](#Configuration) section for more details on these two parameters.

@@ -66,14 +66,14 @@ Only Docker images under Base OS UBI8 with `rootless` variants are FIPS enabled 
 
 [MarkLogic Server](http://www.marklogic.com/) is a multi-model database that has both NoSQL and trusted enterprise data management capabilities. It is the most secure multi-model database, and it’s deployable in any environment.
 
-MarkLogic documentation is available at [http://docs.marklogic.com](https://docs.marklogic.com/).
+MarkLogic documentation is available at [https://docs.progress.com/category/marklogic-content-hub](https://docs.progress.com/category/marklogic-content-hub).
 
 # Using this Image
 
 With this image, you have the option to either create an initialized or an uninitialized MarkLogic Server.
 
 - Initialized: admin credentials are set up as part of container startup process.
-- Unintialized: admin credentials are created by the user after MarkLogic has started. To create the credentials you can use the GUI (see the MarkLogic Installation documentation: https://docs.marklogic.com/guide/installation/procedures#id_84772) or you can use APIs (see the scripting documentation: https://docs.marklogic.com/10.0/guide/admin-api/cluster).
+- Unintialized: admin credentials are created by the user after MarkLogic has started. To create the credentials you can use the GUI (see the MarkLogic Installation documentation: https://docs.progress.com/bundle/marklogic-server-install-12/page/topics/procedures/configuring-the-first-and-subsequent-hosts/configuring-a-single-host-or-the-first-host-in-a-cluster.html) or you can use APIs (see the scripting documentation: https://docs.progress.com/bundle/marklogic-server-script-admin-tasks-12/page/topics/cluster.html).
 
 ## Initialized MarkLogic Server
 For an initialized MarkLogic Server, admin credentials are required to be passed in while creating the Docker container. The Docker container will have MarkLogic Server installed and initialized, and databases and app servers created. A security database will be created to store user data, roles, and other security information. MarkLogic Server credentials, passed in as environment variable parameters while running a container, will be stored as part of the admin user in the security database. These admin credentials can be used to access MarkLogic Server Admin interface on port 8001 and other app servers with their respective ports.
@@ -102,10 +102,10 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
      progressofficial/marklogic-db
 ```
 
-Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
+Wait about a minute for MarkLogic Server to initialize before checking the ports. To verify the successful installation and initialization, log into the MarkLogic Server Admin Interface using the admin credentials used in the command above. Go to http://localhost:8001. You can also verify the configuration by following the procedures outlined in the MarkLogic Server documentation. See the MarkLogic Installation documentation [here](https://docs.progress.com/bundle/marklogic-server-install-12/page/topics/procedures/configuring-the-first-and-subsequent-hosts/configuring-a-single-host-or-the-first-host-in-a-cluster.html).
 
 ## Uninitialized MarkLogic Server
-For an uninitialized MarkLogic Server, admin credentials or license information are not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access the MarkLogic Admin Interface at http://localhost:8001 and manually initialize the MarkLogic Server, create the admin user, databases, and install the license. See the MarkLogic Installation documentation [here](https://docs.marklogic.com/guide/installation/procedures#id_84772).
+For an uninitialized MarkLogic Server, admin credentials or license information are not required while creating the container. The Docker container will have MarkLogic Server installed and ports exposed for app servers as specified in the run command. Users can access the MarkLogic Admin Interface at http://localhost:8001 and manually initialize the MarkLogic Server, create the admin user, databases, and install the license. See the MarkLogic Installation documentation [here](https://docs.progress.com/bundle/marklogic-server-install-12/page/topics/procedures/configuring-the-first-and-subsequent-hosts/configuring-a-single-host-or-the-first-host-in-a-cluster.html).
 
 To create an uninitialized MarkLogic Server with [Docker CLI](https://docs.docker.com/engine/reference/commandline/cli/), run this command. You can optionally add the `--cap-add=SYS_PTRACE` flag (see the "Enabling Stack Trace Generation" section below for details):
 
@@ -115,7 +115,7 @@ $ docker run -d -it -p 8000:8000 -p 8001:8001 -p 8002:8002 \
 ```
 The example output will contain a hash of the image ID: `f484a784d99838a918e384eca5d5c0a35e7a4b0f0545d1389e31a65d57b2573d`
 
-Wait for about a minute, before going to the MarkLogic Admin Interface at http://localhost:8001. If the MarkLogic container has started successfully on Docker, you should see a configuration screen allowing you to initialize the server as shown at: https://docs.marklogic.com/guide/installation/procedures#id_60220.  
+Wait for about a minute, before going to the MarkLogic Admin Interface at http://localhost:8001. If the MarkLogic container has started successfully on Docker, you should see a configuration screen allowing you to initialize the server as shown at: https://docs.progress.com/bundle/marklogic-server-install-12/page/topics/procedures/configuring-the-first-and-subsequent-hosts/configuring-a-single-host-or-the-first-host-in-a-cluster.html.  
 
 
 Note that the examples in this document can interfere with one another.  We recommend that you stop all containers before running the examples. See the [Clean up](#clean-up) section at the end of this document for more details.
@@ -257,7 +257,7 @@ This capability is optional and not required for normal MarkLogic Server operati
 
 # Clustering
 
-MarkLogic Server Docker containers ship with a small set of scripts, making it easy to create clusters. See the [MarkLogic documentation](https://docs.marklogic.com/guide/concepts/clustering) for more about clusters. The following three examples show how to create MarkLogic Server clusters with Docker containers. The first two use Docker compose scripts to create one-node and three-node clusters. See the documentation for [Docker compose](https://docs.docker.com/compose/) for more details. The third example demonstrates a container setup on separate VMs.
+MarkLogic Server Docker containers ship with a small set of scripts, making it easy to create clusters. See the [MarkLogic documentation](https://docs.progress.com/bundle/marklogic-server-understand-concepts-12/page/topics/clustering.html) for more about clusters. The following three examples show how to create MarkLogic Server clusters with Docker containers. The first two use Docker compose scripts to create one-node and three-node clusters. See the documentation for [Docker compose](https://docs.docker.com/compose/) for more details. The third example demonstrates a container setup on separate VMs.
 
 The credentials for the admin user are configured using Docker secrets, and are stored in `mldb_admin_username.txt`, `mldb_admin_password.txt`, and `mldb_wallet_password.txt` files.
 
@@ -773,7 +773,7 @@ volumes:
 ```
 docker stack deploy -c bootstrap-compose.yaml mlstack
 ```
-3. Once the bootstrap host is up and running, enable HTTPS on the Admin and Manage app servers (ports 8001 and 8002) using the procedures from the MarkLogic documentation https://docs.marklogic.com/guide/security/SSL.
+3. Once the bootstrap host is up and running, enable HTTPS on the Admin and Manage app servers (ports 8001 and 8002) using the procedures from the MarkLogic documentation https://docs.progress.com/bundle/marklogic-server-secure-12/page/topics/configuring-ssl-on-app-servers.html.
 4. Obtain the CA certificate for SSL enabled app servers on the bootstrap host and store it in the same directory as the compose file. The CA certificate/certificate chain used to join the cluster will be stored as Docker secret.
 5. Create files `mldb_admin_username.txt` and `mldb_admin_password.txt` to set the admin username/password used for joining the bootstrap host.
 6. Use the compose file below to create node2. Please note the {MARKLOGIC_JOIN_TLS_ENABLED} parameter is set to true and the {MARKLOGIC_JOIN_CACERT_FILE} is set as a Docker secret with the value set to the CA certificate/certificate chain file path. Please see the [Configuration](#Configuration) section for more details on these two parameters.
@@ -851,9 +851,9 @@ Wait for the service to be updated. Secret inside the container under /run/secre
 
 # Upgrading to the latest MarkLogic Docker Release
 
-MarkLogic has extensive documentation about upgrades, see [https://docs.marklogic.com/guide/relnotes/chap2](https://docs.marklogic.com/guide/relnotes/chap2). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.marklogic.com/guide/admin/rolling-upgrades](https://docs.marklogic.com/guide/admin/rolling-upgrades) if you need to upgrade with zero downtime.
+MarkLogic has extensive documentation about upgrades, see [https://docs.progress.com/bundle/marklogic-server-whats-new-12/page/topics/release-notes.html](https://docs.progress.com/bundle/marklogic-server-whats-new-12/page/topics/release-notes.html). Other than the uninstall and install of the MarkLogic RPMs, the overall processes and compatibility notes for upgrades remain the same when you run MarkLogic in containers. Instead of uninstalling and installing the MarkLogic RPMs, use the following procedure to upgrade a container instance to a newer release of MarkLogic. Be sure to follow the sequence described in the documentation for rolling upgrades [https://docs.progress.com/bundle/marklogic-server-administrate-12/page/topics/rolling-upgrades.html](https://docs.progress.com/bundle/marklogic-server-administrate-12/page/topics/rolling-upgrades.html) if you need to upgrade with zero downtime.
 
-To upgrade MarkLogic Docker from release 10.x to the latest release, perform following steps:
+To upgrade MarkLogic Docker from an earlier release to the latest release, perform following steps:
 
 Note: In the below example, we are upgrading an initialized MarkLogic host to the latest MarkLogic version supported for Docker.
 
@@ -894,7 +894,7 @@ $ docker run -d -it -p 7000:8000 -p 7001:8001 -p 7002:8002 \
      -e MARKLOGIC_ADMIN_PASSWORD={insert admin password} \
      progressofficial/marklogic-db
 ```
-The /space mounted on the Docker volume can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.marklogic.com/guide/admin/backup_restore
+The /space mounted on the Docker volume can now be used as backup directory for backing up/restoring a database using the procedures described in the MarkLogic documentation: https://docs.progress.com/bundle/marklogic-server-administrate-12/page/topics/backing-up-and-restoring-a-database/backup-and-restore-overview.html
 
 # Debugging
 
@@ -1048,15 +1048,11 @@ This tag points to the latest patch release of a specific minor version of MarkL
 
 e.g. `latest-11.0` is the latest patch release of MarkLogic Server 11.0 (11.0.0, 11.0.1, etc.).
 
-For MarkLogic 10, because the numbering scheme was changed, the maintenance release is equivalent to the minor release in MarkLogic 11. Use the `latest-10.0-x` tag to pin to a specific maintenance release of MarkLogic 10.
-
 ## `latest-xx`
 
 This tag points to the latest minor and patch release of a specific major version of MarkLogic Server on UBI-rootless.
 
 e.g. `latest-11` is the latest patch release of the latest minor release of MarkLogic Server 11 (11.0.0, 11.0.1, 11.1.0, 11.1.1, etc.)
-
-For MarkLogic 10, because the numbering scheme was changed, the maintenance release is equivalent to the minor release in MarkLogic 11. Use the `latest-10` tag to get the latest patch release of the latest maintenance release MarkLogic 10.
 
 ## `latest`
 

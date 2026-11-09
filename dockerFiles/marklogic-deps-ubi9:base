@@ -42,4 +42,4 @@ RUN update-crypto-policies --set FIPS
 ###############################################################
 FROM platform AS deps
 
-RUN rpm -i https://download.rockylinux.org/pub/rocky/9.8/BaseOS/x86_64/os/Packages/l/libnsl-2.34-283.el9_8.x86_64.rpm
+RUN rpm -i https://download.rockylinux.org/pub/rocky/9.8/BaseOS/x86_64/os/Packages/l/libnsl-2.34-284.el9_8.4.x86_64.rpm

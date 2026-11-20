@@ -1,0 +1,10 @@
+schemaVersion: "2.0.0"
+
+# Rootless-only checks. make structure-test adds this file for rootless image types.
+fileExistenceTests:
+- name: 'gdbinit mode matches other home-directory files'
+  path: '/home/marklogic_user/.gdbinit'
+  shouldExist: true
+  permissions: '-rwxr-----'
+  uid: 1000
+  gid: 100

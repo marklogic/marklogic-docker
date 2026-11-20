@@ -28,6 +28,7 @@ If you are using Copilot/AI to modify this repo, follow the **How Copilot Should
   - Keep the multi-stage + flattened final stage pattern (`COPY --from=builder / /`).
   - UBI-repo (microdnf) installs belong in the `platform` stage of the deps Dockerfiles; non-UBI content (libnsl, MarkLogic rpm, tini, scripts) goes after it. The `marklogic-platform-<type>` image must stay an exact layer prefix of the server image (used for the Black Duck NOTICE scan), and `sudo` must never be installed in rootless images.
   - Keep ownership/permissions correct for rootless (`marklogic_user:users`, UID 1000).
+  - Home-directory init files (for example `.gdbinit`) must match other home files: mode 0740 or less permissive (CIS `file_permission_user_init_files`).
   - If you add/remove files, update `test/structure-test.yaml` accordingly.
   - **External RPM pinning**: When pinning external RPMs (e.g., libnsl from AlmaLinux), avoid broad `microdnf -y update` in the same RUN layer, as it can advance glibc and break version compatibility. Use targeted upgrades instead (e.g., `microdnf -y upgrade tzdata`). Test both the dependency image build AND downstream MarkLogic RPM installation.
 - **Env vars / secrets**
@@ -146,7 +147,7 @@ Container Structure Tests validate:
 - Command availability
 - Environment variables
 
-Template: `test/structure-test.yaml` (placeholders replaced during `make structure-test`)
+Template: `test/structure-test.yaml` (placeholders replaced during `make structure-test`). Rootless-only checks, such as the `.gdbinit` mode, live in `test/structure-test-rootless.yaml` and are added for rootless image types.
 
 ## Clustering Patterns
 

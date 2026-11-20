@@ -636,6 +636,27 @@ void scapScan() {
     """
 }
 
+/**
+ * Makes this build's server and platform images available in the local Docker daemon.
+ * A same-tag image can be left on an agent by an earlier build, so a local tag is reused only
+ * when its image ID matches the ID recorded at build time. Otherwise the archive is unstashed
+ * and loaded, which replaces the stale tag.
+ */
+void ensureBuiltImagesLoaded() {
+    unstash 'built-image-ids'
+    def idsMatch = sh(returnStatus: true, script: '''
+        while read -r tag id; do
+            [ "$(docker image inspect --format '{{.Id}}' "$tag" 2>/dev/null)" = "$id" ] || exit 1
+        done < built-image-ids.txt
+    ''') == 0
+    if (idsMatch) {
+        echo 'Built images already present locally with matching IDs, skipping archive load'
+    } else {
+        unstash 'built-image-archive'
+        sh "docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}"
+    }
+}
+
 pipeline {
     // No pipeline-wide agent: stages that need a different label (graviton) must not
     // overlap with a persistently-held top-level agent, or two nodes of the same scarce
@@ -740,6 +761,11 @@ pipeline {
                                 docker image save ${builtImage} ${platformBuiltImage} -o ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                                 ls -lh ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
                             """
+                            // Record each image's ID so later stages can confirm a same-tag image on their agent is this build's.
+                            def serverId = sh(script: "docker image inspect --format '{{.Id}}' ${builtImage}", returnStdout: true).trim()
+                            def platformId = sh(script: "docker image inspect --format '{{.Id}}' ${platformBuiltImage}", returnStdout: true).trim()
+                            writeFile file: 'built-image-ids.txt', text: "${builtImage} ${serverId}\n${platformBuiltImage} ${platformId}\n"
+                            stash name: 'built-image-ids', includes: 'built-image-ids.txt', allowEmpty: false
                             stash name: 'built-image-archive', includes: "${GRAVITON3_IMAGE_ARCHIVE}", allowEmpty: false
                         }
                     }
@@ -781,19 +807,7 @@ pipeline {
                     expression { return params.SCAP_SCAN }
             }
             steps {
-                script {
-                    unstash 'built-image-archive'
-                    // Load image from tar if not already available (applies to all build types)
-                    def imageSource = "${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}"
-                    sh """
-                        if ! docker image inspect ${builtImage} &>/dev/null; then
-                            echo "Loading image from ${imageSource} for SCAP scan..."
-                            docker image load -i ${imageSource}
-                        else
-                            echo "Image ${builtImage} already available locally"
-                        fi
-                    """
-                }
+                ensureBuiltImagesLoaded()
                 scapScan()
                 stash name: 'scap-results', includes: 'scap/**', allowEmpty: true
             }
@@ -807,18 +821,8 @@ pipeline {
                 expression { return isArmImage() && params.GRAVITON3_AGENT }
             }
             steps {
-                script {
-                    unstash 'built-image-archive'
-                    sh """
-                        if ! docker image inspect ${builtImage} &>/dev/null; then
-                            echo "Loading image from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
-                            docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
-                        else
-                            echo "Image ${builtImage} already loaded (likely by SCAP-Scan stage)"
-                        fi
-                        docker images | head -5
-                    """
-                }
+                ensureBuiltImagesLoaded()
+                sh 'docker images | head -5'
             }
         }
 
@@ -834,19 +838,7 @@ pipeline {
                 expression { return params.TEST_STRUCTURE }
             }
             steps {
-                script {
-                    unstash 'built-image-archive'
-                    // Load image from tar if not already available (applies to all build types)
-                    def imageSource = "${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}"
-                    sh """
-                        if ! docker image inspect ${builtImage} &>/dev/null; then
-                            echo "Loading image from ${imageSource} for Structure-Tests..."
-                            docker image load -i ${imageSource}
-                        else
-                            echo "Image ${builtImage} already available locally"
-                        fi
-                    """
-                }
+                ensureBuiltImagesLoaded()
                 structureTests()
                 stash name: 'structure-test-results', includes: 'container-structure-test.xml', allowEmpty: true
             }
@@ -864,18 +856,8 @@ pipeline {
                 expression { return params.DOCKER_TESTS }
             }
             steps {
+                ensureBuiltImagesLoaded()
                 script {
-                    unstash 'built-image-archive'
-                    // Load image from tar if not already available (applies to all build types)
-                    def imageSource = "${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}"
-                    sh """
-                        if ! docker image inspect ${builtImage} &>/dev/null; then
-                            echo "Loading image from ${imageSource} for Docker-Run-Tests..."
-                            docker image load -i ${imageSource}
-                        else
-                            echo "Image ${builtImage} already available locally"
-                        fi
-                    """
                     unstash 'upgrade-image-archive'
                     // Always load from the archive: upgradeDockerImage defaults to the
                     // mutable 'latest-<majorVersion>' tag, which a shared agent may already
@@ -908,18 +890,10 @@ pipeline {
                     }
                     steps {
                         script {
-                            unstash 'built-image-archive'
-                            // Load image from tar if not already available (applies to all build types)
-                            // Node's Docker daemon is shared with other concurrent builds, so only ever
-                            // trust the exact, fully-qualified tag - never a loose repo/type match, which
-                            // could resolve to a different build's image (e.g. a different marklogicVersion).
+                            ensureBuiltImagesLoaded()
+                            // Images are matched by ID, so this build's images are published even when an earlier
+                            // build left the same tag on this node. The exact-tag inspects below confirm both are present.
                             sh """
-                                if ! docker image inspect ${builtImage} &>/dev/null || ! docker image inspect ${platformBuiltImage} &>/dev/null; then
-                                    echo "Image not found locally, loading from ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}..."
-                                    docker image load -i ${WORKSPACE}/${GRAVITON3_IMAGE_ARCHIVE}
-                                else
-                                    echo "Images ${builtImage} and ${platformBuiltImage} already available locally"
-                                fi
                                 docker image inspect ${builtImage} >/dev/null
                                 docker image inspect ${platformBuiltImage} >/dev/null
                             """

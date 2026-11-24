@@ -95,7 +95,7 @@ endif
 	sed -i -e 's^ML_VERSION_PLACEHOLDER^${marklogicVersion}^g' ./test/structure-test.yaml
 	sed -i -e 's^ML_DOCKER_VERSION_PLACEHOLDER^${dockerVersion}^g' ./test/structure-test.yaml
 	sed -i -e 's^BRANCH_PLACEHOLDER^${build_branch}^g' ./test/structure-test.yaml
-	container-structure-test test --config ./test/structure-test.yaml --image ${current_image} \
+	container-structure-test test --config ./test/structure-test.yaml $(if $(findstring rootless,$(docker_image_type)),--config ./test/structure-test-rootless.yaml) --image ${current_image} \
 		$(if $(Jenkins), --output junit | tee container-structure-test.xml,)
 
 #***************************************************************************

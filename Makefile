@@ -191,6 +191,8 @@ endif
 	docker exec -u root scap-scan /bin/bash -c "microdnf update -y; microdnf install -y openscap-scanner"
 	# ensure the file is owned by root in order to avoid permission issues
 	docker exec -u root scap-scan /bin/bash -c "chown root:root /scap/ssg-rhel-ds.xml"
+	# TEMPORARY DIAGNOSTIC (MLE-34739): record mounts, groups, and files that have no valid group
+	docker exec -u root scap-scan /bin/bash -c "cat /proc/mounts > /scap/diag-mounts.txt; getent group > /scap/diag-groups.txt; find / \( -path /proc -o -path /sys \) -prune -o -nogroup -printf '%p owner=%u uid=%U gid=%G mode=%m\n' > /scap/diag-nogroup.txt 2>/dev/null; wc -l /scap/diag-nogroup.txt"
 	docker exec -u root scap-scan /bin/bash -c "oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_cis --results /scap/scap_scan_results.xml --report /scap/scap_scan_report.html /scap/ssg-rhel-ds.xml > /scap/command-output.txt 2>&1" || true
 	docker exec -u root scap-scan /bin/bash -c "rm -f /scap/ssg-rhel-ds.xml"
 	docker rm -f scap-scan

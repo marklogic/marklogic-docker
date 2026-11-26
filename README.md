@@ -55,8 +55,12 @@ Published image artifact details: https://github.com/marklogic/marklogic-docker,
 
 Docker images with `rootless` variants are hardened using Openscap (<https://github.com/OpenSCAP/openscap>).
 
-Scoring : 96.67%
-See [Known Issues and Limitations](#known-issues-and-limitations)
+Scoring (CIS profile, nightly SCAP-Scan on `develop`, 24 Nov 2026, built from commit `246d903`):
+
+- `ubi-rootless` (RHEL 8): 100% (MarkLogic 12.2), 100% (MarkLogic 12.1), 95.83% (MarkLogic 11.3)
+- `ubi9-rootless` (RHEL 9): 100% (MarkLogic 12.2), 100% (MarkLogic 12.1), 95.83% (MarkLogic 11.3)
+
+The MarkLogic 11.3 images fail one rule, `file_permissions_ungroupowned`. See [Known Issues and Limitations](#known-issues-and-limitations).
 
 ## FIPS Enabled
 
@@ -1099,3 +1103,4 @@ Where is calculated as described in the [Configuring HugePages](https://github.c
 4. MarkLogic Server will default to the UTC timezone.
 5. As part of the hardening process, the following packages are removed from the image: `vim-minimal`, `cups-client`, `cups-libs`, `tar`, `avahi-libs`, `binutils`, `libarchive`, `binutils-gold`. These packages are not required for the operation of MarkLogic Server and are removed to reduce the attack surface of the image. If you require any of these packages, you can install them in your own Dockerfile.
 6. The cryptographic modules of RHEL 9 are not yet certified for the FIPS 140-3 requirements.
+7. The CIS rule `file_permissions_ungroupowned` ("Ensure All Files Are Owned by a Group") fails in the nightly OpenSCAP scan for MarkLogic 11.3 on `ubi-rootless` (CCE-83497-8) and `ubi9-rootless` (CCE-83906-8). The result has varied between nightly builds, and the cause is still under investigation.

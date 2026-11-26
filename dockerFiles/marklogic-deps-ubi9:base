@@ -4,7 +4,7 @@
 #
 ###############################################################
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1794186349 AS platform
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.9-1795198179 AS platform
 LABEL "com.marklogic.maintainer"="docker@marklogic.com"
 
 # Extra UBI-repo packages for the platform image, space separated
@@ -15,7 +15,7 @@ ARG PLATFORM_EXTRA_PACKAGES=""
 ###############################################################
 
 # microdnf -y upgrade glibc ensures glibc is updated to the patch level required by the pinned libnsl RPM.
-# The Rocky Linux 9.8 libnsl version is kept in sync with the glibc version UBI9 pulls.
+# The Rocky Linux 9.9 libnsl version is kept in sync with the glibc version UBI9 pulls.
 RUN microdnf -y upgrade glibc \
     && microdnf clean all
 
